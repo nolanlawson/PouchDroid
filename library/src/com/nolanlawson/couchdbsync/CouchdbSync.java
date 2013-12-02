@@ -29,8 +29,7 @@ public class CouchdbSync {
     
     public void start() {
         final WebView webView = new WebView(activity);
-        webView.setVisibility(View.VISIBLE);
-        webView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+        webView.setVisibility(View.GONE);
         ViewGroup viewGroup = (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
         viewGroup.addView(webView);
         
