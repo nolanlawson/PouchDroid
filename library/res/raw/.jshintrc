@@ -18,6 +18,8 @@
   "trailing": true,
   "smarttabs": true,
   "globals": {
-    "PouchDB" : true
+    "PouchDB" : true,
+    "SQLiteJavascriptInterface" : true,
+    "DEBUG_MODE" : true
   }
 }

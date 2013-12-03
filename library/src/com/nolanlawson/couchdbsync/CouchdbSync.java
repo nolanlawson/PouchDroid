@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
+import com.nolanlawson.couchdbsync.sqlite.SQLiteJavascriptInterface;
 import com.nolanlawson.couchdbsync.util.ResourceUtil;
 import com.nolanlawson.couchdbsync.util.SqliteUtil;
 import com.nolanlawson.couchdbsync.util.UtilLogger;
@@ -33,7 +34,9 @@ public class CouchdbSync {
     private List<SqliteTable> sqliteTables = new ArrayList<SqliteTable>();
     private WebView webView;
     private SQLiteDatabase sqliteDatabase;
+    private String dbId;
     private String dbName;
+    private SQLiteJavascriptInterface sqliteJavascriptInterface;
     
     private CouchdbSync(Activity activity, SQLiteDatabase sqliteDatabase) {
         this.activity = activity;
@@ -49,6 +52,7 @@ public class CouchdbSync {
         initWebView();
         
         log.d("attempting to load javascript");
+        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.native_sqlite_interface));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper));
         loadJavascript("window.console.log('PouchDB is: ' + typeof PouchDB)");
@@ -106,6 +110,7 @@ public class CouchdbSync {
                     StringBuilder js = new StringBuilder()
                             .append("var pouchDBHelper = new PouchDBHelper('")
                             .append(activity.getPackageName())
+                            .append(dbId == null ? "" : dbId)
                             .append("',")
                             .append(UtilLogger.DEBUG_MODE)
                             .append(");")
@@ -180,6 +185,11 @@ public class CouchdbSync {
                     
                     SqliteColumn sqliteColumn = sqliteColumns.get(i - 1);
                     String columnName = sqliteColumn.getName();
+                    
+                    if (columnName.startsWith("_")) {
+                        // you're not allowed to use this, since underscore-prefixed fields are reserved in Couchdb
+                        columnName = new StringBuilder(columnName).replace(0, 1, "!reserved_android_id!").toString();
+                    }
                     
                     if (cursor.isNull(i)) {
                         document.putNull(columnName);
@@ -286,6 +296,11 @@ public class CouchdbSync {
         }
         
         webView.setWebChromeClient(new MyWebChromeClient());
+        
+        sqliteJavascriptInterface = new SQLiteJavascriptInterface(activity, webView);
+        webView.addJavascriptInterface(sqliteJavascriptInterface, "SQLiteJavascriptInterface");
+        
+        
         String html = new StringBuilder("<html><body>")
                 .append(UtilLogger.DEBUG_MODE 
                         ? "<script src='http://192.168.0.3:8080/target/target-script-min.js#anonymous'></script>"
@@ -333,6 +348,16 @@ public class CouchdbSync {
             }
             
             couchdbSync.sqliteTables.add(sqliteTable);
+            return this;
+        }
+        
+        /**
+         * Set a unique id, else we'll just use one package-wide id.
+         * @param id
+         * @return
+         */
+        public Builder setDatabaseId(String id) {
+            couchdbSync.dbId = id;
             return this;
         }
         
