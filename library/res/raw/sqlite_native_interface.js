@@ -19,8 +19,8 @@ var SQLiteNativeDB;
 
         var newFn = function() {
             debug('executing callback with id: ' + callbackId);
-            delete SQLiteNativeDB.callbacks[(callbackId)];
             fn.apply(null, arguments);
+            // TODO: intelligently clean up callbacks
 
         };
 
