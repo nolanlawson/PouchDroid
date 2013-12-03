@@ -19,4 +19,9 @@ public class SqliteTable {
     public void setIdColumns(List<String> idColumns) {
         this.idColumns = idColumns;
     }
+
+    @Override
+    public String toString() {
+        return "SqliteTable [name=" + name + ", idColumns=" + idColumns + "]";
+    }
 }

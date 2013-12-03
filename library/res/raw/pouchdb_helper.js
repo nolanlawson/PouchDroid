@@ -1,46 +1,54 @@
-/* export PouchDBHelper DEBUG_MODE */
+/* export PouchDBHelper */
 
-var PouchDBHelper, DEBUG_MODE;
+var PouchDBHelper;
 
 (function () {
     'use strict';
 
-    PouchDBHelper = function (dbId, debugMode) {
+    function debug(str) {
+        if (DEBUG_MODE) {
+            window.console.log(str);
+        }
+    }
+
+    PouchDBHelper = function (dbId) {
 
         var self = this;
 
         try {
             self.db = new PouchDB(dbId);
         } catch (err) {
-            window.console.log('error: ' + JSON.stringify(err));
-        }
-        self.debugMode = debugMode;
-
-        if (self.debugMode) {
-            window.console.log('created new PouchDBHelper with dbId ' + dbId);
+            debug('error: ' + JSON.stringify(err));
         }
 
-        DEBUG_MODE = debugMode;
+        if (DEBUG_MODE) {
+            debug('created new PouchDBHelper with dbId ' + dbId);
+        }
+
     };
 
     PouchDBHelper.prototype.putAll = function (documents) {
         var self = this;
 
-        if (self.debugMode) {
-            window.console.log('attempting to put ' + documents.length + ' documents into PouchDB...');
-        }
+        debug('attempting to put ' + documents.length + ' documents into PouchDB...');
 
         function onPut(err, response) {
-            window.console.log(err);
-            window.console.log(response);
+            debug('got err from pouch: ' + JSON.stringify(err));
+            debug('got response from pouch: ' + JSON.stringify(response));
+
+            if (DEBUG_MODE && response && response.ok) {
+                debug('getting doc: ' + response.id + '...');
+                self.db.get(response.id, function(err, doc){
+                    debug('got err from pouch: ' + err);
+                    debug('got doc from pouch: ' + JSON.stringify(doc));
+                });
+            }
         }
 
         for (var i = 0, len = documents.length; i < len; i++) {
             self.db.put(documents[i], onPut);
         }
-        if (self.debugMode) {
-            window.console.log('put ' + documents.length + ' documents into PouchDB.');
-        }
+        debug('put ' + documents.length + ' documents into PouchDB.');
     };
 
 })();

@@ -52,7 +52,8 @@ public class CouchdbSync {
         initWebView();
         
         log.d("attempting to load javascript");
-        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.native_sqlite_interface));
+        loadJavascript("DEBUG_MODE = " + UtilLogger.DEBUG_MODE);
+        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper));
         loadJavascript("window.console.log('PouchDB is: ' + typeof PouchDB)");
@@ -80,6 +81,7 @@ public class CouchdbSync {
             }
             
             private void loadTable(SqliteTable sqliteTable) {
+                log.d("loadTable: %s", sqliteTable);
                 List<SqliteColumn> sqliteColumns = getColumnsForTable(sqliteTable.getName());
                 
                 int offset = 0;
@@ -99,12 +101,11 @@ public class CouchdbSync {
                     
                     offset += BATCH_SIZE;
                 }
-                
-                
-                
             }
 
-            private void loadBatchIntoPouchdb(ArrayList<Object> jsonList, ObjectMapper objectMapper) {
+            private void loadBatchIntoPouchdb(ArrayList<Object> docsBatch, ObjectMapper objectMapper) {
+                
+                log.d("loadBatchIntoPouchdb: %s docs", docsBatch.size());
                 
                 try {
                     StringBuilder js = new StringBuilder()
@@ -115,13 +116,13 @@ public class CouchdbSync {
                             .append(UtilLogger.DEBUG_MODE)
                             .append(");")
                             .append("pouchDBHelper.putAll(")
-                            .append(objectMapper.writeValueAsString(jsonList))
+                            .append(objectMapper.writeValueAsString(docsBatch))
                             .append(");");
                     
                     log.d("javascript is: %s", js);
                     loadJavascriptWrapped(js);
                     loadJavascriptWrapped("window.console.log('hello world!');");
-                    log.d("Loaded %d objects into pouchdb", jsonList.size());
+                    log.d("Loaded %d objects into pouchdb", docsBatch.size());
                 } catch (IOException e) {
                     // shouldn't happen
                     log.e(e, "unexpected exception");
@@ -311,9 +312,13 @@ public class CouchdbSync {
         log.d("loaded webview data: %s", html);
     }
     
-    public void stop() {
-        sqliteDatabase.close();
+    public void close() {
+        if (sqliteJavascriptInterface != null) {
+            sqliteJavascriptInterface.close();
+        }
+        sqliteJavascriptInterface = null;
         activity = null; // release resources
+        
     }
     
     private class MyWebChromeClient extends WebChromeClient {

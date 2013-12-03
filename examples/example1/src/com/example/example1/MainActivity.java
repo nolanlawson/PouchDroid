@@ -14,23 +14,47 @@ import com.nolanlawson.couchdbsync.CouchdbSync;
 
 public class MainActivity extends Activity {
     
+    private CouchdbSync couchdbSync;
+    SQLiteDatabase sqliteDatabase;
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+    }
+    
+    
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         
-        String dbName = "pokemon-" + Long.toString(new Random().nextLong());
-        SQLiteDatabase sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
+        String dbName = "pokemon_" + Long.toString(Math.abs(new Random().nextLong())) + ".db";
+        sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
         
         loadPokemonData(sqliteDatabase);
-        
-        CouchdbSync couchdbSync = CouchdbSync.Builder.create(this, sqliteDatabase)
+        couchdbSync = CouchdbSync.Builder.create(this, sqliteDatabase)
                 .setDatabaseId(dbName)
                 .addSqliteTable("Monsters", "_id")
                 .build();
         
         couchdbSync.start();
     }
+
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (couchdbSync != null) {
+            couchdbSync.close();
+        }
+        if (sqliteDatabase != null) {
+            sqliteDatabase.close();
+        }
+    }
+
+
 
     private void loadPokemonData(SQLiteDatabase sqliteDatabase) {
         

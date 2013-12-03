@@ -23,12 +23,8 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -52,7 +48,7 @@ public class SQLiteJavascriptInterface {
         log.d("callback(%s, %s)", callbackId, arg1);
 
         try {
-            final String url = new StringBuilder().append("javascript:window.nativeDBCallbacks['").append(callbackId)
+            final String url = new StringBuilder().append("javascript:SQLiteNativeDB.callbacks['").append(callbackId)
                     .append("'](").append(arg1 != null ? objectMapper.writeValueAsString(arg1) : "").append(");")
                     .toString();
 
@@ -78,82 +74,113 @@ public class SQLiteJavascriptInterface {
         /*new AsyncTask<Void, Void, Void>(){
 
             @Override
-            protected Void doInBackground(Void... params) {
+            protected Void doInBackground(Void... params) {*/
                 runnable.run();
-                return null;
+       /*         return null;
             }
             
         }.execute((Void)null);*/
-        runnable.run();
     }
 
     @JavascriptInterface
     public void open(final String name, final String callbackId) {
+        log.d("open(%s, %s)", name, callbackId);
 
         executeInBackground(new Runnable() {
             @Override
             public void run() {
-                log.d("open(%s, %s)", name, callbackId);
-                try {
-                    SQLiteDatabase db = activity.openOrCreateDatabase(name, 0, null);
-                    dbs.put(name, db);
-                    callback(callbackId);
-                } catch (Exception e) {
-                    // shouldn't happen
-                    log.e(e, "unexpected");
-                }
+                openInBackground(name, callbackId);
             }
         });
+ 
+    }
+    public void openInBackground(String name, String callbackId) {
+        try {
+            SQLiteDatabase db = dbs.get(name);
+            if (db == null) { // doesn't exist yet
+                db = activity.openOrCreateDatabase(name + "_nwebsql.db", 0, null);
+                dbs.put(name, db);
+            }
+            callback(callbackId);
+        } catch (Exception e) {
+            // shouldn't happen
+            log.e(e, "unexpected");
+        }
     }
 
     @JavascriptInterface
     public void startTransaction(final String name, final String successId, final String errorId) {
+        log.d("startTransaction(%s, %s, %s)", name, successId, errorId);
         executeInBackground(new Runnable() {
             @Override
             public void run() {
-
-                log.d("startTransaction(%s, %s)", successId, errorId);
-                try {
-                    SQLiteDatabase db = dbs.get(name);
-                    synchronized (db) {
-                        db.beginTransaction();
-                    }
-                    callback(successId);
-                } catch (Exception e) {
-                    log.e(e, "error");
-                    callback(errorId);
-                }
+                startTransactionInBackground(name, successId, errorId);
             }
         });
     }
+    
+    public void startTransactionInBackground(String name, String successId, String errorId) {
+        try {
+            SQLiteDatabase db = dbs.get(name);
+            synchronized (db) {
+                db.beginTransaction();
+            }
+            callback(successId);
+        } catch (Exception e) {
+            log.e(e, "error");
+            callback(errorId);
+        }
+    }
 
     @JavascriptInterface
-    public void endTransaction(final String name, final String endTransactionSuccessId, final String transactionErrorId) {
+    public void endTransaction(final String name, final String successId, final String errorId,
+            final boolean markAsSuccessful) {
+        log.d("endTransaction(%s, %s, %s, %s)", name, successId, errorId, markAsSuccessful);
         executeInBackground(new Runnable() {
             @Override
             public void run() {
-                log.d("endTransaction(%s, %s)", endTransactionSuccessId, transactionErrorId);
-                SQLiteDatabase db = dbs.get(name);
-                try {
-                    synchronized (db) {
-                        db.setTransactionSuccessful();
-                    }
-                    callback(endTransactionSuccessId);
-                } catch (Exception e) {
-                    callback(transactionErrorId);
-                } finally {
-                    synchronized (db) {
-                        db.endTransaction();
-                    }
-                }
+                endTransactionInBackground(name, successId, errorId, markAsSuccessful);
             }
         });
     }
+    
+    public void endTransactionInBackground(String name, String successId, String errorId, boolean markAsSuccessful) {
+                
+        boolean error = false;
+        
+        SQLiteDatabase db = dbs.get(name);
+        try {
+            if (markAsSuccessful) {
+                synchronized (db) {
+                    db.setTransactionSuccessful();
+                }
+            }
+        } catch (Exception e) {
+            log.e(e, "unexpected");
+            error = true;
+        } finally {
+            synchronized (db) {
+                try {
+                    db.endTransaction();
+                } catch (Exception e) {
+                    log.e(e, "unexpected");
+                    error = true;
+                }
+            }
+            if (error) {
+                callback(errorId);
+            } else {
+                callback(successId);
+            }
+        }
+    }    
 
     @JavascriptInterface
-    public void executeSql(final String name, final String sql, final String selectArgsJson, final String querySuccessId,
+    public void executeSql(final String name, final String sql, final String selectArgsJson, 
+            final String querySuccessId,
             final String transactionErrorId) {
-
+        log.d("executeSql(%s, %s, %s, %s, %s)", name, sql, selectArgsJson, querySuccessId, transactionErrorId);
+        
         executeInBackground(new Runnable() {
 
             @Override
@@ -166,7 +193,6 @@ public class SQLiteJavascriptInterface {
     @SuppressLint("NewApi")
     public void executeSqlInBackground(String name, String sql, String selectArgsJson, String querySuccessId,
             String transactionErrorId) {
-        log.d("executeSql(%s, %s, %s, %s)", sql, selectArgsJson, querySuccessId, transactionErrorId);
         
         SQLiteDatabase db = dbs.get(name);
         try {
@@ -186,41 +212,15 @@ public class SQLiteJavascriptInterface {
                 ObjectNode queryResult = null;
                 String errorMessage = null;
 
-                try {
-                    query = queryarr[i];
+                query = queryarr[i];
 
-                    // /* OPTIONAL changes for new Android SDK from HERE:
-                    if (android.os.Build.VERSION.SDK_INT >= 11
-                            && (query.toLowerCase().startsWith("update") || query.toLowerCase().startsWith("delete"))) {
-                        synchronized (db) {
-                            SQLiteStatement myStatement = db.compileStatement(query);
-    
-                            if (selectArgs != null) {
-                                for (int j = 0; j < selectArgs.size(); j++) {
-                                    if (selectArgs.get(j) instanceof Float || selectArgs.get(j) instanceof Double) {
-                                        myStatement.bindDouble(j + 1, (Double) selectArgs.get(j));
-                                    } else if (selectArgs.get(j) instanceof Integer) {
-                                        myStatement.bindLong(j + 1, (Integer) selectArgs.get(j));
-                                    } else if (selectArgs.get(j) instanceof Long) {
-                                        myStatement.bindLong(j + 1, (Long) selectArgs.get(j));
-                                    } else if (selectArgs.get(j) == null) {
-                                        myStatement.bindNull(j + 1);
-                                    } else {
-                                        myStatement.bindString(j + 1, (String) selectArgs.get(j));
-                                    }
-                                }
-                            }
-    
-                            int rowsAffected = myStatement.executeUpdateDelete();
-    
-                            queryResult = objectMapper.createObjectNode();
-                            queryResult.put("rowsAffected", rowsAffected);
-                        }
-                    } else // to HERE. */
-                    if (query.toLowerCase().startsWith("insert") && selectArgs != null) {
-                        synchronized (db) {
-                            SQLiteStatement myStatement = db.compileStatement(query);
-    
+                // /* OPTIONAL changes for new Android SDK from HERE:
+                if (android.os.Build.VERSION.SDK_INT >= 11
+                        && (query.toLowerCase().startsWith("update") || query.toLowerCase().startsWith("delete"))) {
+                    synchronized (db) {
+                        SQLiteStatement myStatement = db.compileStatement(query);
+
+                        if (selectArgs != null) {
                             for (int j = 0; j < selectArgs.size(); j++) {
                                 if (selectArgs.get(j) instanceof Float || selectArgs.get(j) instanceof Double) {
                                     myStatement.bindDouble(j + 1, (Double) selectArgs.get(j));
@@ -234,72 +234,88 @@ public class SQLiteJavascriptInterface {
                                     myStatement.bindString(j + 1, (String) selectArgs.get(j));
                                 }
                             }
-    
-                            long insertId = myStatement.executeInsert();
-    
-                            int rowsAffected = (insertId == -1) ? 0 : 1;
-    
-                            queryResult = objectMapper.createObjectNode();
-                            queryResult.put("insertId", insertId);
-                            queryResult.put("rowsAffected", rowsAffected);
                         }
-                    } else {
-                        String[] params = null;
 
-                        if (selectArgs != null) {
-                            params = new String[selectArgs.size()];
+                        int rowsAffected = myStatement.executeUpdateDelete();
 
-                            for (int j = 0; j < selectArgs.size(); j++) {
-                                if (selectArgs.get(j) == null)
-                                    params[j] = "";
-                                else
-                                    params[j] = String.valueOf(selectArgs.get(j));
+                        queryResult = objectMapper.createObjectNode();
+                        queryResult.put("rowsAffected", rowsAffected);
+                    }
+                } else // to HERE. */
+                if (query.toLowerCase().startsWith("insert") && selectArgs != null) {
+                    synchronized (db) {
+                        SQLiteStatement myStatement = db.compileStatement(query);
+
+                        for (int j = 0; j < selectArgs.size(); j++) {
+                            if (selectArgs.get(j) instanceof Float || selectArgs.get(j) instanceof Double) {
+                                myStatement.bindDouble(j + 1, (Double) selectArgs.get(j));
+                            } else if (selectArgs.get(j) instanceof Integer) {
+                                myStatement.bindLong(j + 1, (Integer) selectArgs.get(j));
+                            } else if (selectArgs.get(j) instanceof Long) {
+                                myStatement.bindLong(j + 1, (Long) selectArgs.get(j));
+                            } else if (selectArgs.get(j) == null) {
+                                myStatement.bindNull(j + 1);
+                            } else {
+                                myStatement.bindString(j + 1, (String) selectArgs.get(j));
                             }
                         }
 
-                        synchronized (db) {
-                            Cursor myCursor = db.rawQuery(query, params);
-    
-                            if (query_id.length() > 0) {
-                                queryResult = this.getRowsResultFromQuery(myCursor);
-                            }
-    
-                            myCursor.close();
+                        long insertId = myStatement.executeInsert();
+
+                        int rowsAffected = (insertId == -1) ? 0 : 1;
+
+                        queryResult = objectMapper.createObjectNode();
+                        queryResult.put("insertId", insertId);
+                        queryResult.put("rowsAffected", rowsAffected);
+                    }
+                } else {
+                    String[] params = null;
+
+                    if (selectArgs != null) {
+                        params = new String[selectArgs.size()];
+
+                        for (int j = 0; j < selectArgs.size(); j++) {
+                            if (selectArgs.get(j) == null)
+                                params[j] = "";
+                            else
+                                params[j] = String.valueOf(selectArgs.get(j));
                         }
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    errorMessage = ex.getMessage();
-                    Log.v("executeSqlBatch", "SQLitePlugin.executeSql[Batch](): Error=" + errorMessage);
-                }
 
-                try {
-                    if (queryResult != null) {
-                        ObjectNode r = objectMapper.createObjectNode();
-                        r.put("qid", query_id);
+                    synchronized (db) {
+                        Cursor myCursor = db.rawQuery(query, params);
 
-                        r.put("type", "success");
-                        r.put("result", queryResult);
+                        if (query_id.length() > 0) {
+                            queryResult = this.getRowsResultFromQuery(myCursor);
+                        }
 
-                        batchResults.add(r);
-                    } else if (errorMessage != null) {
-                        ObjectNode r = objectMapper.createObjectNode();
-                        r.put("qid", query_id);
-
-                        r.put("type", "error");
-                        r.put("result", errorMessage);
-
-                        batchResults.add(r);
+                        myCursor.close();
                     }
-                } catch (Exception e) {
-                    log.e(e, "unexpected");
-                    // TODO what to do?
                 }
+                
+
+                if (queryResult != null) {
+                    ObjectNode r = objectMapper.createObjectNode();
+                    r.put("qid", query_id);
+
+                    r.put("type", "success");
+                    r.put("result", queryResult);
+
+                    batchResults.add(r);
+                }
+                
 
                 callback(querySuccessId, queryResult);
             }
         } catch (Exception e) {
             log.e(e, "unexpected");
+            
+            ObjectNode r = objectMapper.createObjectNode();
+
+            r.put("type", "error");
+            r.put("result", e.getMessage());
+
+            callback(transactionErrorId, r);
         }
     }
 
