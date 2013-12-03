@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -402,11 +403,14 @@ public class SQLiteJavascriptInterface {
 
     public void close() {
         this.activity = null;
-        for (SQLiteDatabase db : dbs.values()) {
+        for (Entry<String, SQLiteDatabase> entry : dbs.entrySet()) {
+            String name = entry.getKey();
+            SQLiteDatabase db = entry.getValue();
+            
             if (db != null) {
-                synchronized (db) {
-                    db.close();
-                }
+                log.d("closing database with name %s", name);
+                db.close();
+                log.d("closed database with name %s", name);
             }
         }
     }

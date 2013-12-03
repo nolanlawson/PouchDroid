@@ -31,7 +31,7 @@ var SQLiteNativeDB;
 
     function debug(str) {
         if (DEBUG_MODE && str) {
-            window.console.log(str);
+            window.console.log('SQLiteNativeDB: ' + str);
         }
     }
 

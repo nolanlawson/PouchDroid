@@ -35,13 +35,11 @@ public class MainActivity extends Activity {
         loadPokemonData(sqliteDatabase);
         couchdbSync = CouchdbSync.Builder.create(this, sqliteDatabase)
                 .setDatabaseId(dbName)
-                .addSqliteTable("Monsters", "_id")
+                .addSqliteTable("Monsters", "uniqueId")
                 .build();
         
         couchdbSync.start();
     }
-
-
 
     @Override
     protected void onStop() {
@@ -54,13 +52,9 @@ public class MainActivity extends Activity {
         }
     }
 
-
-
     private void loadPokemonData(SQLiteDatabase sqliteDatabase) {
         
         List<PocketMonster> monsters = PocketMonsterHelper.readInPocketMonsters(this);
-        
-        monsters = monsters.subList(0, 1);
         
         sqliteDatabase.execSQL("create table Monsters (" +
         		"_id integer primary key autoincrement, " +
