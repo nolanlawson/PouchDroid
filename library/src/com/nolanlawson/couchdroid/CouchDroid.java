@@ -31,7 +31,8 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final boolean USE_WEINRE = false;
+    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     private static final int BATCH_SIZE = 100;
@@ -65,7 +66,7 @@ public class CouchDroid {
         loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
-        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb));
+        loadJavascript(ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper));
         loadJavascript("window.console.log('PouchDB is: ' + typeof PouchDB)");
         loadJavascript("window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper)");
@@ -212,7 +213,9 @@ public class CouchDroid {
             private CharSequence createReportProgressCallback(int offset, int totalNumRows,
                     SqliteTable sqliteTable) throws IOException {
                 return new StringBuilder()
-                        .append(",function(type, numLoaded){SQLiteJavascriptInterface.reportProgress(type,")
+                        .append(",function(numLoaded){SQLiteJavascriptInterface.reportProgress(")
+                        .append(objectMapper.writeValueAsString(ProgressType.Copy.name()))
+                        .append(",")
                         .append(objectMapper.writeValueAsString(sqliteTable.getName()))
                         .append(",")
                         .append(totalNumRows)
@@ -422,7 +425,7 @@ public class CouchDroid {
         
         
         String html = new StringBuilder("<html><body>")
-                .append(UtilLogger.DEBUG_MODE && USE_WEINRE
+                .append(USE_WEINRE
                         ? "<script src='" + WEINRE_URL +"/target/target-script-min.js#anonymous'></script>"
                         : "")
                 .append("</body></html>").toString();
@@ -438,7 +441,6 @@ public class CouchDroid {
         }
         sqliteJavascriptInterface = null;
         activity = null; // release resources
-        
     }
     
     private class MyWebChromeClient extends WebChromeClient {

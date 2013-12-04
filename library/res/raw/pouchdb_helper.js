@@ -17,9 +17,8 @@ var PouchDBHelper;
             idsToDocuments[document._id] = document;
         });
         rows.forEach(function(row){
-            if (row.doc) { // doc does indeed already exist
-                idsToDocuments[row.doc._id]._rev = row.doc._rev;
-            }
+            // doc does indeed already exist
+            idsToDocuments[row.id]._rev = row.value.rev;
         });
     }
 
@@ -62,13 +61,13 @@ var PouchDBHelper;
     PouchDBHelper = function (dbId, couchdbUrl) {
 
         var self = this;
+        self.couchdbUrl = couchdbUrl;
         self.queue = [];
         self.batchInProgress = false;
 
         debug('attempting to create new PouchDBHelper with dbId ' + dbId +' and couchdbUrl ' + couchdbUrl);
         try {
             self.db = new PouchDB(dbId);
-            self.db.replicate.to(couchdbUrl, {continuous : true});
         } catch (err) {
             debug('ERROR: ' + JSON.stringify(err));
         }
@@ -77,6 +76,25 @@ var PouchDBHelper;
             debug('created new PouchDBHelper with dbId ' + dbId);
         }
 
+    };
+
+    PouchDBHelper.prototype.syncAll = function() {
+        var self = this;
+
+        debug('syncAll()');
+
+        function complete(err, response){
+            debug('complete, with err: ' + JSON.stringify(err));
+            debug('complete, with response: ' + JSON.stringify(response));
+        }
+
+        function onChange(change) {
+            debug('onChange, with change: ' + JSON.stringify(change));
+        }
+
+        var response = self.db.replicate.to(self.couchdbUrl, {complete : complete, onChange: onChange, continuous : true});
+
+        debug('called replicate, got response: ' + JSON.stringify(response));
     };
 
     /**
@@ -110,7 +128,7 @@ var PouchDBHelper;
             self.processBatch(batch.docs, function onDone(){
                 self.batchInProgress = false;
                 if (batch.onProgress && typeof batch.onProgress === 'function') {
-                    batch.onProgress('Copy',batch.docs.length); // progress listener
+                    batch.onProgress(batch.docs.length); // progress listener
                 }
                 self.processNextBatch();
             });
@@ -148,7 +166,7 @@ var PouchDBHelper;
 
         var keys = documents.map(function(document){return document._id;});
 
-        self.db.allDocs({include_docs: true, keys : keys}, onBulkGet);
+        self.db.allDocs({include_docs: false, keys : keys}, onBulkGet);
     };
 
 })();

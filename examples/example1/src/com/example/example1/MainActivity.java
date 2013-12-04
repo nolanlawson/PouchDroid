@@ -17,11 +17,10 @@ import com.example.example1.data.PocketMonster;
 import com.example.example1.data.PocketMonsterHelper;
 import com.nolanlawson.couchdroid.CouchDroid;
 import com.nolanlawson.couchdroid.CouchDroidProgressListener;
-import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
 
 public class MainActivity extends Activity implements CouchDroidProgressListener {
     
-    private static final String COUCHDB_URL = "http://192.168.0.5:5984/pokemon";
+    private static final String COUCHDB_URL = "http://192.168.0.3:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     
