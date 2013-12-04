@@ -30,11 +30,11 @@ var PouchDBHelper;
         /**
          * the compressed batch object looks like this:
          * {
-                     *  table : "MyTable",
-                     *  columns : ["id", "name", "date", ...],
-                     *  uuids:['foo','bar','baz'...],
-                     *  docs : [[..values...], [...values...]...]
-                     *  }
+         *  table : "MyTable",
+         *  columns : ["id", "name", "date", ...],
+         *  uuids:['foo','bar','baz'...],
+         *  docs : [[..values...], [...values...]...]
+         *  }
          */
         var docs = [];
         for (var i = 0, iLen = compressedDocs.docs.length; i < iLen; i++) {
