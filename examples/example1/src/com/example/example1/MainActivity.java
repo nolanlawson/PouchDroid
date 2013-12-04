@@ -7,23 +7,31 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.example.example1.data.PocketMonster;
 import com.example.example1.data.PocketMonsterHelper;
 import com.nolanlawson.couchdbsync.CouchdbSync;
+import com.nolanlawson.couchdbsync.CouchdbSyncProgressListener;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements CouchdbSyncProgressListener {
     
     private CouchdbSync couchdbSync;
-    SQLiteDatabase sqliteDatabase;
+    private SQLiteDatabase sqliteDatabase;
+    private long startTime;
+    
+    private TextView text;
+    private ProgressBar progress;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        text = (TextView) findViewById(android.R.id.text1);
+        progress = (ProgressBar) findViewById(android.R.id.progress);
     }
-    
-    
 
     @Override
     protected void onStart() {
@@ -36,9 +44,11 @@ public class MainActivity extends Activity {
         couchdbSync = CouchdbSync.Builder.create(this, sqliteDatabase)
                 .setDatabaseId(dbName)
                 .addSqliteTable("Monsters", "uniqueId")
+                .setProgressListener(this)
                 .build();
         
         couchdbSync.start();
+        startTime = System.currentTimeMillis();
     }
 
     @Override
@@ -83,6 +93,22 @@ public class MainActivity extends Activity {
         } finally {
             sqliteDatabase.endTransaction();
         }
-    }    
-    
+    }
+
+    @Override
+    public void onProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+        
+        progress.setMax(numRowsTotal);
+        progress.setProgress(numRowsLoaded);
+        StringBuilder textContent = new StringBuilder();
+        textContent.append(numRowsLoaded + "/" + numRowsTotal);
+        if (numRowsTotal == numRowsLoaded) {
+            long totalTimeMs = System.currentTimeMillis() - startTime;
+            
+            double totalTimeS = totalTimeMs / 1000.0;
+            
+            textContent.append("\nCompleted in " + totalTimeS + " seconds");
+        }
+        text.setText(textContent);
+    }
 }

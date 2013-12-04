@@ -48,11 +48,11 @@ var PouchDBHelper;
      *
      * @param documents
      */
-    PouchDBHelper.prototype.putAll = function (documents) {
+    PouchDBHelper.prototype.putAll = function (documents, onComplete) {
         var self = this;
         debug('putAll()');
 
-        self.queue.push({docs : documents});
+        self.queue.push({docs : documents, onComplete: onComplete});
 
         self.processNextBatch();
 
@@ -69,6 +69,9 @@ var PouchDBHelper;
             self.queue.shift();
             self.processBatch(batch.docs, function onDone(){
                 self.batchInProgress = false;
+                if (batch.onComplete && typeof batch.onComplete === 'function') {
+                    batch.onComplete(batch.docs.length); // progress listener
+                }
                 self.processNextBatch();
             });
         }
@@ -78,6 +81,7 @@ var PouchDBHelper;
     PouchDBHelper.prototype.processBatch = function(documents, onDone) {
         var self = this;
         debug('processBatch()');
+
 
         function onBulkGet(err, response) {
             debug('onBulkGet(): got err from pouch: ' + err);

@@ -35,6 +35,7 @@ import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
+import com.nolanlawson.couchdbsync.CouchdbSyncProgressListener;
 import com.nolanlawson.couchdbsync.util.UtilLogger;
 
 public class SQLiteJavascriptInterface {
@@ -45,6 +46,7 @@ public class SQLiteJavascriptInterface {
     
     private Activity activity;
     private WebView webView;
+    private CouchdbSyncProgressListener progressListener;
     
     private final Map<String, SQLiteDatabase> dbs = new HashMap<String, SQLiteDatabase>();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -87,6 +89,31 @@ public class SQLiteJavascriptInterface {
         } catch (IOException e) {
             // shouldn't happen
             log.e(e, "unexpected");
+        }
+    }
+    
+    public void setProgressListener(CouchdbSyncProgressListener progressListener) {
+        this.progressListener = progressListener;
+    }
+    
+    @JavascriptInterface
+    public void reportProgress(final String tableName, final int numRowsTotal, final int numRowsLoaded) {
+        try {
+            if (activity != null) {
+                activity.runOnUiThread(new Runnable() {
+                    
+                    @Override
+                    public void run() {
+                        try {
+                            progressListener.onProgress(tableName, numRowsTotal, numRowsLoaded);
+                        } catch (Exception e) {
+                            log.e(e, "progress listener threw an exception!");
+                        }                        
+                    }
+                });
+            }
+        } catch (Exception e) {
+            log.e(e, "unexpected exception in reportProgress()");
         }
     }
     

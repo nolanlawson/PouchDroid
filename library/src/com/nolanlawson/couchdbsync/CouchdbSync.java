@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -37,6 +38,7 @@ public class CouchdbSync {
     private String dbId;
     private String dbName;
     private SQLiteJavascriptInterface sqliteJavascriptInterface;
+    private CouchdbSyncProgressListener listener;
     
     private CouchdbSync(Activity activity, SQLiteDatabase sqliteDatabase) {
         this.activity = activity;
@@ -53,7 +55,6 @@ public class CouchdbSync {
         
         log.d("attempting to load javascript");
         loadJavascript("DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
-        //loadJavascript("DEBUG_MODE = false;");
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb));
@@ -70,24 +71,32 @@ public class CouchdbSync {
      */
     private void migrateSqliteTables() {
         
-        new AsyncTask<Void, CouchdbSyncProgress, Void>() {
+        new AsyncTask<Void, Void, Void>() {
 
             @Override
             protected Void doInBackground(Void... params) {
                 
                 for (SqliteTable sqliteTable : sqliteTables) {
-                    loadTable(sqliteTable);
+                    try {
+                        loadTable(sqliteTable);
+                    } catch (IOException e) {
+                        log.e(e, "unexpected"); // shouldn't happen
+                    }
                 }
                 
                 return null;
             }
             
-            private void loadTable(SqliteTable sqliteTable) {
+            private void loadTable(SqliteTable sqliteTable) throws IOException {
                 log.d("loadTable: %s", sqliteTable);
                 List<SqliteColumn> sqliteColumns = getColumnsForTable(sqliteTable.getName());
                 
-                int offset = 0;
                 ObjectMapper objectMapper = new ObjectMapper();
+                
+                int offset = 0;
+                
+                int totalNumRows = listener != null ? countNumRows(sqliteTable) : 0;
+                
                 while (true) {
                     ArrayList<Object> currentBatch = convertBatchToJsonList(
                             offset, sqliteColumns, sqliteTable, objectMapper);
@@ -96,7 +105,12 @@ public class CouchdbSync {
                         break;
                     }
 
-                    loadBatchIntoPouchdb(currentBatch, objectMapper);
+                    CharSequence javascriptCallback = listener != null 
+                            ? createJavascriptCallback(offset, totalNumRows, sqliteTable, objectMapper)
+                            : "";
+                    
+                    loadBatchIntoPouchdb(currentBatch, objectMapper, javascriptCallback);
+                    
                     if (currentBatch.size() < BATCH_SIZE) {
                         break;
                     }
@@ -105,35 +119,39 @@ public class CouchdbSync {
                 }
             }
 
-            private void loadBatchIntoPouchdb(ArrayList<Object> docsBatch, ObjectMapper objectMapper) {
+            private CharSequence createJavascriptCallback(int offset, int totalNumRows,
+                    SqliteTable sqliteTable, ObjectMapper objectMapper) throws IOException {
+                return new StringBuilder()
+                        .append(",function(numLoaded){SQLiteJavascriptInterface.reportProgress(")
+                        .append(objectMapper.writeValueAsString(sqliteTable.getName()))
+                        .append(",")
+                        .append(totalNumRows)
+                        .append(",numLoaded + ")
+                        .append(offset)
+                        .append(");}");
+            }
+
+            private void loadBatchIntoPouchdb(ArrayList<Object> docsBatch, ObjectMapper objectMapper,
+                    CharSequence javascriptCallback) throws IOException {
                 
                 log.d("loadBatchIntoPouchdb: %s docs", docsBatch.size());
                 
-                try {
-                    StringBuilder js = new StringBuilder()
-                            .append("var pouchDBHelper = new PouchDBHelper('")
-                            .append(activity.getPackageName())
-                            .append(dbId == null ? "" : dbId)
-                            .append("',")
-                            .append(UtilLogger.DEBUG_MODE)
-                            .append(");")
-                            .append("pouchDBHelper.putAll(")
-                            .append(objectMapper.writeValueAsString(docsBatch))
-                            .append(");");
-                    
-                    log.d("javascript is: %s", js);
-                    loadJavascriptWrapped(js);
-                    log.d("Loaded %d objects into pouchdb", docsBatch.size());
-                } catch (IOException e) {
-                    // shouldn't happen
-                    log.e(e, "unexpected exception");
-                }
+                StringBuilder js = new StringBuilder()
+                        .append("var pouchDBHelper = new PouchDBHelper('")
+                        .append(activity.getPackageName())
+                        .append(dbId == null ? "" : dbId)
+                        .append("',")
+                        .append(UtilLogger.DEBUG_MODE)
+                        .append(");")
+                        .append("pouchDBHelper.putAll(")
+                        .append(objectMapper.writeValueAsString(docsBatch))
+                        .append(javascriptCallback)
+                        .append(");");
                 
-            }
-
-            @Override
-            protected void onProgressUpdate(CouchdbSyncProgress... values) {
-                super.onProgressUpdate(values);
+                log.d("javascript is: %s", js);
+                loadJavascriptWrapped(js);
+                log.d("Loaded %d objects into pouchdb", docsBatch.size());
+                
             }
 
             @Override
@@ -143,7 +161,8 @@ public class CouchdbSync {
             
         }.execute(((Void)null));
     }
-    
+
+
     private ArrayList<Object> convertBatchToJsonList(int offset, 
             List<SqliteColumn> sqliteColumns, SqliteTable sqliteTable, ObjectMapper objectMapper) {
         
@@ -226,7 +245,29 @@ public class CouchdbSync {
             }
         }
     }
-
+    
+    private int countNumRows(SqliteTable sqliteTable) {
+        Cursor cursor = null;
+        
+        try {
+            cursor = sqliteDatabase.rawQuery(
+                    new StringBuilder("select count(*) from ")
+                        .append(sqliteTable.getName())
+                        .append(";").toString(), null);
+            
+            if (cursor.moveToNext()) {
+                return cursor.getInt(0);
+            }
+            
+            return 0;
+            
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+    
     private List<SqliteColumn> getColumnsForTable(String tableName) {
         Cursor cursor = null;
         
@@ -300,6 +341,8 @@ public class CouchdbSync {
         webView.setWebChromeClient(new MyWebChromeClient());
         
         sqliteJavascriptInterface = new SQLiteJavascriptInterface(activity, webView);
+        sqliteJavascriptInterface.setProgressListener(listener);
+        
         webView.addJavascriptInterface(sqliteJavascriptInterface, "SQLiteJavascriptInterface");
         
         
@@ -311,14 +354,6 @@ public class CouchdbSync {
         // fake url to allow loading of weinre
         webView.loadDataWithBaseURL("http://localhost:9340",html, "text/html", "UTF-8", "http://localhost:9340");
         
-        if (UtilLogger.DEBUG_MODE) {
-            // give me a chance to connect with weinre
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         log.d("loaded webview data: %s", html);
     }
     
@@ -373,6 +408,16 @@ public class CouchdbSync {
          */
         public Builder setDatabaseId(String id) {
             couchdbSync.dbId = id;
+            return this;
+        }
+        
+        /**
+         * Listen for progress events, so you can report how far along syncing is to the user.
+         * @param listener
+         * @return
+         */
+        public Builder setProgressListener(CouchdbSyncProgressListener listener) {
+            couchdbSync.listener = listener;
             return this;
         }
         
