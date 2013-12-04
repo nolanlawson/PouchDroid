@@ -14,6 +14,7 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
@@ -30,13 +31,18 @@ public class CouchdbSync {
     private static UtilLogger log = new UtilLogger(CouchdbSync.class);
 
     private static final boolean USE_WEINRE = false;
+    private static final String WEINRE_URL = "http://192.168.0.3:8080";
+    
     private static final int BATCH_SIZE = 100;
     
     private Activity activity;
     private List<SqliteTable> sqliteTables = new ArrayList<SqliteTable>();
+    private ObjectMapper objectMapper = new ObjectMapper();
     private WebView webView;
     private SQLiteDatabase sqliteDatabase;
     private String dbId;
+    private String userId;
+    private String couchdbUrl;
     private String dbName;
     private SQLiteJavascriptInterface sqliteJavascriptInterface;
     private CouchdbSyncProgressListener listener;
@@ -55,7 +61,7 @@ public class CouchdbSync {
         initWebView();
         
         log.d("attempting to load javascript");
-        loadJavascript("DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
+        loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb));
@@ -101,8 +107,6 @@ public class CouchdbSync {
                 log.d("loadTable: %s", sqliteTable);
                 List<SqliteColumn> sqliteColumns = getColumnsForTable(sqliteTable.getName());
                 
-                ObjectMapper objectMapper = new ObjectMapper();
-                
                 int offset = 0;
                 
                 int totalNumRows = listener != null ? countNumRows(sqliteTable) : 0;
@@ -110,6 +114,9 @@ public class CouchdbSync {
                 if (listener != null) {
                     notifyListenerAtZero(sqliteTable, totalNumRows);
                 }
+
+                
+                initPouchDBHelper();
                 
                 while (true) {
                     
@@ -117,6 +124,7 @@ public class CouchdbSync {
                      * the resulting, compressed batch object looks like this:
                      * {
                      *  table : "MyTable",
+                     *  user : "Bobby B",
                      *  columns : ["id", "name", "date", ...],
                      *  uuids:['foo','bar','baz'...],
                      *  docs : [[..values...], [...values...]...]
@@ -125,6 +133,7 @@ public class CouchdbSync {
                     
                     ObjectNode batch = objectMapper.createObjectNode();
                     batch.put("table", sqliteTable.getName());
+                    batch.put("user", userId);
                     ArrayNode columns = batch.putArray("columns");
                     
                     for (SqliteColumn column : sqliteColumns) {
@@ -133,17 +142,19 @@ public class CouchdbSync {
                     ArrayNode documents = batch.putArray("docs");
                     ArrayNode uuids = batch.putArray("uuids");
                     
-                    convertBatchToJsonList(documents, uuids, offset, sqliteColumns, sqliteTable, objectMapper);
+                    convertBatchToJsonList(documents, uuids, offset, sqliteColumns, sqliteTable);
                     
                     if (documents.size() == 0) {
                         break;
                     }
 
                     CharSequence javascriptCallback = listener != null 
-                            ? createJavascriptCallback(offset, totalNumRows, sqliteTable, objectMapper)
+                            ? createJavascriptCallback(offset, totalNumRows, sqliteTable)
                             : "";
                     
-                    loadBatchIntoPouchdb(batch, objectMapper, javascriptCallback);
+                    log.d("loadBatchIntoPouchdb: %s docs", documents.size());
+                    loadBatchIntoPouchdb(batch, javascriptCallback);
+                    log.d("Loaded %d objects into pouchdb", documents.size());
                     
                     if (documents.size() < BATCH_SIZE) {
                         break;
@@ -151,6 +162,28 @@ public class CouchdbSync {
                     
                     offset += BATCH_SIZE;
                 }
+            }
+
+            private void initPouchDBHelper() throws IOException {
+                
+                // ensure that pouchdb talks to the same database every time, i.e. uniquify its name
+                StringBuilder internalPouchdbName = new StringBuilder()
+                    .append(activity.getPackageName())
+                    .append("_")
+                    .append(userId);
+                if (dbId != null) {
+                    internalPouchdbName.append("_").append(dbId);
+                }
+                
+                loadJavascript(new StringBuilder()
+                    .append("window.pouchDBHelper = new PouchDBHelper(")
+                    .append(objectMapper.writeValueAsString(internalPouchdbName))
+                    .append(",")
+                    .append(objectMapper.writeValueAsString(couchdbUrl))
+                    .append(",")
+                    .append(UtilLogger.DEBUG_MODE)
+                    .append(");"));
+                
             }
 
             private void notifyListenerAtZero(final SqliteTable sqliteTable, final int totalNumRows) {
@@ -176,7 +209,7 @@ public class CouchdbSync {
             }
 
             private CharSequence createJavascriptCallback(int offset, int totalNumRows,
-                    SqliteTable sqliteTable, ObjectMapper objectMapper) throws IOException {
+                    SqliteTable sqliteTable) throws IOException {
                 return new StringBuilder()
                         .append(",function(numLoaded){SQLiteJavascriptInterface.reportProgress(")
                         .append(objectMapper.writeValueAsString(sqliteTable.getName()))
@@ -187,27 +220,18 @@ public class CouchdbSync {
                         .append(");}");
             }
 
-            private void loadBatchIntoPouchdb(ObjectNode docsBatch, ObjectMapper objectMapper,
+            private void loadBatchIntoPouchdb(ObjectNode docsBatch,
                     CharSequence javascriptCallback) throws IOException {
-                
-                log.d("loadBatchIntoPouchdb: %s docs", docsBatch.size());
-                
+
+                // call the PouchDBHelper, set the db id, load the documents
                 StringBuilder js = new StringBuilder()
-                        .append("var pouchDBHelper = new PouchDBHelper('")
-                        .append(activity.getPackageName())
-                        .append(dbId == null ? "" : dbId)
-                        .append("',")
-                        .append(UtilLogger.DEBUG_MODE)
-                        .append(");")
-                        .append("pouchDBHelper.putAll(")
+                        .append("window.pouchDBHelper.putAll(")
                         .append(objectMapper.writeValueAsString(docsBatch))
                         .append(javascriptCallback)
                         .append(");");
                 
                 log.d("javascript is: %s", js);
                 loadJavascriptWrapped(js);
-                log.d("Loaded %d objects into pouchdb", docsBatch.size());
-                
             }
 
             @Override
@@ -220,7 +244,7 @@ public class CouchdbSync {
 
 
     private void convertBatchToJsonList(ArrayNode documents, ArrayNode uuids, int offset, 
-            List<SqliteColumn> sqliteColumns, SqliteTable sqliteTable, ObjectMapper objectMapper) {
+            List<SqliteColumn> sqliteColumns, SqliteTable sqliteTable) {
         
         Cursor cursor = null;
         try {
@@ -248,6 +272,8 @@ public class CouchdbSync {
                 // generate uuid (i.e. the _id for couch)
                 String id = cursor.getString(0);
                 String uid = new StringBuilder()
+                        .append(userId)
+                        .append("~")
                         .append(dbName)
                         .append("~")
                         .append(sqliteTable.getName())
@@ -379,8 +405,8 @@ public class CouchdbSync {
         viewGroup.addView(webView);
         
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDatabaseEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
+        webView.getSettings().setDatabaseEnabled(true); // we're overriding websql, but we still need to set this
+        webView.getSettings().setDomStorageEnabled(true); // pouch needs to call localStorage for some reason
         
         if (UtilLogger.DEBUG_MODE) {    
             webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
@@ -396,7 +422,7 @@ public class CouchdbSync {
         
         String html = new StringBuilder("<html><body>")
                 .append(UtilLogger.DEBUG_MODE && USE_WEINRE
-                        ? "<script src='http://192.168.10.110:8080/target/target-script-min.js#anonymous'></script>"
+                        ? "<script src='" + WEINRE_URL +"/target/target-script-min.js#anonymous'></script>"
                         : "")
                 .append("</body></html>").toString();
         // fake url to allow loading of weinre
@@ -460,6 +486,33 @@ public class CouchdbSync {
         }
         
         /**
+         * Set a unique userId.  It's required, so that you can properly set up CouchDB to enforce read-only/write-only
+         * access for documents (see the README.md for details).
+         * 
+         * @param userId
+         * @return
+         */
+        public Builder setUserId(String userId) {
+            couchdbSync.userId = userId;
+            return this;
+        }
+        /**
+         * Set a CouchDB database url to sync to.  User credentials should be set here as well.
+         * (Hopefully you're using SSH!)
+         * 
+         * Here's an example URL:
+         * 
+         * "https://myusername:mypassword@localhost:5984/mydb"
+         * 
+         * @param userId
+         * @return
+         */
+        public Builder setCouchdbUrl(String couchdbUrl) {
+            couchdbSync.couchdbUrl = couchdbUrl;
+            return this;
+        }
+        
+        /**
          * Listen for progress events, so you can report how far along syncing is to the user.
          * @param listener
          * @return
@@ -471,8 +524,12 @@ public class CouchdbSync {
         
         public CouchdbSync build() {
             if (couchdbSync.sqliteTables.isEmpty()) {
-                throw new IllegalStateException(
-                        "You must supply at least one sqlite table definition using addSqliteTable()!");
+                throw new IllegalArgumentException(
+                        "You must supply at least one sqlite table definition using addSqliteTable()");
+            } else if (TextUtils.isEmpty(couchdbSync.userId)) {
+                throw new IllegalArgumentException("You must supply a userId using setUserId().");
+            } else if (TextUtils.isEmpty(couchdbSync.couchdbUrl)) {
+                throw new IllegalArgumentException("You must supply a valid couchDB url using setCouchdbUrl()");
             }
             return couchdbSync;
         }

@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -19,7 +20,9 @@ import com.nolanlawson.couchdbsync.CouchdbSyncProgressListener;
 
 public class MainActivity extends Activity implements CouchdbSyncProgressListener {
     
+    private static final String COUCHDB_URL = "http://192.168.0.5:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
+    private static final boolean RANDOMIZE_DB = true;
     
     private CouchdbSync couchdbSync;
     private SQLiteDatabase sqliteDatabase;
@@ -42,12 +45,17 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
     protected void onStart() {
         super.onStart();
         
-        String dbName = "pokemon_" + Long.toString(Math.abs(new Random().nextLong())) + ".db";
+        String dbName = "pokemon.db";
+        if (RANDOMIZE_DB) {
+            dbName = "pokemon_" + Long.toString(Math.abs(new Random().nextLong())) + ".db";
+        }
         sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
         
         loadPokemonData(sqliteDatabase);
         couchdbSync = CouchdbSync.Builder.create(this, sqliteDatabase)
                 .setDatabaseId(dbName)
+                .setUserId("fooUser")
+                .setCouchdbUrl(COUCHDB_URL)
                 .addSqliteTable("Monsters", "uniqueId")
                 .setProgressListener(this)
                 .build();
@@ -72,6 +80,14 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
     private void loadPokemonData(SQLiteDatabase sqliteDatabase) {
         
         List<PocketMonster> monsters = PocketMonsterHelper.readInPocketMonsters(this);
+        
+        SQLiteStatement statement = sqliteDatabase.compileStatement(
+                "select count(*) from sqlite_master where type='table' and name='Monsters';");
+        long tableExists = statement.simpleQueryForLong();
+        
+        if (tableExists > 0) {
+            return; // nothing to do
+        }
         
         sqliteDatabase.execSQL("create table Monsters (" +
         		"_id integer primary key autoincrement, " +

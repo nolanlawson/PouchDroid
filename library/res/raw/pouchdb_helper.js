@@ -31,6 +31,7 @@ var PouchDBHelper;
          * the compressed batch object looks like this:
          * {
          *  table : "MyTable",
+         *  user: "Bobby B",
          *  columns : ["id", "name", "date", ...],
          *  uuids:['foo','bar','baz'...],
          *  docs : [[..values...], [...values...]...]
@@ -49,6 +50,7 @@ var PouchDBHelper;
             var doc = {
                 _id : uuid,
                 table : compressedDocs.table,
+                user  : compressedDocs.user,
                 content : content
             };
 
@@ -57,16 +59,18 @@ var PouchDBHelper;
         return docs;
     }
 
-    PouchDBHelper = function (dbId) {
+    PouchDBHelper = function (dbId, couchdbUrl) {
 
         var self = this;
         self.queue = [];
         self.batchInProgress = false;
 
+        debug('attempting to create new PouchDBHelper with dbId ' + dbId +' and couchdbUrl ' + couchdbUrl);
         try {
             self.db = new PouchDB(dbId);
+            self.db.replicate.to(couchdbUrl, {continuous : true});
         } catch (err) {
-            debug('error: ' + JSON.stringify(err));
+            debug('ERROR: ' + JSON.stringify(err));
         }
 
         if (DEBUG_MODE) {

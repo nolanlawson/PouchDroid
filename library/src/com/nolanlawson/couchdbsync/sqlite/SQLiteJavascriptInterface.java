@@ -457,6 +457,11 @@ public class SQLiteJavascriptInterface {
      * thread, to avoid the myriad SQLite problems that arise if you try to use it in a multi-threaded environment.
      * 
      * Plus, Android only gives us one thread that's not the UI thread, so we gotta live with it.
+     * 
+     * TODO: I wrote this while I was trying to over-architect this thing into a multi-threaded behemoth.
+     * Then I remember that it's SQLite, idiot; you should only use a single thread. I need to rewrite 
+     * this to be simpler.
+     * 
      * @author nolan
      *
      */
@@ -501,28 +506,13 @@ public class SQLiteJavascriptInterface {
             }
         }
         
-        // execute one or more queries for the transaction;
+        // execute one query for the transaction;
         log.d("executing queries for transaction %s", transaction.getTransactionId());
         
-        List<JavascriptCallback> callbacks = null;
-        
-        WebSqlQuery webSqlQuery;
-        while ((webSqlQuery = transaction.getQueries().poll()) != null) {
+        WebSqlQuery webSqlQuery = transaction.getQueries().poll();
+        if (webSqlQuery != null) {
             JavascriptCallback callback = execute(webSqlQuery, transaction);
-
-            if (callbacks == null) {
-                callbacks = new ArrayList<JavascriptCallback>();
-            }
-            callbacks.add(callback);
-            
-            if (callback.isError()) {
-                break; // per w3c spec, we stop the world and wait for judgment on this failure
-            }
-            
-        }
-        
-        if (callbacks != null) {
-            sendCallback(callbacks);
+            sendCallback(callback);
         }
     }
 }
