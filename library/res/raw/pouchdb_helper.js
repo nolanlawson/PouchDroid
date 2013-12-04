@@ -86,13 +86,13 @@ var PouchDBHelper;
      *
      * @param documents
      */
-    PouchDBHelper.prototype.putAll = function (compressedDocs, onComplete) {
+    PouchDBHelper.prototype.putAll = function (compressedDocs, onProgress) {
         var self = this;
         debug('putAll()');
 
         var documents = uncompress(compressedDocs);
 
-        self.queue.push({docs : documents, onComplete: onComplete});
+        self.queue.push({docs : documents, onProgress: onProgress});
 
         self.processNextBatch();
 
@@ -109,8 +109,8 @@ var PouchDBHelper;
             self.queue.shift();
             self.processBatch(batch.docs, function onDone(){
                 self.batchInProgress = false;
-                if (batch.onComplete && typeof batch.onComplete === 'function') {
-                    batch.onComplete(batch.docs.length); // progress listener
+                if (batch.onProgress && typeof batch.onProgress === 'function') {
+                    batch.onProgress('Copy',batch.docs.length); // progress listener
                 }
                 self.processNextBatch();
             });

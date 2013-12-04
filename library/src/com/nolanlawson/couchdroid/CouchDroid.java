@@ -150,7 +150,7 @@ public class CouchDroid {
                     }
 
                     CharSequence javascriptCallback = listener != null 
-                            ? createJavascriptCallback(offset, totalNumRows, sqliteTable)
+                            ? createReportProgressCallback(offset, totalNumRows, sqliteTable)
                             : "";
                     
                     log.d("loadBatchIntoPouchdb: %s docs", documents.size());
@@ -209,12 +209,10 @@ public class CouchDroid {
                 }                
             }
 
-            private CharSequence createJavascriptCallback(int offset, int totalNumRows,
+            private CharSequence createReportProgressCallback(int offset, int totalNumRows,
                     SqliteTable sqliteTable) throws IOException {
                 return new StringBuilder()
-                        .append(",function(numLoaded){SQLiteJavascriptInterface.reportProgress(")
-                        .append(objectMapper.writeValueAsString(ProgressType.Copy.name()))
-                        .append(",")
+                        .append(",function(type, numLoaded){SQLiteJavascriptInterface.reportProgress(type,")
                         .append(objectMapper.writeValueAsString(sqliteTable.getName()))
                         .append(",")
                         .append(totalNumRows)
