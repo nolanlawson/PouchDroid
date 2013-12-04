@@ -119,7 +119,7 @@ var SQLiteNativeDB;
              * 3. Otherwise, the error callback did not return false, or there was no error callback. Jump to the last
              *    step in the overall steps.
              */
-            if (!queryError) {
+            if (queryError && typeof queryError === 'function') {
                 var failedToCorrectError = queryError(self, sqlErrorObj);
                 if (failedToCorrectError) {
                     debug('failed to correct error, entire transaction is in error');
