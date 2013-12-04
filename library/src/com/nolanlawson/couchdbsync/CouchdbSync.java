@@ -66,6 +66,15 @@ public class CouchdbSync {
         
     }
     
+    /**
+     * If you're really interested in the names of the databases that pouchdb has created, you're free 
+     * to see them.  But you probably shouldn't be messing with this!
+     * @return list of the database names, if any
+     */
+    public List<String> getPouchDatabaseNames() {
+        return sqliteJavascriptInterface.getDbNames();
+    }
+    
     /*
      * migrate sqlite tables from sqlite to PouchDB
      */

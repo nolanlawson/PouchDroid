@@ -5,6 +5,7 @@ import java.util.Random;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.widget.ProgressBar;
@@ -16,6 +17,8 @@ import com.nolanlawson.couchdbsync.CouchdbSync;
 import com.nolanlawson.couchdbsync.CouchdbSyncProgressListener;
 
 public class MainActivity extends Activity implements CouchdbSyncProgressListener {
+    
+    private static final int EXPECTED_COUNT = 743;
     
     private CouchdbSync couchdbSync;
     private SQLiteDatabase sqliteDatabase;
@@ -108,7 +111,41 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
             double totalTimeS = totalTimeMs / 1000.0;
             
             textContent.append("\nCompleted in " + totalTimeS + " seconds");
+            
+            int dbCount = verifyDbCount();
+            
+            textContent.append("\nFound " + dbCount + " rows, expected " + EXPECTED_COUNT);
+            
+            getWindow().getDecorView().getRootView().setBackgroundColor(getResources().getColor(
+                    dbCount == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
         }
         text.setText(textContent);
+    }
+
+    private int verifyDbCount() {
+        
+        String dbName = couchdbSync.getPouchDatabaseNames().get(0);
+        
+        SQLiteDatabase sqliteDatabase = null; 
+        try {
+            sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
+            
+            Cursor cursor = null;
+            try {
+                cursor = sqliteDatabase.rawQuery("select count(*) from 'document-store';", null);
+                int numRows = cursor.moveToNext() ? cursor.getInt(0) : 0;
+                
+                return numRows;
+                
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        } finally {
+            if (sqliteDatabase != null) {
+                sqliteDatabase.close();
+            }
+        }
     }
 }

@@ -86,6 +86,14 @@ public class SQLiteJavascriptInterface {
         }
     }
     
+    /**
+     * Get the names of the databases that pouch has created
+     * @return
+     */
+    public List<String> getDbNames() {
+        return new ArrayList<String>(dbs.keySet());
+    }
+    
     public void setProgressListener(CouchdbSyncProgressListener progressListener) {
         this.progressListener = progressListener;
     }
@@ -117,7 +125,7 @@ public class SQLiteJavascriptInterface {
         try {
             SQLiteDatabase db = dbs.get(dbName);
             if (db == null) { // doesn't exist yet
-                db = activity.openOrCreateDatabase(dbName + "_nwebsql.db", 0, null);
+                db = activity.openOrCreateDatabase(dbName, 0, null);
                 dbs.put(dbName, db);
             }
             sendCallback(new JavascriptCallback(callbackId, null, false));

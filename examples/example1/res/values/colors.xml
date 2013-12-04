@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="alert_blue">#3b68a2</color>
+    <color name="alert_red">#db473f</color>
+</resources>
