@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import android.annotation.SuppressLint;
@@ -111,10 +112,30 @@ public class CouchdbSync {
                 }
                 
                 while (true) {
-                    ArrayList<Object> currentBatch = convertBatchToJsonList(
-                            offset, sqliteColumns, sqliteTable, objectMapper);
-                     
-                    if (currentBatch.isEmpty()) {
+                    
+                    /**
+                     * the resulting, compressed batch object looks like this:
+                     * {
+                     *  table : "MyTable",
+                     *  columns : ["id", "name", "date", ...],
+                     *  uuids:['foo','bar','baz'...],
+                     *  docs : [[..values...], [...values...]...]
+                     *  }
+                     */
+                    
+                    ObjectNode batch = objectMapper.createObjectNode();
+                    batch.put("table", sqliteTable.getName());
+                    ArrayNode columns = batch.putArray("columns");
+                    
+                    for (SqliteColumn column : sqliteColumns) {
+                        columns.add(column.getName());
+                    }
+                    ArrayNode documents = batch.putArray("docs");
+                    ArrayNode uuids = batch.putArray("uuids");
+                    
+                    convertBatchToJsonList(documents, uuids, offset, sqliteColumns, sqliteTable, objectMapper);
+                    
+                    if (documents.size() == 0) {
                         break;
                     }
 
@@ -122,9 +143,9 @@ public class CouchdbSync {
                             ? createJavascriptCallback(offset, totalNumRows, sqliteTable, objectMapper)
                             : "";
                     
-                    loadBatchIntoPouchdb(currentBatch, objectMapper, javascriptCallback);
+                    loadBatchIntoPouchdb(batch, objectMapper, javascriptCallback);
                     
-                    if (currentBatch.size() < BATCH_SIZE) {
+                    if (documents.size() < BATCH_SIZE) {
                         break;
                     }
                     
@@ -166,7 +187,7 @@ public class CouchdbSync {
                         .append(");}");
             }
 
-            private void loadBatchIntoPouchdb(ArrayList<Object> docsBatch, ObjectMapper objectMapper,
+            private void loadBatchIntoPouchdb(ObjectNode docsBatch, ObjectMapper objectMapper,
                     CharSequence javascriptCallback) throws IOException {
                 
                 log.d("loadBatchIntoPouchdb: %s docs", docsBatch.size());
@@ -198,10 +219,9 @@ public class CouchdbSync {
     }
 
 
-    private ArrayList<Object> convertBatchToJsonList(int offset, 
+    private void convertBatchToJsonList(ArrayNode documents, ArrayNode uuids, int offset, 
             List<SqliteColumn> sqliteColumns, SqliteTable sqliteTable, ObjectMapper objectMapper) {
         
-        ArrayList<Object> result = new ArrayList<Object>();
         Cursor cursor = null;
         try {
             
@@ -216,17 +236,16 @@ public class CouchdbSync {
                 sql.append(idColumn);
             }
             sql.append(", * from ")
-            .append(sqliteTable.getName())
-            .append(" limit ").append(BATCH_SIZE)
-            .append(" offset ").append(offset)
-            .append(";");
+                .append(sqliteTable.getName())
+                .append(" limit ").append(BATCH_SIZE)
+                .append(" offset ").append(offset)
+                .append(";");
             
             cursor = sqliteDatabase.rawQuery(sql.toString(), null);
             
             while (cursor.moveToNext()) {
                 
-                ObjectNode document = objectMapper.createObjectNode();
-                
+                // generate uuid (i.e. the _id for couch)
                 String id = cursor.getString(0);
                 String uid = new StringBuilder()
                         .append(dbName)
@@ -235,44 +254,38 @@ public class CouchdbSync {
                         .append("~")
                         .append(id).toString();
                 
-                document.put("_id", uid);
+                uuids.add(uid);
+                
+                ArrayNode document = objectMapper.createArrayNode();
                 
                 for (int i = 1; i < cursor.getColumnCount(); i++) {
                     
                     SqliteColumn sqliteColumn = sqliteColumns.get(i - 1);
-                    String columnName = sqliteColumn.getName();
-                    
-                    if (columnName.startsWith("_")) {
-                        // you're not allowed to use this, since underscore-prefixed fields are reserved in Couchdb
-                        columnName = new StringBuilder(columnName).replace(0, 1, "!reserved_android_id!").toString();
-                    }
                     
                     if (cursor.isNull(i)) {
-                        document.putNull(columnName);
+                        document.addNull();
                         continue;
                     }
                     
                     switch (sqliteColumn.getType()) {
                         case SqliteUtil.FIELD_TYPE_BLOB:
-                            document.put(columnName, cursor.getBlob(i));
+                            document.add(cursor.getBlob(i));
                             break;
                         case SqliteUtil.FIELD_TYPE_FLOAT:
-                            document.put(columnName, cursor.getFloat(i));
+                            document.add(cursor.getFloat(i));
                             break;
                         case SqliteUtil.FIELD_TYPE_INTEGER:
-                            document.put(columnName, cursor.getInt(i));
+                            document.add(cursor.getInt(i));
                             break;
                         case SqliteUtil.FIELD_TYPE_STRING:
                         default:
-                            document.put(columnName, cursor.getString(i));
+                            document.add(cursor.getString(i));
                             break;
                     }
                 }
                 
-                result.add(document);
+                documents.add(document);
             }
-            
-            return result;
             
         } finally {
             if (cursor != null) {

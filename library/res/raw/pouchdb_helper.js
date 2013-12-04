@@ -23,6 +23,40 @@ var PouchDBHelper;
         });
     }
 
+    function uncompress(compressedDocs) {
+        // convert docs to a normal CouchDB format from the format
+        // we used to pass them from Java to javascript
+
+        /**
+         * the compressed batch object looks like this:
+         * {
+                     *  table : "MyTable",
+                     *  columns : ["id", "name", "date", ...],
+                     *  uuids:['foo','bar','baz'...],
+                     *  docs : [[..values...], [...values...]...]
+                     *  }
+         */
+        var docs = [];
+        for (var i = 0, iLen = compressedDocs.docs.length; i < iLen; i++) {
+            var compressedDoc = compressedDocs.docs[i];
+            var uuid = compressedDocs.uuids[i];
+            var content = {};
+            for (var j = 0, jLen = compressedDocs.columns.length; j < jLen; j++) {
+                var column = compressedDocs.columns[i];
+                var value = compressedDoc[j];
+                content[column] = value;
+            }
+            var doc = {
+                _id : uuid,
+                table : compressedDocs.table,
+                content : content
+            };
+
+            docs.push(doc);
+        }
+        return docs;
+    }
+
     PouchDBHelper = function (dbId) {
 
         var self = this;
@@ -48,9 +82,11 @@ var PouchDBHelper;
      *
      * @param documents
      */
-    PouchDBHelper.prototype.putAll = function (documents, onComplete) {
+    PouchDBHelper.prototype.putAll = function (compressedDocs, onComplete) {
         var self = this;
         debug('putAll()');
+
+        var documents = uncompress(compressedDocs);
 
         self.queue.push({docs : documents, onComplete: onComplete});
 
