@@ -84,23 +84,23 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void open(final String name, final String callbackId) {
-        log.d("open(%s, %s)", name, callbackId);
+    public void open(final String dbName, final String callbackId) {
+        log.d("open(%s, %s)", dbName, callbackId);
 
         executeInBackground(new Runnable() {
             @Override
             public void run() {
-                openInBackground(name, callbackId);
+                openInBackground(dbName, callbackId);
             }
         });
  
     }
-    public void openInBackground(String name, String callbackId) {
+    public void openInBackground(String dbName, String callbackId) {
         try {
-            SQLiteDatabase db = dbs.get(name);
+            SQLiteDatabase db = dbs.get(dbName);
             if (db == null) { // doesn't exist yet
-                db = activity.openOrCreateDatabase(name + "_nwebsql.db", 0, null);
-                dbs.put(name, db);
+                db = activity.openOrCreateDatabase(dbName + "_nwebsql.db", 0, null);
+                dbs.put(dbName, db);
             }
             callback(callbackId);
         } catch (Exception e) {
@@ -110,19 +110,19 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void startTransaction(final String name, final String successId, final String errorId) {
-        log.d("startTransaction(%s, %s, %s)", name, successId, errorId);
+    public void startTransaction(final String dbName, final String successId, final String errorId) {
+        log.d("startTransaction(%s, %s, %s)", dbName, successId, errorId);
         executeInBackground(new Runnable() {
             @Override
             public void run() {
-                startTransactionInBackground(name, successId, errorId);
+                startTransactionInBackground(dbName, successId, errorId);
             }
         });
     }
     
-    public void startTransactionInBackground(String name, String successId, String errorId) {
+    public void startTransactionInBackground(String dbName, String successId, String errorId) {
         try {
-            SQLiteDatabase db = dbs.get(name);
+            SQLiteDatabase db = dbs.get(dbName);
             synchronized (db) {
                 db.beginTransaction();
             }
@@ -134,22 +134,22 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void endTransaction(final String name, final String successId, final String errorId,
+    public void endTransaction(final String dbName, final String successId, final String errorId,
             final boolean markAsSuccessful) {
-        log.d("endTransaction(%s, %s, %s, %s)", name, successId, errorId, markAsSuccessful);
+        log.d("endTransaction(%s, %s, %s, %s)", dbName, successId, errorId, markAsSuccessful);
         executeInBackground(new Runnable() {
             @Override
             public void run() {
-                endTransactionInBackground(name, successId, errorId, markAsSuccessful);
+                endTransactionInBackground(dbName, successId, errorId, markAsSuccessful);
             }
         });
     }
     
-    public void endTransactionInBackground(String name, String successId, String errorId, boolean markAsSuccessful) {
+    public void endTransactionInBackground(String dbName, String successId, String errorId, boolean markAsSuccessful) {
                 
         boolean error = false;
         
-        SQLiteDatabase db = dbs.get(name);
+        SQLiteDatabase db = dbs.get(dbName);
         try {
             if (markAsSuccessful) {
                 synchronized (db) {
@@ -177,25 +177,25 @@ public class SQLiteJavascriptInterface {
     }    
 
     @JavascriptInterface
-    public void executeSql(final String name, final String sql, final String selectArgsJson, 
+    public void executeSql(final String dbName, final String sql, final String selectArgsJson, 
             final String querySuccessId,
             final String queryErrorId) {
-        log.d("executeSql(%s, %s, %s, %s, %s)", name, sql, selectArgsJson, querySuccessId, queryErrorId);
+        log.d("executeSql(%s, %s, %s, %s, %s)", dbName, sql, selectArgsJson, querySuccessId, queryErrorId);
         
         executeInBackground(new Runnable() {
 
             @Override
             public void run() {
-                executeSqlInBackground(name, sql, selectArgsJson, querySuccessId, queryErrorId);
+                executeSqlInBackground(dbName, sql, selectArgsJson, querySuccessId, queryErrorId);
             }
         });
     }
 
     @SuppressLint("NewApi")
-    public void executeSqlInBackground(String name, String sql, String selectArgsJson, String querySuccessId,
+    public void executeSqlInBackground(String dbName, String sql, String selectArgsJson, String querySuccessId,
             String queryErrorId) {
         
-        SQLiteDatabase db = dbs.get(name);
+        SQLiteDatabase db = dbs.get(dbName);
         try {
             List<Object> selectArgs = getSelectArgs(selectArgsJson);
 
@@ -404,13 +404,13 @@ public class SQLiteJavascriptInterface {
     public void close() {
         this.activity = null;
         for (Entry<String, SQLiteDatabase> entry : dbs.entrySet()) {
-            String name = entry.getKey();
+            String dbName = entry.getKey();
             SQLiteDatabase db = entry.getValue();
             
             if (db != null) {
-                log.d("closing database with name %s", name);
+                log.d("closing database with name %s", dbName);
                 db.close();
-                log.d("closed database with name %s", name);
+                log.d("closed database with name %s", dbName);
             }
         }
     }
