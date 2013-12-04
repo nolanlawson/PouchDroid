@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdbsync.sqlite;
+package com.nolanlawson.couchdroid.sqlite;
 
 import java.util.concurrent.LinkedBlockingQueue;
 

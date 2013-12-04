@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.nolanlawson.couchdbsync"
+    package="com.nolanlawson.couchdroid"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -9,7 +9,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Couchdb Sync" >
+        android:label="CouchDroid" >
     </application>
 
 </manifest>

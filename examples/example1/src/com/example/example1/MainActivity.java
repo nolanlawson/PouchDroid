@@ -15,16 +15,17 @@ import android.widget.TextView;
 
 import com.example.example1.data.PocketMonster;
 import com.example.example1.data.PocketMonsterHelper;
-import com.nolanlawson.couchdbsync.CouchdbSync;
-import com.nolanlawson.couchdbsync.CouchdbSyncProgressListener;
+import com.nolanlawson.couchdroid.CouchDroid;
+import com.nolanlawson.couchdroid.CouchDroidProgressListener;
+import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
 
-public class MainActivity extends Activity implements CouchdbSyncProgressListener {
+public class MainActivity extends Activity implements CouchDroidProgressListener {
     
     private static final String COUCHDB_URL = "http://192.168.0.5:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     
-    private CouchdbSync couchdbSync;
+    private CouchDroid couchdbSync;
     private SQLiteDatabase sqliteDatabase;
     private long startTime;
     
@@ -52,7 +53,7 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
         sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
         
         loadPokemonData(sqliteDatabase);
-        couchdbSync = CouchdbSync.Builder.create(this, sqliteDatabase)
+        couchdbSync = CouchDroid.Builder.create(this, sqliteDatabase)
                 .setDatabaseId(dbName)
                 .setUserId("fooUser")
                 .setCouchdbUrl(COUCHDB_URL)
@@ -119,7 +120,7 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
     }
 
     @Override
-    public void onProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+    public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
         
         progress.setMax(numRowsTotal);
         progress.setProgress(numRowsLoaded);

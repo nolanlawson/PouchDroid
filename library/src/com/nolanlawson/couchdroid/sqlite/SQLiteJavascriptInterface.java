@@ -6,7 +6,7 @@
  * 
  * @author nolan
  */
-package com.nolanlawson.couchdbsync.sqlite;
+package com.nolanlawson.couchdroid.sqlite;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,8 +33,9 @@ import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
-import com.nolanlawson.couchdbsync.CouchdbSyncProgressListener;
-import com.nolanlawson.couchdbsync.util.UtilLogger;
+import com.nolanlawson.couchdroid.CouchDroidProgressListener;
+import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
+import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class SQLiteJavascriptInterface {
 
@@ -42,7 +43,7 @@ public class SQLiteJavascriptInterface {
     
     private Activity activity;
     private WebView webView;
-    private CouchdbSyncProgressListener progressListener;
+    private CouchDroidProgressListener progressListener;
     
     private final Map<String, SQLiteDatabase> dbs = new HashMap<String, SQLiteDatabase>();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -94,12 +95,12 @@ public class SQLiteJavascriptInterface {
         return new ArrayList<String>(dbs.keySet());
     }
     
-    public void setProgressListener(CouchdbSyncProgressListener progressListener) {
+    public void setProgressListener(CouchDroidProgressListener progressListener) {
         this.progressListener = progressListener;
     }
     
     @JavascriptInterface
-    public void reportProgress(final String tableName, final int numRowsTotal, final int numRowsLoaded) {
+    public void reportProgress(final String type, final String tableName, final int numRowsTotal, final int numRowsLoaded) {
         try {
             if (activity != null) {
                 activity.runOnUiThread(new Runnable() {
@@ -107,7 +108,7 @@ public class SQLiteJavascriptInterface {
                     @Override
                     public void run() {
                         try {
-                            progressListener.onProgress(tableName, numRowsTotal, numRowsLoaded);
+                            progressListener.onProgress(ProgressType.valueOf(type), tableName, numRowsTotal, numRowsLoaded);
                         } catch (Exception e) {
                             log.e(e, "progress listener threw an exception!");
                         }                        

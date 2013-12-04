@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdbsync;
+package com.nolanlawson.couchdroid;
 
 import java.util.List;
 

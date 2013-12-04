@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdbsync.sqlite;
+package com.nolanlawson.couchdroid.sqlite;
 
 public class WebSqlQuery {
     

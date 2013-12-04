@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdbsync;
+package com.nolanlawson.couchdroid;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,15 +20,16 @@ import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
-import com.nolanlawson.couchdbsync.sqlite.SQLiteJavascriptInterface;
-import com.nolanlawson.couchdbsync.util.ResourceUtil;
-import com.nolanlawson.couchdbsync.util.SqliteUtil;
-import com.nolanlawson.couchdbsync.util.UtilLogger;
+import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
+import com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface;
+import com.nolanlawson.couchdroid.util.ResourceUtil;
+import com.nolanlawson.couchdroid.util.SqliteUtil;
+import com.nolanlawson.couchdroid.util.UtilLogger;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class CouchdbSync {
+public class CouchDroid {
 
-    private static UtilLogger log = new UtilLogger(CouchdbSync.class);
+    private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
     private static final boolean USE_WEINRE = false;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
@@ -45,9 +46,9 @@ public class CouchdbSync {
     private String couchdbUrl;
     private String dbName;
     private SQLiteJavascriptInterface sqliteJavascriptInterface;
-    private CouchdbSyncProgressListener listener;
+    private CouchDroidProgressListener listener;
     
-    private CouchdbSync(Activity activity, SQLiteDatabase sqliteDatabase) {
+    private CouchDroid(Activity activity, SQLiteDatabase sqliteDatabase) {
         this.activity = activity;
         this.sqliteDatabase = sqliteDatabase;
         
@@ -194,7 +195,7 @@ public class CouchdbSync {
                             @Override
                             public void run() {
                                 try {
-                                    listener.onProgress(sqliteTable.getName(), totalNumRows, 0);
+                                    listener.onProgress(ProgressType.Init, sqliteTable.getName(), totalNumRows, 0);
                                 } catch (Exception e) {
                                     log.e(e, "progress listener threw exception");
                                 }
@@ -212,6 +213,8 @@ public class CouchdbSync {
                     SqliteTable sqliteTable) throws IOException {
                 return new StringBuilder()
                         .append(",function(numLoaded){SQLiteJavascriptInterface.reportProgress(")
+                        .append(objectMapper.writeValueAsString(ProgressType.Copy.name()))
+                        .append(",")
                         .append(objectMapper.writeValueAsString(sqliteTable.getName()))
                         .append(",")
                         .append(totalNumRows)
@@ -451,10 +454,10 @@ public class CouchdbSync {
     
     public static class Builder {
         
-        private CouchdbSync couchdbSync;
+        private CouchDroid couchdbSync;
         
         private Builder(Activity activity, SQLiteDatabase sqliteDatabase) {
-            this.couchdbSync = new CouchdbSync(activity, sqliteDatabase);
+            this.couchdbSync = new CouchDroid(activity, sqliteDatabase);
         }
         
         public static Builder create(Activity activity, SQLiteDatabase sqliteDatabase) {
@@ -517,12 +520,12 @@ public class CouchdbSync {
          * @param listener
          * @return
          */
-        public Builder setProgressListener(CouchdbSyncProgressListener listener) {
+        public Builder setProgressListener(CouchDroidProgressListener listener) {
             couchdbSync.listener = listener;
             return this;
         }
         
-        public CouchdbSync build() {
+        public CouchDroid build() {
             if (couchdbSync.sqliteTables.isEmpty()) {
                 throw new IllegalArgumentException(
                         "You must supply at least one sqlite table definition using addSqliteTable()");

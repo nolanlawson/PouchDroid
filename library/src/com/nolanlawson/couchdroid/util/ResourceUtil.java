@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdbsync.util;
+package com.nolanlawson.couchdroid.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
