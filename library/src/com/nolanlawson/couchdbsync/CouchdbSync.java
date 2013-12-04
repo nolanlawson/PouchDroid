@@ -106,6 +106,10 @@ public class CouchdbSync {
                 
                 int totalNumRows = listener != null ? countNumRows(sqliteTable) : 0;
                 
+                if (listener != null) {
+                    notifyListenerAtZero(sqliteTable, totalNumRows);
+                }
+                
                 while (true) {
                     ArrayList<Object> currentBatch = convertBatchToJsonList(
                             offset, sqliteColumns, sqliteTable, objectMapper);
@@ -126,6 +130,28 @@ public class CouchdbSync {
                     
                     offset += BATCH_SIZE;
                 }
+            }
+
+            private void notifyListenerAtZero(final SqliteTable sqliteTable, final int totalNumRows) {
+                try {
+                    if (activity != null) {
+                        activity.runOnUiThread(new Runnable() {
+                            
+                            @Override
+                            public void run() {
+                                try {
+                                    listener.onProgress(sqliteTable.getName(), totalNumRows, 0);
+                                } catch (Exception e) {
+                                    log.e(e, "progress listener threw exception");
+                                }
+                                
+                            }
+                        });
+                        
+                    }
+                } catch (Exception e) {
+                    log.e(e, "progress listener threw exception");
+                }                
             }
 
             private CharSequence createJavascriptCallback(int offset, int totalNumRows,

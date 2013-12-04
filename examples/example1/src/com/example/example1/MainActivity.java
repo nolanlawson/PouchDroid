@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -25,7 +26,7 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
     private long startTime;
     
     private TextView text;
-    private ProgressBar progress;
+    private ProgressBar progress, progressIndeterminate;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,7 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
 
         text = (TextView) findViewById(android.R.id.text1);
         progress = (ProgressBar) findViewById(android.R.id.progress);
+        progressIndeterminate = (ProgressBar) findViewById(R.id.progress_indeterminate);
     }
 
     @Override
@@ -52,6 +54,8 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
         
         couchdbSync.start();
         startTime = System.currentTimeMillis();
+        progress.setProgress(0);
+        progressIndeterminate.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -118,6 +122,7 @@ public class MainActivity extends Activity implements CouchdbSyncProgressListene
             
             getWindow().getDecorView().getRootView().setBackgroundColor(getResources().getColor(
                     dbCount == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
+            progressIndeterminate.setVisibility(View.INVISIBLE);
         }
         text.setText(textContent);
     }
