@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -54,6 +55,7 @@ public class SQLiteJavascriptInterface {
     public SQLiteJavascriptInterface(Activity activity, WebView webView) {
         this.activity = activity;
         this.webView = webView;
+        handler.post(batchTransactionRunnable);
     }
     
     private void sendCallback(JavascriptCallback callback) {
@@ -105,18 +107,19 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void startTransaction(int transactionId, final String dbName, final String successId, final String errorId) {
-        log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, successId, errorId);
+    public void startTransaction(int transactionId, final String dbName, final String startTransactionSuccessId, 
+            final String transactionErrorId, final String transactionSuccessId) {
+        log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, startTransactionSuccessId, transactionErrorId);
         try {
             synchronized (transactions) {
-                transactions.put(new WebSqlTransaction(dbName, transactionId, successId, errorId));
+                transactions.put(new WebSqlTransaction(dbName, transactionId, transactionSuccessId, transactionErrorId));
             }
-            sendCallback(new JavascriptCallback(successId, null, false));
+            sendCallback(new JavascriptCallback(startTransactionSuccessId, null, false));
             handler.removeCallbacks(batchTransactionRunnable);
             handler.post(batchTransactionRunnable);
         } catch (Exception e) {
             log.e(e, "error");
-            sendCallback(new JavascriptCallback(errorId, null, true));
+            sendCallback(new JavascriptCallback(transactionErrorId, null, true));
         }
     }
     
@@ -145,6 +148,7 @@ public class SQLiteJavascriptInterface {
         
         WebSqlTransaction transaction = findTransactionById(transactionId);
         if (transaction == null) {
+            log.e("transaction was invalidated");
             sendCallback(new JavascriptCallback(queryErrorId, createSqlError("transaction was invalidated"), true));
         } else {
             // valid transaction
@@ -180,7 +184,8 @@ public class SQLiteJavascriptInterface {
 
             // /* OPTIONAL changes for new Android SDK from HERE:
             if (android.os.Build.VERSION.SDK_INT >= 11
-                    && (query.toLowerCase().startsWith("update") || query.toLowerCase().startsWith("delete"))) {
+                    && (query.toLowerCase(Locale.US).startsWith("update") 
+                            || query.toLowerCase(Locale.US).startsWith("delete"))) {
                 synchronized (db) {
                     SQLiteStatement myStatement = db.compileStatement(query);
 
@@ -206,7 +211,7 @@ public class SQLiteJavascriptInterface {
                     queryResult.put("rowsAffected", rowsAffected);
                 }
             } else // to HERE. */
-            if (query.toLowerCase().startsWith("insert") && selectArgs != null) {
+            if (query.toLowerCase(Locale.US).startsWith("insert") && selectArgs != null) {
                 synchronized (db) {
                     SQLiteStatement myStatement = db.compileStatement(query);
 
@@ -324,7 +329,6 @@ public class SQLiteJavascriptInterface {
             return null;
         }
 
-        log.d("getSelectArgs(%s)", selectArgsJson);
         try {
             return objectMapper.readValue(selectArgsJson, new TypeReference<List<Object>>() {
             });
@@ -424,8 +428,7 @@ public class SQLiteJavascriptInterface {
 
     private class BatchTransactionRunnable implements Runnable {
 
-        @Override
-        public void run() {
+        private boolean doBatchOfWorkAndReturnTrueIfMoreWork() {
             synchronized (this) {
                 log.d("BatchTransactionRunnable.run()");
                 
@@ -435,7 +438,8 @@ public class SQLiteJavascriptInterface {
                     transaction = transactions.peek();
                     
                     if (transaction == null) {
-                        return;
+                        log.d("no transactions!");
+                        return false; // nothing to do
                     }
                 }
                 
@@ -446,7 +450,7 @@ public class SQLiteJavascriptInterface {
                     synchronized (transactions) {
                         transactions.remove(transaction);
                     }
-                    return;
+                    return true;
                 }
                 
                 // start the transaction
@@ -461,12 +465,11 @@ public class SQLiteJavascriptInterface {
                     } catch (Exception e) {
                         // couldn't even begin
                         sendCallback(new JavascriptCallback(transaction.getErrorId(), null, true));
-                        return;
                     }
                 }
                 
                 // execute one or more queries for the transaction;
-                log.d("ending queries for transaction %s", transaction.getTransactionId());
+                log.d("executing queries for transaction %s", transaction.getTransactionId());
                 
                 List<JavascriptCallback> callbacks = null;
                 
@@ -482,11 +485,28 @@ public class SQLiteJavascriptInterface {
                     if (callback.isError()) {
                         break; // per w3c spec, we stop the world and wait for judgment on this failure
                     }
+                    
                 }
                 
                 if (callbacks != null) {
                     sendCallback(callbacks);
                 }
+                return true;
+            }
+        }
+        
+        @Override
+        public void run() {
+            boolean moreWork = doBatchOfWorkAndReturnTrueIfMoreWork();
+            
+            if (moreWork && activity != null) {
+                activity.runOnUiThread(new Runnable() {
+                    
+                    @Override
+                    public void run() {
+                        handler.postDelayed(BatchTransactionRunnable.this, BATCH_TRANSACTION_DELAY);
+                    }
+                });
             }
         }
     }

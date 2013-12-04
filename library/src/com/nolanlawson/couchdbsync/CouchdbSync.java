@@ -123,7 +123,6 @@ public class CouchdbSync {
                     
                     log.d("javascript is: %s", js);
                     loadJavascriptWrapped(js);
-                    loadJavascriptWrapped("window.console.log('hello world!');");
                     log.d("Loaded %d objects into pouchdb", docsBatch.size());
                 } catch (IOException e) {
                     // shouldn't happen
@@ -306,11 +305,20 @@ public class CouchdbSync {
         
         String html = new StringBuilder("<html><body>")
                 .append(UtilLogger.DEBUG_MODE 
-                        ? "<script src='http://192.168.0.3:8080/target/target-script-min.js#anonymous'></script>"
+                        ? "<script src='http://192.168.10.110:8080/target/target-script-min.js#anonymous'></script>"
                         : "")
                 .append("</body></html>").toString();
         // fake url to allow loading of weinre
         webView.loadDataWithBaseURL("http://localhost:9340",html, "text/html", "UTF-8", "http://localhost:9340");
+        
+        if (UtilLogger.DEBUG_MODE) {
+            // give me a chance to connect with weinre
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         log.d("loaded webview data: %s", html);
     }
     
@@ -328,7 +336,7 @@ public class CouchdbSync {
         @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            log.d(message);
+            //log.d(message);
         }
     }
     

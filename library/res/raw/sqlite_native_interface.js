@@ -1,33 +1,14 @@
 /* export SQLiteNativeDB */
 
-var SQLiteNativeDB;
-
 (function(){
     'use strict';
 
-    SQLiteNativeDB = {
+    window.SQLiteNativeDB = {
         transactionIds : 0,
         callbacks : {},
         callbackIds : 0,
         nativeDBs : {}
     };
-
-    function createCallback(fn) {
-        fn = fn || function(){};
-
-        var callbackId = 'callback_' + (SQLiteNativeDB.callbackIds++);
-
-        var newFn = function() {
-            debug('executing callback with id: ' + callbackId);
-            fn.apply(null, arguments);
-            // TODO: intelligently clean up callbacks
-
-        };
-
-        SQLiteNativeDB.callbacks[(callbackId)] = newFn;
-
-        return callbackId;
-    }
 
     function debug(str) {
         if (DEBUG_MODE && str) {
@@ -35,13 +16,29 @@ var SQLiteNativeDB;
         }
     }
 
-    var SqliteQuery = function(sql, selectArgs, querySuccess, queryError) {
+    function createCallback(fn) {
+        fn = fn || function(){};
+
+        var callbackId = 'callback_' + (window.SQLiteNativeDB.callbackIds++);
+
+        var newFn = function() {
+            debug('executing callback with id: ' + callbackId);
+            fn.apply(null, arguments);
+
+            //TODO: intelligently remove callbacks
+            //delete window.SQLiteNativeDB.callbacks[callbackId];
+        };
+
+        window.SQLiteNativeDB.callbacks[callbackId] = newFn;
+
+        return callbackId;
+    }
+
+    var SqliteQuery = function(sql, selectArgs) {
         var self = this;
 
         self.sql = sql;
         self.selectArgs = selectArgs;
-        self.querySuccess = querySuccess;
-        self.queryError = queryError;
     };
 
     var SqliteTransaction = function(callback, error, success, nativeDB) {
@@ -52,10 +49,21 @@ var SQLiteNativeDB;
         self.error = self.runErrorFunctionAndCleanup(error);
         self.errorId = createCallback(self.error);
         self.nativeDB = nativeDB;
-        self.queries = [];
-        self.numQueriesStarted = 0;
-        self.numQueriesEnded = 0;
-        self.transactionId = SQLiteNativeDB.transactionIds++;
+        self.queriesIn = [];
+        self.queriesStarted = [];
+        self.queriesDone = [];
+        self.sentEndAsFailure = false;
+        self.transactionId = window.SQLiteNativeDB.transactionIds++;
+        debug('created new transaction with id ' + self.transactionId);
+    };
+
+    SqliteTransaction.prototype.debugQueryStatus = function() {
+        var self = this;
+
+        if (DEBUG_MODE) {
+            debug('transactionId ' + self.transactionId + ': (queriesIn: ' + self.queriesIn.length + ', queriesStarted: ' + self.queriesStarted.length +
+                ', queriesDone: ' + self.queriesDone.length + ')');
+        }
     };
 
     SqliteTransaction.prototype.runSuccessFunctionAndCleanup = function(fn) {
@@ -86,24 +94,24 @@ var SQLiteNativeDB;
         };
     };
 
-    SqliteTransaction.prototype.wrapQuerySuccess = function(querySuccess) {
+    SqliteTransaction.prototype.wrapQuerySuccess = function(querySuccess, query) {
         var self = this;
 
         return function(transaction, payload) {
+            debug('wrapQuerySuccess(), transactionId ' + self.transactionId);
             if (querySuccess && typeof querySuccess === 'function') {
                 querySuccess(transaction, payload);
             }
-            self.numQueriesEnded++;
+            self.queriesDone.push(query);
             self.runNextQueryOrEnd(); // if new queries were pushed, process those
         };
     };
 
-    SqliteTransaction.prototype.wrapQueryError = function(queryError) {
+    SqliteTransaction.prototype.wrapQueryError = function(queryError, query) {
         var self = this;
 
         return function(sqlErrorObj) {
-
-            debug('running queryError');
+            debug('wrapQueryError(), transactionId ' + self.transactionId);
 
             /**
              * Per the W3C spec:
@@ -120,7 +128,11 @@ var SQLiteNativeDB;
              *    step in the overall steps.
              */
             if (queryError && typeof queryError === 'function') {
+                debug('running queryError');
+                self.debugQueryStatus();
                 var failedToCorrectError = queryError(self, sqlErrorObj);
+                debug('ran queryError');
+                self.debugQueryStatus();
                 if (failedToCorrectError) {
                     debug('failed to correct error, entire transaction is in error');
                     self.markTransactionInError = true;
@@ -132,32 +144,41 @@ var SQLiteNativeDB;
                 self.markTransactionInError = true;
             }
 
-            self.numQueriesEnded++;
+
+
+            self.queriesDone.push(query);
             self.runNextQueryOrEnd(); // if new queries were pushed, process those
         };
     };
 
     SqliteTransaction.prototype.runNextQueryOrEnd = function() {
         var self = this;
+        debug('runNextQueryOrEnd(), transactionId ' + self.transactionId);
+
         if (self.markTransactionInError) {
             // ran into an error
             debug('ending this transaction unsuccessfully for id ' + self.transactionId);
-            self.endAsFailure();
-        } else if (self.queries.length) {
+            if (!self.sentEndAsFailure) {
+                self.endAsFailure();
+                self.sentEndAsFailure = true;
+            }
+        } else if (self.queriesIn.length) {
             // more queries remain
             debug('transactionId ' + self.transactionId + ': there are ' +
-                self.queries.length + '; popping one off the top...');
-            var query = self.queries[0];
-            self.queries.shift();
-            self.numQueriesStarted++;
+                self.queriesIn.length + '; popping one off the top...');
+
+            var query = self.queriesIn.shift();
+            self.queriesStarted.push(query);
+            self.debugQueryStatus();
             self.nativeDB.executeSql(query, self);
         } else {
             // no more queries; end the transaction ?
-            debug('transactionId ' + self.transactionId + ': there are 0 queries, self.numQueriesStarted is ' + self.numQueriesStarted +
-                ', self.numQueriesEnded is ' + self.numQueriesEnded);
-            var allQueriesComplete = self.numQueriesStarted && self.numQueriesStarted === self.numQueriesEnded;
+            debug('transactionId ' + self.transactionId + ': no more queries; end the transaction, maybe?');
+            self.debugQueryStatus();
+            var allQueriesComplete = (self.queriesIn.length === 0 && self.queriesStarted.length > 0 &&
+                self.queriesStarted.length === self.queriesDone.length);
             if (allQueriesComplete) {
-                debug('ending this transaction with id ' + self.transactionId);
+                debug('ending this transaction successfully with id ' + self.transactionId);
                 self.endAsSuccessful();
             }
         }
@@ -192,9 +213,13 @@ var SQLiteNativeDB;
     SqliteTransaction.prototype.executeSql = function(sql, selectArgs, querySuccess, queryError) {
         var self = this;
 
-        var query = new SqliteQuery(sql, selectArgs, self.wrapQuerySuccess(querySuccess), self.wrapQueryError(queryError));
+        var query = new SqliteQuery(sql, selectArgs);
+        query.querySuccess = self.wrapQuerySuccess(querySuccess, query);
+        query.queryError = self.wrapQueryError(queryError, query);
 
-        self.queries.push(query);
+        self.queriesIn.push(query);
+        debug('transaction ' + self.transactionId + ' got a new query');
+        self.debugQueryStatus();
 
         self.runNextQueryOrEnd();
     };
@@ -238,14 +263,18 @@ var SQLiteNativeDB;
 
             self.transactionInProgress = false;
 
-            var transaction = self.transactions[0];
-            self.transactions.shift();
+            var transaction = self.transactions.shift();
 
-            var startTransactionErrorId = createCallback(transaction.error);
+            debug('processing transaction with id ' + transaction.transactionId);
+            debug('remaining transactions are: ' + JSON.stringify(self.transactions.map(function(transaction){return transaction.transactionId;})));
+
+            var transactionErrorId = createCallback(transaction.error);
+            var transactionSuccessId = createCallback(transaction.success);
             var startTransactionSuccessId = createCallback(function (){
                 transaction.callback(transaction);
             });
-            SQLiteJavascriptInterface.startTransaction(transaction.transactionId, self.name, startTransactionSuccessId, startTransactionErrorId);
+            SQLiteJavascriptInterface.startTransaction(transaction.transactionId, self.name, startTransactionSuccessId,
+                transactionErrorId, transactionSuccessId);
         }
     };
 
@@ -272,8 +301,11 @@ var SQLiteNativeDB;
             };
 
             debug('calling querySuccess function...');
+            transaction.debugQueryStatus();
+
             query.querySuccess(transaction, payload);
             debug('querySuccess called.');
+            transaction.debugQueryStatus();
         });
         var queryErrorId = createCallback(query.queryError);
 
@@ -283,13 +315,13 @@ var SQLiteNativeDB;
     };
 
     window.openDatabase = function(name, version, description, size, success) {
-        var nativeDB = SQLiteNativeDB.nativeDBs[name];
+        var nativeDB = window.SQLiteNativeDB.nativeDBs[name];
         if (!nativeDB) {
             // doesn't exist yet
             nativeDB =  new NativeDB(name);
             nativeDB.init(success);
 
-            SQLiteNativeDB.nativeDBs[name] = nativeDB;
+            window.SQLiteNativeDB.nativeDBs[name] = nativeDB;
         } else {
             setTimeout(function(){
                 if (success && typeof success === 'function') {
