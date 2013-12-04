@@ -171,7 +171,8 @@ var SQLiteNativeDB;
             self.nativeDB.transactionInProgress = false;
             self.nativeDB.processNextTransaction();
         });
-        SQLiteJavascriptInterface.endTransaction(self.nativeDB.name, endTransactionDoneId, endTransactionDoneId, false);
+        SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionDoneId,
+            endTransactionDoneId, false);
     };
 
     SqliteTransaction.prototype.endAsSuccessful = function() {
@@ -182,7 +183,7 @@ var SQLiteNativeDB;
             debug('executing transaction success for transactionId ' + self.transactionId);
             self.success();
         });
-        SQLiteJavascriptInterface.endTransaction(self.nativeDB.name, endTransactionSuccessId, self.errorId, true);
+        SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionSuccessId, self.errorId, true);
     };
 
     /**
@@ -244,7 +245,7 @@ var SQLiteNativeDB;
             var startTransactionSuccessId = createCallback(function (){
                 transaction.callback(transaction);
             });
-            SQLiteJavascriptInterface.startTransaction(self.name, startTransactionSuccessId, startTransactionErrorId);
+            SQLiteJavascriptInterface.startTransaction(transaction.transactionId, self.name, startTransactionSuccessId, startTransactionErrorId);
         }
     };
 
@@ -277,7 +278,7 @@ var SQLiteNativeDB;
         var queryErrorId = createCallback(query.queryError);
 
         var selectArgsAsJson = query.selectArgs ? JSON.stringify(query.selectArgs) : null;
-        SQLiteJavascriptInterface.executeSql(
+        SQLiteJavascriptInterface.executeSql(transaction.transactionId,
             self.name, query.sql, selectArgsAsJson, querySuccessId, queryErrorId);
     };
 
