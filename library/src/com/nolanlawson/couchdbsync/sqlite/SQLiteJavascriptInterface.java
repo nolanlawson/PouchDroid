@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -30,7 +31,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.SparseArray;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -48,7 +48,7 @@ public class SQLiteJavascriptInterface {
     private final Map<String, SQLiteDatabase> dbs = new HashMap<String, SQLiteDatabase>();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final SparseArray<WebSqlTransaction> transactions = new SparseArray<WebSqlTransaction>();
+    private final LinkedBlockingQueue<WebSqlTransaction> transactions = new LinkedBlockingQueue<WebSqlTransaction>();
     private final BatchTransactionRunnable batchTransactionRunnable = new BatchTransactionRunnable();;
 
     public SQLiteJavascriptInterface(Activity activity, WebView webView) {
@@ -56,7 +56,7 @@ public class SQLiteJavascriptInterface {
         this.webView = webView;
     }
     
-    private void callback(JavascriptCallback callback) {
+    private void sendCallback(JavascriptCallback callback) {
         sendCallback(Collections.singletonList(callback));
     }
     
@@ -64,7 +64,7 @@ public class SQLiteJavascriptInterface {
         log.d("sendCallback(%s)", callbacks);
 
         try {
-            final StringBuilder url = new StringBuilder().append("javascript:");
+            final StringBuilder url = new StringBuilder().append("javascript:(function(){");
             for (JavascriptCallback callback : callbacks) {
                 url.append("SQLiteNativeDB.callbacks['")
                     .append(callback.getCallbackId())
@@ -72,6 +72,7 @@ public class SQLiteJavascriptInterface {
                     .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1()) : "")
                     .append(");");
             }
+            url.append("})();");
 
             log.d("calling javascript: %s", url);
 
@@ -96,7 +97,7 @@ public class SQLiteJavascriptInterface {
                 db = activity.openOrCreateDatabase(dbName + "_nwebsql.db", 0, null);
                 dbs.put(dbName, db);
             }
-            callback(new JavascriptCallback(callbackId, null, false));
+            sendCallback(new JavascriptCallback(callbackId, null, false));
         } catch (Exception e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -105,78 +106,53 @@ public class SQLiteJavascriptInterface {
 
     @JavascriptInterface
     public void startTransaction(int transactionId, final String dbName, final String successId, final String errorId) {
-        log.d("startTransaction(%s, %s, %s)", dbName, successId, errorId);
+        log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, successId, errorId);
         try {
-            SQLiteDatabase db = dbs.get(dbName);
-            synchronized (db) {
-                db.beginTransaction();
-            }
             synchronized (transactions) {
-                transactions.put(transactionId, new WebSqlTransaction(dbName, transactionId, successId, errorId));
+                transactions.put(new WebSqlTransaction(dbName, transactionId, successId, errorId));
             }
-            callback(new JavascriptCallback(successId, null, false));
+            sendCallback(new JavascriptCallback(successId, null, false));
+            handler.removeCallbacks(batchTransactionRunnable);
+            handler.post(batchTransactionRunnable);
         } catch (Exception e) {
             log.e(e, "error");
-            callback(new JavascriptCallback(errorId, null, true));
+            sendCallback(new JavascriptCallback(errorId, null, true));
         }
     }
     
     @JavascriptInterface
-    public void endTransaction(int transactionId, final String dbName, final String successId, final String errorId,
-            final boolean markAsSuccessful) {
-        log.d("endTransaction(%s, %s, %s, %s)", dbName, successId, errorId, markAsSuccessful);
-        boolean error = false;
+    public void endTransaction(int transactionId, String dbName, String successId, String errorId,
+            boolean markAsSuccessful) {
         
-        SQLiteDatabase db = dbs.get(dbName);
+        log.d("endTransaction(%s, %s, %s, %s, %s)", transactionId, dbName, successId, errorId, markAsSuccessful);
+        
         try {
-            if (markAsSuccessful) {
-                synchronized (db) {
-                    db.setTransactionSuccessful();
-                }
-            }
+            WebSqlTransaction transaction = findTransactionById(transactionId);
+            transaction.setMarkAsSuccessful(markAsSuccessful);
+            transaction.setShouldEnd(true);
+            handler.removeCallbacks(batchTransactionRunnable);
+            handler.postDelayed(batchTransactionRunnable, BATCH_TRANSACTION_DELAY);
         } catch (Exception e) {
             log.e(e, "unexpected");
-            error = true;
-        } finally {
-            synchronized (db) {
-                try {
-                    db.endTransaction();
-                } catch (Exception e) {
-                    log.e(e, "unexpected");
-                    error = true;
-                }
-            }
-            synchronized (transactions) {
-                WebSqlTransaction transaction = transactions.get(transactionId);
-                if (transaction != null) {
-                    transaction.setInvalid(true);
-                    transactions.remove(transactionId);
-                }
-            }
-            
-            if (error) {
-                callback(new JavascriptCallback(errorId, null, true));
-            } else {
-                callback(new JavascriptCallback(successId, null, false));
-            }
+            sendCallback(new JavascriptCallback(errorId, createSqlError(e.getMessage()), true));
         }
     }
-
+    
     @JavascriptInterface
     public void executeSql(int transactionId, final String dbName, final String sql, final String selectArgsJson, 
             final String querySuccessId, final String queryErrorId) {
-        log.d("executeSql(%s, %s, %s, %s, %s)", dbName, sql, selectArgsJson, querySuccessId, queryErrorId);
+        log.d("executeSql(%s, %s, %s, %s, %s, %s)", transactionId, dbName, sql, selectArgsJson, querySuccessId, queryErrorId);
         
-        WebSqlTransaction transaction = transactions.get(transactionId);
-        if (transaction == null || transaction.isInvalid()) {
-            callback(new JavascriptCallback(queryErrorId, createSqlError("transaction was invalidated"), true));
+        WebSqlTransaction transaction = findTransactionById(transactionId);
+        if (transaction == null) {
+            sendCallback(new JavascriptCallback(queryErrorId, createSqlError("transaction was invalidated"), true));
         } else {
             // valid transaction
             try {
                 transaction.getQueries().put(new WebSqlQuery(sql, selectArgsJson, querySuccessId, queryErrorId));
             } catch (InterruptedException e) {
                 log.d(e, "unexpected");
-                callback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true));
+                sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true));
                 return;
             }
             handler.removeCallbacks(batchTransactionRunnable);
@@ -288,10 +264,48 @@ public class SQLiteJavascriptInterface {
 
                 batchResults.add(r);
             }
+            log.d("query success %s", webSqlQuery);
             return new JavascriptCallback(querySuccessId, queryResult, false);
         } catch (Exception e) {
             log.e(e, "unexpected");
             return new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true);
+        }
+    }
+    
+    private void endTransaction(WebSqlTransaction transaction) {
+        
+        boolean error = false;
+        
+        SQLiteDatabase db = dbs.get(transaction.getDbName());
+        try {
+            if (transaction.isMarkAsSuccessful()) {
+                synchronized (db) {
+                    db.setTransactionSuccessful();
+                }
+            }
+        } catch (Exception e) {
+            log.e(e, "unexpected");
+            error = true;
+        } finally {
+            synchronized (db) {
+                try {
+                    db.endTransaction();
+                } catch (Exception e) {
+                    log.e(e, "unexpected");
+                    error = true;
+                }
+            }
+            synchronized (transactions) {
+                if (transaction != null) {
+                    transactions.remove(transaction);
+                }
+            }
+            
+            if (error) {
+                sendCallback(new JavascriptCallback(transaction.getErrorId(), null, true));
+            } else {
+                sendCallback(new JavascriptCallback(transaction.getSuccessId(), null, false));
+            }
         }
     }
     
@@ -399,46 +413,80 @@ public class SQLiteJavascriptInterface {
         }
     }
     
-    private List<WebSqlTransaction> getOpenTransactions() {
-        List<WebSqlTransaction> result = new ArrayList<WebSqlTransaction>();
-        synchronized (transactions) {
-            for (int i = 0, len = transactions.size(); i < len; i++) {
-                int key = transactions.keyAt(i);
-                WebSqlTransaction transaction = transactions.get(key);
-                result.add(transaction);
+    private WebSqlTransaction findTransactionById(int transactionId) {
+        for (WebSqlTransaction candidate : transactions) {
+            if (candidate.getTransactionId() == transactionId) {
+                return candidate;
             }
         }
-        return result;
-    }
+        return null;
+    }    
 
     private class BatchTransactionRunnable implements Runnable {
 
         @Override
         public void run() {
-            
-            log.d("BatchTransactionRunnable.run()");
-            
-            List<WebSqlTransaction> transactions = getOpenTransactions();
-            log.d("found %s transactions", transactions.size());
-            
-            for (WebSqlTransaction transaction : transactions) {
+            synchronized (this) {
+                log.d("BatchTransactionRunnable.run()");
                 
-                List<JavascriptCallback> callbacks = new ArrayList<JavascriptCallback>();
+                WebSqlTransaction transaction;
+                
+                synchronized (transactions) {
+                    transaction = transactions.peek();
+                    
+                    if (transaction == null) {
+                        return;
+                    }
+                }
+                
+                // end the transaction
+                if (transaction.isShouldEnd()) {
+                    log.d("ending transaction %s", transaction.getTransactionId());
+                    endTransaction(transaction);
+                    synchronized (transactions) {
+                        transactions.remove(transaction);
+                    }
+                    return;
+                }
+                
+                // start the transaction
+                if (!transaction.isBegun()) {
+                    log.d("beginning transaction %s", transaction.getTransactionId());
+                    try {
+                        SQLiteDatabase db = dbs.get(transaction.getDbName());
+                        synchronized (db) {
+                            db.beginTransaction();
+                            transaction.setBegun(true);
+                        }
+                    } catch (Exception e) {
+                        // couldn't even begin
+                        sendCallback(new JavascriptCallback(transaction.getErrorId(), null, true));
+                        return;
+                    }
+                }
+                
+                // execute one or more queries for the transaction;
+                log.d("ending queries for transaction %s", transaction.getTransactionId());
+                
+                List<JavascriptCallback> callbacks = null;
                 
                 WebSqlQuery webSqlQuery;
                 while ((webSqlQuery = transaction.getQueries().poll()) != null) {
-                    if (transaction.isInvalid()) {
-                        break;
-                    }
                     JavascriptCallback callback = execute(webSqlQuery, transaction);
 
+                    if (callbacks == null) {
+                        callbacks = new ArrayList<JavascriptCallback>();
+                    }
                     callbacks.add(callback);
                     
                     if (callback.isError()) {
-                        break; // per w3c spec
+                        break; // per w3c spec, we stop the world and wait for judgment on this failure
                     }
                 }
-                sendCallback(callbacks);
+                
+                if (callbacks != null) {
+                    sendCallback(callbacks);
+                }
             }
         }
     }

@@ -15,13 +15,35 @@ public class WebSqlTransaction {
     private String successId;
     private String errorId;
     private LinkedBlockingQueue<WebSqlQuery> queries = new LinkedBlockingQueue<WebSqlQuery>();
-    private boolean invalid = false;
+    private boolean begun = false;
+    private boolean shouldEnd = false;
+    private boolean markAsSuccessful = false;
     
     public WebSqlTransaction(String dbName, int transactionId, String successId, String errorId) {
         this.dbName = dbName;
         this.transactionId = transactionId;
         this.successId = successId;
         this.errorId = errorId;
+    }
+    
+    public boolean isMarkAsSuccessful() {
+        return markAsSuccessful;
+    }
+    public void setMarkAsSuccessful(boolean markAsSuccessful) {
+        this.markAsSuccessful = markAsSuccessful;
+    }
+    public boolean isShouldEnd() {
+        return shouldEnd;
+    }
+    public void setShouldEnd(boolean shouldEnd) {
+        this.shouldEnd = shouldEnd;
+    }
+    public boolean isBegun() {
+        return begun;
+    }
+
+    public void setBegun(boolean begun) {
+        this.begun = begun;
     }
 
     public String getDbName() {
@@ -44,17 +66,10 @@ public class WebSqlTransaction {
         return errorId;
     }
 
-    public boolean isInvalid() {
-        return invalid;
-    }
-
-    public void setInvalid(boolean invalid) {
-        this.invalid = invalid;
-    }
-
     @Override
     public String toString() {
         return "WebSqlTransaction [dbName=" + dbName + ", transactionId=" + transactionId + ", successId=" + successId
-                + ", errorId=" + errorId + ", queries=" + queries + ", invalid=" + invalid + "]";
+                + ", errorId=" + errorId + ", queries=" + queries + ", begun=" + begun + ", shouldEnd=" + shouldEnd
+                + ", markAsSuccessful=" + markAsSuccessful + "]";
     }
 }
