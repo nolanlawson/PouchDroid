@@ -31,7 +31,7 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_WEINRE = false;
     private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     

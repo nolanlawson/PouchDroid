@@ -17,8 +17,10 @@ var PouchDBHelper;
             idsToDocuments[document._id] = document;
         });
         rows.forEach(function(row){
-            // doc does indeed already exist
-            idsToDocuments[row.id]._rev = row.value.rev;
+            if (row.value && row.value.rev) {
+                // doc does indeed already exist
+                idsToDocuments[row.id]._rev = row.value.rev;
+            }
         });
     }
 
