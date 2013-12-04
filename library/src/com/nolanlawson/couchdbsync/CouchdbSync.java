@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -29,6 +28,7 @@ public class CouchdbSync {
 
     private static UtilLogger log = new UtilLogger(CouchdbSync.class);
 
+    private static final boolean USE_WEINRE = false;
     private static final int BATCH_SIZE = 100;
     
     private Activity activity;
@@ -347,7 +347,7 @@ public class CouchdbSync {
         
         
         String html = new StringBuilder("<html><body>")
-                .append(UtilLogger.DEBUG_MODE 
+                .append(UtilLogger.DEBUG_MODE && USE_WEINRE
                         ? "<script src='http://192.168.10.110:8080/target/target-script-min.js#anonymous'></script>"
                         : "")
                 .append("</body></html>").toString();

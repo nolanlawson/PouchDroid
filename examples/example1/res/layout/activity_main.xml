@@ -10,6 +10,15 @@
     tools:context=".MainActivity" >
 
     
+    <!--  this is just to get a feel of the jankiness of the UI, since javascript normally causes this to hang -->
+    <ProgressBar 
+        android:indeterminate="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        />
+    
+    
     <ProgressBar 
         android:indeterminate="false"
         style="?android:attr/progressBarStyleHorizontal"
