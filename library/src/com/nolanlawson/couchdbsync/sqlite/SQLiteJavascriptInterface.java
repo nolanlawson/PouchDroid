@@ -179,21 +179,21 @@ public class SQLiteJavascriptInterface {
     @JavascriptInterface
     public void executeSql(final String name, final String sql, final String selectArgsJson, 
             final String querySuccessId,
-            final String transactionErrorId) {
-        log.d("executeSql(%s, %s, %s, %s, %s)", name, sql, selectArgsJson, querySuccessId, transactionErrorId);
+            final String queryErrorId) {
+        log.d("executeSql(%s, %s, %s, %s, %s)", name, sql, selectArgsJson, querySuccessId, queryErrorId);
         
         executeInBackground(new Runnable() {
 
             @Override
             public void run() {
-                executeSqlInBackground(name, sql, selectArgsJson, querySuccessId, transactionErrorId);
+                executeSqlInBackground(name, sql, selectArgsJson, querySuccessId, queryErrorId);
             }
         });
     }
 
     @SuppressLint("NewApi")
     public void executeSqlInBackground(String name, String sql, String selectArgsJson, String querySuccessId,
-            String transactionErrorId) {
+            String queryErrorId) {
         
         SQLiteDatabase db = dbs.get(name);
         try {
@@ -311,12 +311,12 @@ public class SQLiteJavascriptInterface {
         } catch (Exception e) {
             log.e(e, "unexpected");
             
-            ObjectNode r = objectMapper.createObjectNode();
+            ObjectNode sqlErrorObject = objectMapper.createObjectNode();
 
-            r.put("type", "error");
-            r.put("result", e.getMessage());
+            sqlErrorObject.put("type", "error");
+            sqlErrorObject.put("result", e.getMessage());
 
-            callback(transactionErrorId, r);
+            callback(queryErrorId, sqlErrorObject);
         }
     }
 

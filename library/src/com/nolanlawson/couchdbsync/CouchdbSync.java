@@ -52,8 +52,8 @@ public class CouchdbSync {
         initWebView();
         
         log.d("attempting to load javascript");
-        //loadJavascript("DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
-        loadJavascript("DEBUG_MODE = false;");
+        loadJavascript("DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
+        //loadJavascript("DEBUG_MODE = false;");
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb));

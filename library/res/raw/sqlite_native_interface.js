@@ -35,12 +35,13 @@ var SQLiteNativeDB;
         }
     }
 
-    var SqliteQuery = function(sql, selectArgs, queryCallback) {
+    var SqliteQuery = function(sql, selectArgs, querySuccess, queryError) {
         var self = this;
 
         self.sql = sql;
         self.selectArgs = selectArgs;
-        self.queryCallback = queryCallback;
+        self.querySuccess = querySuccess;
+        self.queryError = queryError;
     };
 
     var SqliteTransaction = function(callback, error, success, nativeDB) {
@@ -81,30 +82,69 @@ var SQLiteNativeDB;
                 fn.apply(null, arguments);
             }
 
-            var endTransactionDoneId = createCallback(function(){
-                debug('transactionId ' + self.transactionId + ': cleaning up after failure.');
-                self.nativeDB.transactionInProgress = false;
-                self.nativeDB.processNextTransaction();
-            });
-            SQLiteJavascriptInterface.endTransaction(self.nativeDB.name, endTransactionDoneId, endTransactionDoneId, false);
+            self.endAsFailure();
         };
     };
 
-    SqliteTransaction.prototype.wrapCallback = function(queryCallback) {
+    SqliteTransaction.prototype.wrapQuerySuccess = function(querySuccess) {
         var self = this;
 
         return function(transaction, payload) {
-            self.numQueriesEnded++;
-            if (queryCallback && typeof queryCallback === 'function') {
-                queryCallback(transaction, payload);
+            if (querySuccess && typeof querySuccess === 'function') {
+                querySuccess(transaction, payload);
             }
+            self.numQueriesEnded++;
+            self.runNextQueryOrEnd(); // if new queries were pushed, process those
+        };
+    };
+
+    SqliteTransaction.prototype.wrapQueryError = function(queryError) {
+        var self = this;
+
+        return function(sqlErrorObj) {
+
+            debug('running queryError');
+
+            /**
+             * Per the W3C spec:
+             *
+             * In case of error (or more specifically, if the above substeps say to jump to the "in case of error"
+             * steps), run the following substeps:
+             * 1. If the statement had an associated error callback that is not null, then queue a task to invoke that
+             *    error callback with the SQLTransaction object and a newly constructed SQLError object that represents
+             *    the error that caused these substeps to be run as the two arguments, respectively, and wait for the
+             *    task to be run.
+             * 2. If the error callback returns false, then move on to the next statement, if any, or onto the next
+             *    overall step otherwise.
+             * 3. Otherwise, the error callback did not return false, or there was no error callback. Jump to the last
+             *    step in the overall steps.
+             */
+            if (!queryError) {
+                var failedToCorrectError = queryError(self, sqlErrorObj);
+                if (failedToCorrectError) {
+                    debug('failed to correct error, entire transaction is in error');
+                    self.markTransactionInError = true;
+                } else {
+                    debug('successfully corrected error, may proceed');
+                }
+            } else {
+                debug('no fallback to correct error, entire transaction is in error');
+                self.markTransactionInError = true;
+            }
+
+            self.numQueriesEnded++;
             self.runNextQueryOrEnd(); // if new queries were pushed, process those
         };
     };
 
     SqliteTransaction.prototype.runNextQueryOrEnd = function() {
         var self = this;
-        if (self.queries.length) {
+        if (self.markTransactionInError) {
+            // ran into an error
+            debug('ending this transaction unsuccessfully for id ' + self.transactionId);
+            self.endAsFailure();
+        } else if (self.queries.length) {
+            // more queries remain
             debug('transactionId ' + self.transactionId + ': there are ' +
                 self.queries.length + '; popping one off the top...');
             var query = self.queries[0];
@@ -112,18 +152,29 @@ var SQLiteNativeDB;
             self.numQueriesStarted++;
             self.nativeDB.executeSql(query, self);
         } else {
-            // no more queries; end the transaction
+            // no more queries; end the transaction ?
             debug('transactionId ' + self.transactionId + ': there are 0 queries, self.numQueriesStarted is ' + self.numQueriesStarted +
                 ', self.numQueriesEnded is ' + self.numQueriesEnded);
-            if (self.numQueriesStarted && self.numQueriesStarted === self.numQueriesEnded) {
+            var allQueriesComplete = self.numQueriesStarted && self.numQueriesStarted === self.numQueriesEnded;
+            if (allQueriesComplete) {
                 debug('ending this transaction with id ' + self.transactionId);
-                self.end();
+                self.endAsSuccessful();
             }
-
         }
     };
 
-    SqliteTransaction.prototype.end = function() {
+    SqliteTransaction.prototype.endAsFailure = function() {
+        var self = this;
+
+        var endTransactionDoneId = createCallback(function(){
+            debug('transactionId ' + self.transactionId + ': cleaning up after failure.');
+            self.nativeDB.transactionInProgress = false;
+            self.nativeDB.processNextTransaction();
+        });
+        SQLiteJavascriptInterface.endTransaction(self.nativeDB.name, endTransactionDoneId, endTransactionDoneId, false);
+    };
+
+    SqliteTransaction.prototype.endAsSuccessful = function() {
         var self = this;
 
         var endTransactionSuccessId = createCallback(function(){
@@ -134,10 +185,13 @@ var SQLiteNativeDB;
         SQLiteJavascriptInterface.endTransaction(self.nativeDB.name, endTransactionSuccessId, self.errorId, true);
     };
 
-    SqliteTransaction.prototype.executeSql = function(sql, selectArgs, queryCallback) {
+    /**
+     * Called by users of the transaction, not us.
+     */
+    SqliteTransaction.prototype.executeSql = function(sql, selectArgs, querySuccess, queryError) {
         var self = this;
 
-        var query = new SqliteQuery(sql, selectArgs, self.wrapCallback(queryCallback));
+        var query = new SqliteQuery(sql, selectArgs, self.wrapQuerySuccess(querySuccess), self.wrapQueryError(queryError));
 
         self.queries.push(query);
 
@@ -216,15 +270,15 @@ var SQLiteNativeDB;
                 insertId: (response && response.insertId) ? response.insertId : 0
             };
 
-            debug('calling queryCallback function...');
-            query.queryCallback(transaction, payload);
-            debug('queryCallback called.');
+            debug('calling querySuccess function...');
+            query.querySuccess(transaction, payload);
+            debug('querySuccess called.');
         });
+        var queryErrorId = createCallback(query.queryError);
 
         var selectArgsAsJson = query.selectArgs ? JSON.stringify(query.selectArgs) : null;
         SQLiteJavascriptInterface.executeSql(
-            self.name, query.sql, selectArgsAsJson, querySuccessId,
-            transaction.errorId);
+            self.name, query.sql, selectArgsAsJson, querySuccessId, queryErrorId);
     };
 
     window.openDatabase = function(name, version, description, size, success) {
