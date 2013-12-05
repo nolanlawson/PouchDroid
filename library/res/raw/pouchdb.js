@@ -5361,6 +5361,7 @@ function replicate(src, target, opts, promise) {
       }
 
       // We already have all diffs passed in `diffCounts`
+      window.console.log('point 76, gonna call object.keys on ' + JSON.stringify(diffs));
       if (Object.keys(diffs).length === 0) {
         for (var docid in diffCounts) {
           pendingRevs -= diffCounts[docid];

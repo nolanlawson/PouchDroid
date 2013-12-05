@@ -1,9 +1,8 @@
 package com.nolanlawson.couchdroid.xhr;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -68,7 +67,13 @@ public class XhrJavascriptInterface {
             log.e(e, "");
         }
     }
-
+    
+    @JavascriptInterface
+    public void send(String xhrJsonObj) {
+        log.d("send()");
+        this.send(xhrJsonObj, "");
+    }
+    
     @JavascriptInterface
     public void send(String xhrJsonObj, String body) {
         log.d("send()");
@@ -102,7 +107,7 @@ public class XhrJavascriptInterface {
         HttpResponse response = client.execute(request);
 
         HttpEntity entity = response.getEntity();
-        String content = getContent(entity);
+        String content = readInput(entity.getContent());
         
         int xhrId = xhrAsJsonNode.findValue("id").asInt();
         
@@ -132,18 +137,18 @@ public class XhrJavascriptInterface {
         });
     }
 
-    private String getContent(HttpEntity entity) throws IOException {
-        InputStream content = entity.getContent();
+    private static String readInput(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte bytes[] = new byte[1024];
 
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(content));
-        StringBuilder sb = new StringBuilder();
-        while (bufferedReader.ready()) {
-            sb.append(bufferedReader.readLine()).append("\n");
+        int n = in.read(bytes);
+
+        while (n != -1) {
+            out.write(bytes, 0, n);
+            n = in.read(bytes);
         }
-        
-        log.d("content is %s", sb);
-        
-        return sb.toString();
+
+        return new String(out.toString());
     }
 
     private static HttpUriRequest createRequest(String method, String url) {

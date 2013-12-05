@@ -58,22 +58,51 @@ public class CouchDroid {
         int idx = sqliteDatabase.getPath().lastIndexOf('/');
         
         this.dbName = sqliteDatabase.getPath().substring(idx + 1);
+        
+        
+        this.listener = wrapListener();
     }
     
+    private CouchDroidProgressListener wrapListener() {
+        // override the client listener to add out own
+        final CouchDroidProgressListener originalListener = this.listener;
+        
+        return new CouchDroidProgressListener(){
+
+            @Override
+            public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
+                log.d("progress: (%s, %s, %s, %s", type, tableName, numRowsTotal, numRowsLoaded);
+                if (originalListener != null) {
+                    originalListener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
+                }
+                
+                if (type == ProgressType.Copy && numRowsLoaded == numRowsTotal) {
+                    replicate();
+                }
+            }
+        };
+    }
+    
+    private void replicate() {
+        loadJavascript(new StringBuilder("window.pouchDBHelper.syncAll(function(){});")
+                .toString());
+        
+    }
+
     public void start() {
         initWebView();
         
         log.d("attempting to load javascript");
-        loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
-        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
-        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
-        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.xhr_native_interface));
-        loadJavascript(
-                ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
-                .replaceAll("XMLHttpRequest", "NativeXMLHttpRequest"));
-        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper));
-        loadJavascript("window.console.log('PouchDB is: ' + typeof PouchDB)");
-        loadJavascript("window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper)");
+        loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";" 
+         + ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims)
+         + ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface)
+         + ResourceUtil.loadTextFile(activity, R.raw.xhr_native_interface)
+         +      (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
+                .replaceAll("XMLHttpRequest", "NativeXMLHttpRequest"))
+         + ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper)
+         + "window.console.log('PouchDB is: ' + typeof PouchDB);"
+         + "window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper);"
+        );
         
         migrateSqliteTables();
         
@@ -181,7 +210,7 @@ public class CouchDroid {
                     internalPouchdbName.append("_").append(dbId);
                 }
                 
-                loadJavascriptWrapped(new StringBuilder()
+                loadJavascript(new StringBuilder()
                     .append("window.pouchDBHelper = new PouchDBHelper(")
                     .append(objectMapper.writeValueAsString(internalPouchdbName))
                     .append(",")
@@ -217,7 +246,7 @@ public class CouchDroid {
             private CharSequence createReportProgressCallback(int offset, int totalNumRows,
                     SqliteTable sqliteTable) throws IOException {
                 return new StringBuilder()
-                        .append(",function(numLoaded){SQLiteJavascriptInterface.reportProgress(")
+                        .append(",function(numLoaded){ProgressReporter.reportProgress(")
                         .append(objectMapper.writeValueAsString(ProgressType.Copy.name()))
                         .append(",")
                         .append(objectMapper.writeValueAsString(sqliteTable.getName()))
@@ -239,7 +268,7 @@ public class CouchDroid {
                         .append(");");
                 
                 log.d("javascript is: %s", js);
-                loadJavascriptWrapped(js);
+                loadJavascript(js);
             }
 
             @Override
@@ -383,14 +412,6 @@ public class CouchDroid {
         }
     }
     
-    private void loadJavascriptWrapped(CharSequence javascript) {
-        
-        loadJavascript(new StringBuilder()
-                .append("(function(){")
-                .append(javascript)
-                .append("})();"));
-    }
-
     private void loadJavascript(final CharSequence javascript) {
         webView.post(new Runnable() {
             
@@ -425,10 +446,10 @@ public class CouchDroid {
         webView.setWebChromeClient(new MyWebChromeClient());
         
         sqliteJavascriptInterface = new SQLiteJavascriptInterface(activity, webView);
-        sqliteJavascriptInterface.setProgressListener(listener);
         
         webView.addJavascriptInterface(sqliteJavascriptInterface, "SQLiteJavascriptInterface");
         webView.addJavascriptInterface(new XhrJavascriptInterface(webView), "XhrJavascriptInterface");
+        webView.addJavascriptInterface(new ProgressReporter(activity, listener), "ProgressReporter");
         
         String html = new StringBuilder("<html><body>")
                 .append(USE_WEINRE

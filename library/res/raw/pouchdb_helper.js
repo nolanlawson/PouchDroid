@@ -80,7 +80,7 @@ var PouchDBHelper;
 
     };
 
-    PouchDBHelper.prototype.syncAll = function() {
+    PouchDBHelper.prototype.syncAll = function(onComplete) {
         var self = this;
 
         debug('syncAll()');
@@ -88,13 +88,20 @@ var PouchDBHelper;
         function complete(err, response){
             debug('complete, with err: ' + JSON.stringify(err));
             debug('complete, with response: ' + JSON.stringify(response));
+            if (onComplete && typeof onComplete === 'function') {
+                onComplete();
+            }
         }
 
         function onChange(change) {
             debug('onChange, with change: ' + JSON.stringify(change));
         }
 
-        var response = self.db.replicate.to(self.couchdbUrl, {complete : complete, onChange: onChange, continuous : true});
+        var response = self.db.replicate.to(self.couchdbUrl, {
+            complete : complete,
+            onChange: onChange,
+            continuous : false
+        });
 
         debug('called replicate, got response: ' + JSON.stringify(response));
     };
