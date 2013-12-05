@@ -44,7 +44,7 @@ var PouchDBHelper;
             var uuid = compressedDocs.uuids[i];
             var content = {};
             for (var j = 0, jLen = compressedDocs.columns.length; j < jLen; j++) {
-                var column = compressedDocs.columns[i];
+                var column = compressedDocs.columns[j];
                 var value = compressedDoc[j];
                 content[column] = value;
             }
