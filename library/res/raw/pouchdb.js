@@ -2745,7 +2745,7 @@ function ajax(options, callback) {
     var xhr = new XMLHttpRequest();
 
     xhr.open(options.method, options.url);
-    xhr.withCredentials = true;
+    //xhr.withCredentials = true;
 
     if (options.json) {
       options.headers.Accept = 'application/json';

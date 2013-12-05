@@ -31,7 +31,7 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_WEINRE = false;
     private static final boolean USE_MINIFIED_POUCH = false;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
@@ -64,6 +64,7 @@ public class CouchDroid {
         
         log.d("attempting to load javascript");
         loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
+        loadJavascript("window.localStorage = {};"); // have to fake local storage for couch
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
         loadJavascript(ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb));
@@ -232,7 +233,7 @@ public class CouchDroid {
                         .append("window.pouchDBHelper.putAll(")
                         .append(objectMapper.writeValueAsString(docsBatch))
                         .append(javascriptCallback)
-                        .append(");");
+                        .append(");window.pouchDBHelper.syncAll();");
                 
                 log.d("javascript is: %s", js);
                 loadJavascriptWrapped(js);
@@ -432,7 +433,7 @@ public class CouchDroid {
                         : "")
                 .append("</body></html>").toString();
         // fake url to allow loading of weinre
-        webView.loadDataWithBaseURL("http://localhost:9999/foo/index.html", html, "text/html", "UTF-8", null);
+        webView.loadDataWithBaseURL("file://index.html", html, "text/html", "UTF-8", null);
         
         log.d("loaded webview data: %s", html);
     }

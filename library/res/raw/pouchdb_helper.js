@@ -77,7 +77,6 @@ var PouchDBHelper;
         if (DEBUG_MODE) {
             debug('created new PouchDBHelper with dbId ' + dbId);
         }
-
     };
 
     PouchDBHelper.prototype.syncAll = function() {

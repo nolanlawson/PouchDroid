@@ -20,7 +20,7 @@ import com.nolanlawson.couchdroid.CouchDroidProgressListener;
 
 public class MainActivity extends Activity implements CouchDroidProgressListener {
     
-    private static final String COUCHDB_URL = "http://admin:password@192.168.0.3:5984/pokemon";
+    private static final String COUCHDB_URL = "http://192.168.0.5:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     
