@@ -79,15 +79,23 @@ public class XhrJavascriptInterface {
         log.d("send()");
         try {
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
-
-            send(xhrAsJsonNode, body);
-
+    
+            int xhrId = xhrAsJsonNode.findValue("id").asInt();
+            
+            try {    
+                send(xhrAsJsonNode, xhrId, body);
+    
+            } catch (IOException e) {
+                log.e(e, "");
+                callback(xhrId, 500, "Internal Java error");
+            }
         } catch (IOException e) {
-            log.e(e, "");
+            log.e(e, "uncatchable exception");
+            // TODO: what to do?
         }
     }
 
-    private void send(JsonNode xhrAsJsonNode, String body) throws IOException {
+    private void send(JsonNode xhrAsJsonNode, int xhrId, String body) throws IOException {
 
         Map<String, String> requestHeaders = objectMapper.readValue(
                 xhrAsJsonNode.findValue("requestHeaders"), new TypeReference<HashMap<String,String>>(){});
@@ -108,8 +116,6 @@ public class XhrJavascriptInterface {
 
         HttpEntity entity = response.getEntity();
         String content = readInput(entity.getContent());
-        
-        int xhrId = xhrAsJsonNode.findValue("id").asInt();
         
         callback(xhrId, response.getStatusLine().getStatusCode(), content);
     }

@@ -89,15 +89,15 @@ var PouchDBHelper;
         debug('syncAll()');
 
         function complete(err, response){
-            debug('complete, with err: ' + JSON.stringify(err));
-            debug('complete, with response: ' + JSON.stringify(response));
+            window.console.log('complete, with err: ' + JSON.stringify(err));
+            window.console.log('complete, with response: ' + JSON.stringify(response));
             if (onComplete && typeof onComplete === 'function') {
                 onComplete();
             }
         }
 
         function onChange(change) {
-            debug('onChange, with change: ' + JSON.stringify(change));
+            window.console.log('onChange, with change: ' + JSON.stringify(change));
         }
 
         var response = self.db.replicate.to(self.couchdbUrl, {

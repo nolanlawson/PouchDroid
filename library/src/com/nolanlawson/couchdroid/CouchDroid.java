@@ -32,9 +32,11 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final boolean USE_WEINRE = false;
+    private static final int WEBVIEW_ID = 249746602;
+    
+    private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
-    private static final String WEINRE_URL = "http://192.168.0.3:8080";
+    private static final String WEINRE_URL = "http://192.168.10.110:8080";
     
     private static final int BATCH_SIZE = 100;
     
@@ -59,10 +61,10 @@ public class CouchDroid {
         
         this.dbName = sqliteDatabase.getPath().substring(idx + 1);
         
-        this.listener = wrapListener();
+        this.listener = wrapClientListener();
     }
     
-    private CouchDroidProgressListener wrapListener() {
+    private CouchDroidProgressListener wrapClientListener() {
         // override the client listener to add out own
         
         return new CouchDroidProgressListener(){
@@ -421,9 +423,13 @@ public class CouchDroid {
     
     @SuppressLint("NewApi")
     private void initWebView() {
-        webView = new WebView(activity);
-        webView.setVisibility(View.GONE);
+        
         ViewGroup viewGroup = (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
+        
+        webView = new WebView(activity);
+        webView.setId(WEBVIEW_ID);
+        webView.setVisibility(View.GONE);
+    
         viewGroup.addView(webView);
         
         webView.getSettings().setJavaScriptEnabled(true);

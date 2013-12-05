@@ -7,8 +7,10 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -153,7 +155,7 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
         
         SQLiteDatabase sqliteDatabase = null; 
         try {
-            sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
+            sqliteDatabase = getDatabase(dbName);
             
             Cursor cursor = null;
             try {
@@ -170,6 +172,22 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
         } finally {
             if (sqliteDatabase != null) {
                 sqliteDatabase.close();
+            }
+        }
+    }
+    
+    private SQLiteDatabase getDatabase(String dbName) {
+        while (true) {
+            try{
+                return openOrCreateDatabase(dbName, 0, null);
+            } catch (SQLiteDatabaseLockedException e) {
+                Log.e("MainActivity", "database locked", e);
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+                // ignore
             }
         }
     }
