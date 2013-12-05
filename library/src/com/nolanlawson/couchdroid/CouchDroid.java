@@ -32,8 +32,8 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final boolean USE_WEINRE = true;
-    private static final boolean USE_MINIFIED_POUCH = false;
+    private static final boolean USE_WEINRE = false;
+    private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     private static final int BATCH_SIZE = 100;
@@ -43,12 +43,12 @@ public class CouchDroid {
     private ObjectMapper objectMapper = new ObjectMapper();
     private WebView webView;
     private SQLiteDatabase sqliteDatabase;
-    private String dbId;
     private String userId;
     private String couchdbUrl;
     private String dbName;
     private SQLiteJavascriptInterface sqliteJavascriptInterface;
     private CouchDroidProgressListener listener;
+    private CouchDroidProgressListener clientListener;
     
     private CouchDroid(Activity activity, SQLiteDatabase sqliteDatabase) {
         this.activity = activity;
@@ -59,24 +59,23 @@ public class CouchDroid {
         
         this.dbName = sqliteDatabase.getPath().substring(idx + 1);
         
-        
         this.listener = wrapListener();
     }
     
     private CouchDroidProgressListener wrapListener() {
         // override the client listener to add out own
-        final CouchDroidProgressListener originalListener = this.listener;
         
         return new CouchDroidProgressListener(){
 
             @Override
             public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
-                log.d("progress: (%s, %s, %s, %s", type, tableName, numRowsTotal, numRowsLoaded);
-                if (originalListener != null) {
-                    originalListener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
+                log.i("progress: (%s, %s, %s, %s)", type, tableName, numRowsTotal, numRowsLoaded);
+                if (clientListener != null) {
+                    clientListener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
                 }
                 
                 if (type == ProgressType.Copy && numRowsLoaded == numRowsTotal) {
+                    log.d("replicating...");
                     replicate();
                 }
             }
@@ -84,9 +83,7 @@ public class CouchDroid {
     }
     
     private void replicate() {
-        loadJavascript(new StringBuilder("window.pouchDBHelper.syncAll(function(){});")
-                .toString());
-        
+        loadJavascript(new StringBuilder("window.pouchDBHelper.syncAll(function(){});").toString());
     }
 
     public void start() {
@@ -144,12 +141,9 @@ public class CouchDroid {
                 
                 int offset = 0;
                 
-                int totalNumRows = listener != null ? countNumRows(sqliteTable) : 0;
+                int totalNumRows = countNumRows(sqliteTable);
                 
-                if (listener != null) {
-                    notifyListenerAtZero(sqliteTable, totalNumRows);
-                }
-
+                notifyListenerAtZero(sqliteTable, totalNumRows);
                 
                 initPouchDBHelper();
                 
@@ -168,6 +162,8 @@ public class CouchDroid {
                     
                     ObjectNode batch = objectMapper.createObjectNode();
                     batch.put("table", sqliteTable.getName());
+                    batch.put("sqliteDB", dbName);
+                    batch.put("appPackage", activity.getPackageName());
                     batch.put("user", userId);
                     ArrayNode columns = batch.putArray("columns");
                     
@@ -183,9 +179,7 @@ public class CouchDroid {
                         break;
                     }
 
-                    CharSequence javascriptCallback = listener != null 
-                            ? createReportProgressCallback(offset, totalNumRows, sqliteTable)
-                            : "";
+                    CharSequence javascriptCallback = createReportProgressCallback(offset, totalNumRows, sqliteTable);
                     
                     log.d("loadBatchIntoPouchdb: %s docs", documents.size());
                     loadBatchIntoPouchdb(batch, javascriptCallback);
@@ -205,10 +199,9 @@ public class CouchDroid {
                 StringBuilder internalPouchdbName = new StringBuilder()
                     .append(activity.getPackageName())
                     .append("_")
-                    .append(userId);
-                if (dbId != null) {
-                    internalPouchdbName.append("_").append(dbId);
-                }
+                    .append(userId)
+                    .append("_")
+                    .append(dbName);
                 
                 loadJavascript(new StringBuilder()
                     .append("window.pouchDBHelper = new PouchDBHelper(")
@@ -506,16 +499,6 @@ public class CouchDroid {
         }
         
         /**
-         * Set a unique id, else we'll just use one package-wide id.
-         * @param id
-         * @return
-         */
-        public Builder setDatabaseId(String id) {
-            couchdbSync.dbId = id;
-            return this;
-        }
-        
-        /**
          * Set a unique userId.  It's required, so that you can properly set up CouchDB to enforce read-only/write-only
          * access for documents (see the README.md for details).
          * 
@@ -548,7 +531,7 @@ public class CouchDroid {
          * @return
          */
         public Builder setProgressListener(CouchDroidProgressListener listener) {
-            couchdbSync.listener = listener;
+            couchdbSync.clientListener = listener;
             return this;
         }
         

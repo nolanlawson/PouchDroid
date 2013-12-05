@@ -33,6 +33,7 @@ var PouchDBHelper;
          * {
          *  table : "MyTable",
          *  user: "Bobby B",
+         *  ...
          *  columns : ["id", "name", "date", ...],
          *  uuids:['foo','bar','baz'...],
          *  docs : [[..values...], [...values...]...]
@@ -50,8 +51,10 @@ var PouchDBHelper;
             }
             var doc = {
                 _id : uuid,
-                table : compressedDocs.table,
-                user  : compressedDocs.user,
+                table       : compressedDocs.table,
+                user        : compressedDocs.user,
+                sqliteDB    : compressedDocs.sqliteDB,
+                appPackage  : compressedDocs.appPackage,
                 content : content
             };
 
