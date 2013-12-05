@@ -31,8 +31,8 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final boolean USE_WEINRE = false;
-    private static final boolean USE_MINIFIED_POUCH = true;
+    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_MINIFIED_POUCH = false;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     private static final int BATCH_SIZE = 100;
@@ -411,6 +411,8 @@ public class CouchDroid {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDatabaseEnabled(true); // we're overriding websql, but we still need to set this
         webView.getSettings().setDomStorageEnabled(true); // pouch needs to call localStorage for some reason
+        webView.getSettings().setAllowContentAccess(true);
+        webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
         
         if (UtilLogger.DEBUG_MODE) {    
             webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
@@ -430,7 +432,7 @@ public class CouchDroid {
                         : "")
                 .append("</body></html>").toString();
         // fake url to allow loading of weinre
-        webView.loadDataWithBaseURL("http://localhost:9340",html, "text/html", "UTF-8", "http://localhost:9340");
+        webView.loadDataWithBaseURL("http://localhost:9999/foo/index.html", html, "text/html", "UTF-8", null);
         
         log.d("loaded webview data: %s", html);
     }
