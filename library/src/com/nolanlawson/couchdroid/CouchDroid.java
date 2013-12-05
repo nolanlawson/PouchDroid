@@ -25,6 +25,7 @@ import com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface;
 import com.nolanlawson.couchdroid.util.ResourceUtil;
 import com.nolanlawson.couchdroid.util.SqliteUtil;
 import com.nolanlawson.couchdroid.util.UtilLogger;
+import com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class CouchDroid {
@@ -66,7 +67,10 @@ public class CouchDroid {
         loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";");
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface));
-        loadJavascript(ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb));
+        loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.xhr_native_interface));
+        loadJavascript(
+                ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
+                .replaceAll("XMLHttpRequest", "NativeXMLHttpRequest"));
         loadJavascript(ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper));
         loadJavascript("window.console.log('PouchDB is: ' + typeof PouchDB)");
         loadJavascript("window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper)");
@@ -424,7 +428,7 @@ public class CouchDroid {
         sqliteJavascriptInterface.setProgressListener(listener);
         
         webView.addJavascriptInterface(sqliteJavascriptInterface, "SQLiteJavascriptInterface");
-        
+        webView.addJavascriptInterface(new XhrJavascriptInterface(webView), "XhrJavascriptInterface");
         
         String html = new StringBuilder("<html><body>")
                 .append(USE_WEINRE
@@ -432,7 +436,7 @@ public class CouchDroid {
                         : "")
                 .append("</body></html>").toString();
         // fake url to allow loading of weinre
-        webView.loadDataWithBaseURL("http://localhost:9999/foo/index.html", html, "text/html", "UTF-8", null);
+        webView.loadDataWithBaseURL("http://localhost:9362", html, "text/html", "UTF-8", null);
         
         log.d("loaded webview data: %s", html);
     }

@@ -974,6 +974,7 @@ function HttpPouch(opts, callback) {
       url: genDBUrl(host, '_revs_diff'),
       body: req
     }, function (err, res) {
+        window.console.log('point 40, callback is: ' + callback);
       PouchUtils.call(callback, err, res);
     });
   };
@@ -1791,7 +1792,9 @@ function IdbPouch(opts, callback) {
     }
 
     function onsuccess(event) {
+        window.console.log('point 12');
       if (!event.target.result) {
+          window.console.log('point 13');
         // Filter out null results casued by deduping
         for (var i = 0, l = results.length; i < l; i++) {
           var result = results[i];
@@ -1801,6 +1804,7 @@ function IdbPouch(opts, callback) {
         }
         return false;
       }
+        window.console.log('point 14');
 
       var cursor = event.target.result;
 
@@ -1815,7 +1819,7 @@ function IdbPouch(opts, callback) {
         resultIndices[changeId] = results.length - 1;
         return cursor['continue']();
       }
-
+        window.console.log('point 15');
       var index = txn.objectStore(DOC_STORE);
       index.get(cursor.value._id).onsuccess = function (event) {
         var metadata = event.target.result;
@@ -1826,6 +1830,7 @@ function IdbPouch(opts, callback) {
         if (last_seq < metadata.seq) {
           last_seq = metadata.seq;
         }
+          window.console.log('point 16');
 
         var mainRev = PouchMerge.winningRev(metadata);
         var key = metadata.id + "::" + mainRev;
@@ -2714,29 +2719,41 @@ function ajax(options, callback) {
 
 
   function onSuccess(obj, resp, cb){
+      window.console.log('point 20, obj is ' + obj);
     if (!options.binary && !options.json && options.processData &&
         typeof obj !== 'string') {
+        window.console.log('point 21');
       obj = JSON.stringify(obj);
     } else if (!options.binary && options.json && typeof obj === 'string') {
+        window.console.log('point 22');
       try {
+          window.console.log('point 24');
         obj = JSON.parse(obj);
       } catch (e) {
         // Probably a malformed JSON from server
+          window.console.log('point 25');
         call(cb, e);
         return;
       }
     }
+      window.console.log('point 26');
     call(cb, null, obj, resp);
   };
 
   function onError(err, cb){
+      window.console.log('point 30');
     var errParsed;
     var errObj = {status: err.status};
+      window.console.log('point 31');
     try {
+        window.console.log('point 32');
       errParsed = JSON.parse(err.responseText);
+        window.console.log('point 33');
       //would prefer not to have a try/catch clause
       errObj = extend(true, {}, errObj, errParsed);
+        window.console.log('point 34');
     } catch(e) {}
+      window.console.log('point 35, callback is: ' + cb + ', errObj is: ' + JSON.stringify(errObj));
     call(cb, errObj);
   };
 
@@ -2791,21 +2808,34 @@ function ajax(options, callback) {
     };
 
     xhr.onreadystatechange = function () {
+        window.console.log('point 1');
       if (xhr.readyState !== 4 || timedout) {
+          window.console.log('point 2');
         return;
       }
+        window.console.log('point 3');
       clearTimeout(timer);
+        window.console.log('point 4');
       if (xhr.status >= 200 && xhr.status < 300) {
+          window.console.log('point 5');
         var data;
         if (options.binary) {
+            window.console.log('point 6');
           data = createBlob([xhr.response || ''], {
             type: xhr.getResponseHeader('Content-Type')
           });
+            window.console.log('point 7');
         } else {
+            window.console.log('point 8');
           data = xhr.responseText;
+            window.console.log('point 9');
         }
+          window.console.log('point 9, data is ' + data);
+          window.console.log('point 9, onsuccess is ' + onSuccess);
         call(onSuccess, data, xhr, callback);
+          window.console.log('point 10');
       } else {
+          window.console.log('point 11, callback is: ' + onError);
          call(onError, xhr, callback);
       }
     };
@@ -5190,20 +5220,27 @@ function RequestManager(promise) {
 
   // Process the next request
   api.process = function () {
+      window.console.log('point 60');
     if (processing || !queue.length || promise.cancelled) {
+        window.console.log('point 61');
       return;
     }
     processing = true;
     var task = queue.shift();
+      window.console.log('point 61, task.fun is ' + task.fun +' and task.args are '+ JSON.stringify(task.args));
+
     task.fun.apply(null, task.args);
   };
 
   // We need to be notified whenever a request is complete to process
   // the next request
   api.notifyRequestComplete = function () {
+      window.console.log('point 50');
     processing = false;
     api.process();
   };
+
+    window.console.log('point 62');
 
   return api;
 }
@@ -5254,6 +5291,7 @@ function writeCheckpoint(src, target, id, checkpoint, callback) {
 function replicate(src, target, opts, promise) {
 
   var requests = new RequestManager(promise);
+    window.console.log('point 70');
   var writeQueue = [];
   var repId = genReplicationId(src, target, opts);
   var results = [];
@@ -5269,7 +5307,10 @@ function replicate(src, target, opts, promise) {
     docs_written: 0
   };
 
+    window.console.log('point 71');
+
   function docsWritten(err, res, len) {
+      window.console.log('point 72');
     if (opts.onChange) {
       for (var i = 0; i < len; i++) {
         /*jshint validthis:true */
@@ -5286,6 +5327,7 @@ function replicate(src, target, opts, promise) {
   }
 
   function writeDocs() {
+      window.console.log('point 73');
     if (!writeQueue.length) {
       return requests.notifyRequestComplete();
     }
@@ -5297,6 +5339,7 @@ function replicate(src, target, opts, promise) {
   }
 
   function eachRev(id, rev) {
+      window.console.log('point 74');
     src.get(id, {revs: true, rev: rev, attachments: true}, function (err, doc) {
       result.docs_read++;
       requests.notifyRequestComplete();
@@ -5306,6 +5349,7 @@ function replicate(src, target, opts, promise) {
   }
 
   function onRevsDiff(diffCounts) {
+      window.console.log('point 75');
     return function (err, diffs) {
       requests.notifyRequestComplete();
       if (err) {
@@ -5338,10 +5382,12 @@ function replicate(src, target, opts, promise) {
   }
 
   function fetchRevsDiff(diff, diffCounts) {
+      window.console.log('point 76');
     target.revsDiff(diff, onRevsDiff(diffCounts));
   }
 
   function onChange(change) {
+      window.console.log('point 77');
     last_seq = change.seq;
     results.push(change);
     var diff = {};
@@ -5353,11 +5399,13 @@ function replicate(src, target, opts, promise) {
   }
 
   function complete() {
+      window.console.log('point 78');
     completed = true;
     isCompleted();
   }
 
   function isCompleted() {
+      window.console.log('point 79');
     if (completed && pendingRevs === 0) {
       result.end_time = new Date();
       PouchUtils.call(opts.complete, null, result);
@@ -5365,6 +5413,7 @@ function replicate(src, target, opts, promise) {
   }
 
   fetchCheckpoint(src, target, repId, function (err, checkpoint) {
+      window.console.log('point 80');
 
     if (err) {
       return PouchUtils.call(opts.complete, err);

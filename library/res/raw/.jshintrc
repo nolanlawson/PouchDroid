@@ -20,6 +20,7 @@
   "globals": {
     "PouchDB" : true,
     "SQLiteJavascriptInterface" : true,
+    "XhrJavascriptInterface" : true,
     "DEBUG_MODE" : true
   }
 }
