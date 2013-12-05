@@ -25,7 +25,26 @@ public class WebSqlTransaction {
         this.successId = successId;
         this.errorId = errorId;
     }
-    
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    public void setTransactionId(int transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public void setSuccessId(String successId) {
+        this.successId = successId;
+    }
+
+    public void setErrorId(String errorId) {
+        this.errorId = errorId;
+    }
+
+    public void setQueries(LinkedBlockingQueue<WebSqlQuery> queries) {
+        this.queries = queries;
+    }
+
     public boolean isMarkAsSuccessful() {
         return markAsSuccessful;
     }

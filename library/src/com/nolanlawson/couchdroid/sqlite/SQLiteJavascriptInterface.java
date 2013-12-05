@@ -162,6 +162,7 @@ public class SQLiteJavascriptInterface {
             WebSqlTransaction transaction = findTransactionById(transactionId);
             transaction.setMarkAsSuccessful(markAsSuccessful);
             transaction.setShouldEnd(true);
+            transaction.setSuccessId(successId);
             doUnitOfSqliteWork();
         } catch (Exception e) {
             log.e(e, "unexpected");
@@ -472,29 +473,25 @@ public class SQLiteJavascriptInterface {
         
         WebSqlTransaction transaction;
         
-        synchronized (transactions) {
-            transaction = transactions.peek();
-            
-            if (transaction == null) {
-                log.d("no transactions!");
-                return; // nothing to do
-            }
+        transaction = transactions.peek();
+        
+        if (transaction == null) {
+            log.d("doUnitOfSqliteWork: no transactions!");
+            return; // nothing to do
         }
         
         // end the transaction
         if (transaction.isShouldEnd()) {
-            log.d("ending transaction %s", transaction.getTransactionId());
+            log.d("doUnitOfSqliteWork: end transaction %s", transaction.getTransactionId());
             endTransaction(transaction);
-            synchronized (transactions) {
-                transactions.remove(transaction);
-            }
+            transactions.remove(transaction);
             doUnitOfSqliteWork(); //run the next transaction, if there is one (TODO: ugly)
             return;
         }
         
         // start the transaction
         if (!transaction.isBegun()) {
-            log.d("beginning transaction %s", transaction.getTransactionId());
+            log.d("doUnitOfSqliteWork: end transaction %s", transaction.getTransactionId());
             try {
                 SQLiteDatabase db = dbs.get(transaction.getDbName());
                 synchronized (db) {
@@ -508,12 +505,19 @@ public class SQLiteJavascriptInterface {
         }
         
         // execute one query for the transaction;
-        log.d("executing queries for transaction %s", transaction.getTransactionId());
+        log.d("doUnitOfSqliteWork: executing queries for transaction %s", transaction.getTransactionId());
         
-        WebSqlQuery webSqlQuery = transaction.getQueries().poll();
-        if (webSqlQuery != null) {
+        WebSqlQuery webSqlQuery = null;
+        List<JavascriptCallback> callbacks = null;
+        while ((webSqlQuery = transaction.getQueries().poll()) != null) {
             JavascriptCallback callback = execute(webSqlQuery, transaction);
-            sendCallback(callback);
+            if (callbacks == null) {
+                callbacks = new ArrayList<JavascriptCallback>();
+            }
+            callbacks.add(callback);
+        }
+        if (callbacks != null) {
+            sendCallback(callbacks);
         }
     }
 }

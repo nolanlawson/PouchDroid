@@ -181,7 +181,7 @@ public class CouchDroid {
                     internalPouchdbName.append("_").append(dbId);
                 }
                 
-                loadJavascript(new StringBuilder()
+                loadJavascriptWrapped(new StringBuilder()
                     .append("window.pouchDBHelper = new PouchDBHelper(")
                     .append(objectMapper.writeValueAsString(internalPouchdbName))
                     .append(",")
