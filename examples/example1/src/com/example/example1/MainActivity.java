@@ -134,6 +134,11 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
     @Override
     public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
         
+        if (type == ProgressType.Sync) {
+            text.setText(text.getText() + "\nDatabase synced as well!");
+            return;
+        }
+        
         progress.setMax(numRowsTotal);
         progress.setProgress(numRowsLoaded);
         StringBuilder textContent = new StringBuilder();

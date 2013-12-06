@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -76,7 +78,14 @@ public class CouchDroidMigrationTask {
     }
     
     private void replicate() {
-        runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBHelper.syncAll(function(){});").toString());
+        try {
+            runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBHelper.syncAll(")
+            .append(createFinalReportProgressJs())
+            .append(");"));
+        } catch (IOException e) {
+            // should not happen
+            log.e(e, "unexpected");
+        }
     }
 
     /*
@@ -181,6 +190,13 @@ public class CouchDroidMigrationTask {
         
     }
     
+    private CharSequence createFinalReportProgressJs() throws IOException {
+        return new StringBuilder()
+            .append("function(){ProgressReporter.reportProgress(")
+            .append(objectMapper.writeValueAsString(ProgressType.Sync.name()))
+            .append(",null, 0, 0);}");
+    }
+    
     private CharSequence createInitReportProgressJs(SqliteTable sqliteTable, int totalNumRows) throws IOException {
         
         return new StringBuilder()
@@ -197,7 +213,7 @@ public class CouchDroidMigrationTask {
     private CharSequence createReportProgressJs(SqliteTable sqliteTable, int totalNumRows, int numRowsLoaded) 
             throws IOException {
         return new StringBuilder()
-                .append(",function(numLoaded){ProgressReporter.reportProgress(")
+                .append("function(numLoaded){ProgressReporter.reportProgress(")
                 .append(objectMapper.writeValueAsString(ProgressType.Copy.name()))
                 .append(",")
                 .append(objectMapper.writeValueAsString(sqliteTable.getName()))
@@ -209,13 +225,14 @@ public class CouchDroidMigrationTask {
     }
 
     private void loadBatchIntoPouchdb(ObjectNode docsBatch,
-            CharSequence javascriptCallback) throws IOException {
+            CharSequence reportProgress) throws IOException {
 
         // call the PouchDBHelper, set the db id, load the documents
         StringBuilder js = new StringBuilder()
                 .append("CouchDroid.pouchDBHelper.putAll(")
                 .append(objectMapper.writeValueAsString(docsBatch))
-                .append(javascriptCallback)
+                .append(",")
+                .append(reportProgress)
                 .append(");");
         
         log.d("javascript is: %s", js);
