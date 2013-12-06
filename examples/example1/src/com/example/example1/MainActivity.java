@@ -14,17 +14,19 @@ import android.widget.TextView;
 
 import com.example.example1.data.PocketMonster;
 import com.example.example1.data.PocketMonsterHelper;
-import com.nolanlawson.couchdroid.CouchDroid;
+import com.nolanlawson.couchdroid.CouchDroidMigrationTask;
+import com.nolanlawson.couchdroid.CouchDroidRuntime;
+import com.nolanlawson.couchdroid.CouchDroidRuntime.OnReadyListener;
 import com.nolanlawson.couchdroid.CouchDroidProgressListener;
 
-public class MainActivity extends Activity implements CouchDroidProgressListener {
+public class MainActivity extends Activity implements CouchDroidProgressListener, OnReadyListener {
     
     private static final String COUCHDB_URL = "http://admin:password@192.168.10.110:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
     
-    private CouchDroid couchdbSync;
+    private CouchDroidRuntime couchDroidRuntime;
     private SQLiteDatabase sqliteDatabase;
     private long startTime;
     
@@ -52,24 +54,32 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
         sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
         
         loadPokemonData(sqliteDatabase);
-        couchdbSync = CouchDroid.Builder.create(this, sqliteDatabase)
-                .setUserId("fooUser")
-                .setCouchdbUrl(COUCHDB_URL)
-                .addSqliteTable("Monsters", "uniqueId")
-                .setProgressListener(this)
-                .build();
         
-        couchdbSync.start();
+        
+        couchDroidRuntime = new CouchDroidRuntime(this, this);
+        
         startTime = System.currentTimeMillis();
         progress.setProgress(0);
         progressIndeterminate.setVisibility(View.VISIBLE);
+    }
+    
+    @Override
+    public void onReady(CouchDroidRuntime runtime) {
+        
+        new CouchDroidMigrationTask.Builder(runtime, sqliteDatabase)
+            .setUserId("fooUser")
+            .setCouchdbUrl(COUCHDB_URL)
+            .addSqliteTable("Monsters", "uniqueId")
+            .setProgressListener(MainActivity.this)             
+            .build()
+            .start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (couchdbSync != null) {
-            couchdbSync.close();
+        if (couchDroidRuntime != null) {
+            couchDroidRuntime.close();
         }
         if (sqliteDatabase != null) {
             sqliteDatabase.close();

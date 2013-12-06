@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid;
+package com.nolanlawson.couchdroid.migration;
 
 import java.util.List;
 

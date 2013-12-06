@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid;
+package com.nolanlawson.couchdroid.migration;
 
 public class SqliteColumn {
     

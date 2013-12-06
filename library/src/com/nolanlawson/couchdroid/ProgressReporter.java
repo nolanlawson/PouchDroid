@@ -22,6 +22,8 @@ public class ProgressReporter {
     public void reportProgress(final String type, final String tableName, final int numRowsTotal, 
             final int numRowsLoaded) {
         
+        log.d("reportProgress(%s, %s, %s, %s)", type, tableName, numRowsTotal, numRowsLoaded);
+        
         if (listener == null) {
             return;
         }
