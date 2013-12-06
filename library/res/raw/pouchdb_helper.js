@@ -74,7 +74,8 @@ var PouchDBHelper;
         try {
             self.db = new PouchDB(dbId);
         } catch (err) {
-            debug('ERROR: ' + JSON.stringify(err));
+            debug('ERROR from new PouchDB(): ' + JSON.stringify(err));
+            throw err;
         }
 
         if (DEBUG_MODE) {

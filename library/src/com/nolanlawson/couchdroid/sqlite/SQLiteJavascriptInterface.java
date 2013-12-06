@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.PriorityQueue;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -45,9 +45,10 @@ public class SQLiteJavascriptInterface {
     
     private final Map<String, BasicSQLiteOpenHelper> dbs = new HashMap<String, BasicSQLiteOpenHelper>();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final LinkedBlockingQueue<WebSqlTransaction> transactions = new LinkedBlockingQueue<WebSqlTransaction>();
+    private final PriorityQueue<WebSqlTask> queue = new PriorityQueue<WebSqlTask>();
     
-
+    private int currentTransactionId = -1;
+    
     public SQLiteJavascriptInterface(Activity activity, WebView webView) {
         this.activity = activity;
         this.webView = webView;
@@ -110,17 +111,12 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void startTransaction(int transactionId, final String dbName, final String startTransactionSuccessId, 
-            final String transactionErrorId, final String transactionSuccessId) {
-        log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, startTransactionSuccessId, transactionErrorId);
-        try {
-            transactions.put(new WebSqlTransaction(dbName, transactionId, transactionSuccessId, transactionErrorId));
-            sendCallback(new JavascriptCallback(startTransactionSuccessId, null, false));
-            doUnitOfSqliteWork();
-        } catch (Exception e) {
-            log.e(e, "error");
-            sendCallback(new JavascriptCallback(transactionErrorId, null, true));
-        }
+    public void startTransaction(int transactionId, String dbName, String successId, String errorId) {
+        log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, successId, errorId);
+        
+        queue.add(WebSqlTask.forBeginTransaction(transactionId, dbName, successId, errorId));
+        
+        doUnitOfSqliteWork();
     }
     
     @JavascriptInterface
@@ -129,49 +125,30 @@ public class SQLiteJavascriptInterface {
         
         log.d("endTransaction(%s, %s, %s, %s, %s)", transactionId, dbName, successId, errorId, markAsSuccessful);
         
-        try {
-            WebSqlTransaction transaction = findTransactionById(transactionId);
-            transaction.setMarkAsSuccessful(markAsSuccessful);
-            transaction.setShouldEnd(true);
-            transaction.setSuccessId(successId);
-            doUnitOfSqliteWork();
-        } catch (Exception e) {
-            log.e(e, "unexpected");
-            sendCallback(new JavascriptCallback(errorId, createSqlError(e.getMessage()), true));
-        }
+        queue.add(WebSqlTask.forEndTransaction(transactionId, dbName, successId, errorId, markAsSuccessful));
+        
+        doUnitOfSqliteWork();
     }
     
     @JavascriptInterface
-    public void executeSql(int transactionId, final String dbName, final String sql, final String selectArgsJson, 
-            final String querySuccessId, final String queryErrorId) {
-        log.d("executeSql(%s, %s, %s, %s, %s, %s)", transactionId, dbName, sql, selectArgsJson, querySuccessId, queryErrorId);
+    public void executeSql(int queryId, int transactionId, final String dbName, final String sql, 
+            final String selectArgsJson, final String querySuccessId, final String queryErrorId) {
+        log.d("executeSql(%s, %s, %s, %s, %s, %s, %s)", queryId, transactionId, dbName, sql, selectArgsJson, 
+                querySuccessId, queryErrorId);
         
-        WebSqlTransaction transaction = findTransactionById(transactionId);
-        if (transaction == null) {
-            log.e("transaction was invalidated");
-            sendCallback(new JavascriptCallback(queryErrorId, createSqlError("transaction was invalidated"), true));
-        } else {
-            // valid transaction
-            try {
-                transaction.getQueries().put(new WebSqlQuery(sql, selectArgsJson, querySuccessId, queryErrorId));
-                doUnitOfSqliteWork();
-            } catch (InterruptedException e) {
-                log.d(e, "unexpected");
-                sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true));
-                return;
-            }
-        }
+        queue.add(WebSqlTask.forExecuteSql(queryId, transactionId, dbName, sql, selectArgsJson, querySuccessId, 
+                queryErrorId));
+        
+        doUnitOfSqliteWork();
     }
     
     @SuppressLint("NewApi")
-    private JavascriptCallback execute(WebSqlQuery webSqlQuery, WebSqlTransaction transaction, SQLiteDatabase db) {
+    private void execute(SQLiteDatabase db, WebSqlTask task) {
         
-        log.d("execute %s, %s", webSqlQuery, transaction);
-        
-        String selectArgsJson = webSqlQuery.getSelectArgsJson();
-        String sql = webSqlQuery.getSql();
-        String querySuccessId = webSqlQuery.getQuerySuccessId();
-        String queryErrorId = webSqlQuery.getQueryErrorId();
+        String sql = (String)task.getArguments().get(0);
+        String selectArgsJson = (String)task.getArguments().get(1);
+        String querySuccessId = task.getSuccessId(); 
+        String queryErrorId = task.getErrorId();
         
         try {
             List<Object> selectArgs = getSelectArgs(selectArgsJson);
@@ -266,55 +243,11 @@ public class SQLiteJavascriptInterface {
 
                 batchResults.add(r);
             }
-            log.d("query success %s", webSqlQuery);
-            return new JavascriptCallback(querySuccessId, queryResult, false);
+            log.d("query success");
+            sendCallback(new JavascriptCallback(querySuccessId, queryResult, false));
         } catch (Exception e) {
             log.e(e, "unexpected");
-            return new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true);
-        }
-    }
-    
-    private void endTransaction(final WebSqlTransaction transactionToEnd) {
-        
-        BasicSQLiteOpenHelper dbHelper = dbs.get(transactionToEnd.getDbName());
-        if (dbHelper != null){
-            dbHelper.post(new SQLiteTask() {
-                
-                @Override
-                public void run(SQLiteDatabase db) {
-                    endTransaction(transactionToEnd, db);
-                }
-            });
-        }
-    }
-    
-    private void endTransaction(WebSqlTransaction transaction, SQLiteDatabase db) {
-        
-        boolean error = false;
-        
-        try {
-            if (transaction.isMarkAsSuccessful()) {
-                db.setTransactionSuccessful();
-            }
-        } catch (Exception e) {
-            log.e(e, "unexpected");
-            error = true;
-        } finally {
-            try {
-                db.endTransaction();
-            } catch (Exception e) {
-                log.e(e, "unexpected");
-                error = true;
-            }
-            if (transaction != null) {
-                transactions.remove(transaction);
-            }
-            
-            if (error) {
-                sendCallback(new JavascriptCallback(transaction.getErrorId(), null, true));
-            } else {
-                sendCallback(new JavascriptCallback(transaction.getSuccessId(), null, false));
-            }
+            sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true));
         }
     }
     
@@ -421,107 +354,97 @@ public class SQLiteJavascriptInterface {
         }
     }
     
-    private WebSqlTransaction findTransactionById(int transactionId) {
-        for (WebSqlTransaction candidate : transactions) {
-            if (candidate.getTransactionId() == transactionId) {
-                return candidate;
-            }
-        }
-        return null;
-    }    
-    
-    /**
-     * A task that processes the workload represented in the transactions queue.  Designed to run on a single
-     * thread, to avoid the myriad SQLite problems that arise if you try to use it in a multi-threaded environment.
-     * 
-     * Plus, Android only gives us one thread that's not the UI thread, so we gotta live with it.
-     * 
-     * TODO: I wrote this while I was trying to over-architect this thing into a multi-threaded behemoth.
-     * Then I remember that it's SQLite, idiot; you should only use a single thread. I need to rewrite 
-     * this to be simpler.
-     * 
-     * @author nolan
-     *
-     */
     private void doUnitOfSqliteWork() {
         
         log.d("doUnitOfSqliteWork");
         
-        WebSqlTransaction transaction;
-        
-        transaction = transactions.peek();
-        
-        if (transaction == null) {
-            log.d("doUnitOfSqliteWork: no transactions!");
-            return; // nothing to do
+        WebSqlTask task;
+        while ((task = queue.poll()) != null) {
+            
+            if (task.getTransactionId() < currentTransactionId && task.getType() != WebSqlTask.Type.BeginTransaction) {
+                log.d("skipping because of canceled transaction: %s");
+                continue;
+            }
+            
+            currentTransactionId = task.getTransactionId();
+            
+            perform(task);
         }
+    }
+
+    private void perform(final WebSqlTask task) {
+        log.d("perform(%s)", task);
         
-        // end the transaction
-        if (transaction.isShouldEnd()) {
-            log.d("doUnitOfSqliteWork: end transaction %s", transaction.getTransactionId());
-            endTransaction(transaction);
-            doUnitOfSqliteWork(); //run the next transaction, if there is one (TODO: ugly)
+        BasicSQLiteOpenHelper dbHelper = dbs.get(task.getDbName());
+        if (dbHelper == null) {
+            log.d("couldn't find db for name %s", task.getDbName());
+            sendCallback(new JavascriptCallback(task.getErrorId(), "couldn't find db", true));
             return;
         }
         
-        // start the transaction
-        if (!transaction.isBegun()) {
-            log.d("doUnitOfSqliteWork: end transaction %s", transaction.getTransactionId());
-            beginTransaction(transaction);
-        }
-        
-        // execute one query for the transaction;
-        log.d("doUnitOfSqliteWork: executing queries for transaction %s", transaction.getTransactionId());
-        
-        executeQuery(transaction);
-    }
-
-    private void executeQuery(final WebSqlTransaction transaction) {
+        dbHelper.post(new SQLiteTask() {
             
-        WebSqlQuery webSqlQuery = transaction.getQueries().poll();
-        if (webSqlQuery != null) {
-            log.d("doUnitOfSqliteWork: executing query for transactionId %s", transaction.getTransactionId());
-            
-            BasicSQLiteOpenHelper dbHelper = dbs.get(transaction.getDbName());
-            
-            if (dbHelper == null) {
-                sendCallback(new JavascriptCallback(webSqlQuery.getQueryErrorId(), 
-                        createSqlError("dbHelper not found"), true));
-            } else {
-                final WebSqlQuery finalWebSqlQuery = webSqlQuery;
-            
-                
-                dbHelper.post(new SQLiteTask() {
-                    
-                    @Override
-                    public void run(SQLiteDatabase db) {
-                        JavascriptCallback callback = execute(finalWebSqlQuery, transaction, db);
-                        sendCallback(callback);
-                    }
-                });
+            @Override
+            public void run(SQLiteDatabase db) {
+                switch (task.getType()) {
+                    case EndTransaction:
+                        endTransaction(db, task);
+                        break;
+                    case BeginTransaction:
+                        beginTransaction(db, task);
+                        break;
+                    case ExecSql:
+                    default:
+                        executeQuery(db, task);
+                        break;
+                }
             }
-        } else {
-            log.d("found 0 transactions for transaction Id %s", transaction.getTransactionId());
-        }
+        });          
     }
-
-    private void beginTransaction(final WebSqlTransaction transaction) {
+    
+    private void endTransaction(SQLiteDatabase db, final WebSqlTask task) {
+        log.d("endTransaction: %s", task);
+        boolean error = false;
+        
+        boolean markAsSuccessful = (Boolean)task.getArguments().get(0);
+        
         try {
-            BasicSQLiteOpenHelper dbHelper = dbs.get(transaction.getDbName());
-            
-            if (dbHelper != null) {
-                dbHelper.post(new SQLiteTask() {
-                    
-                    @Override
-                    public void run(SQLiteDatabase db) {
-                        db.beginTransaction();
-                        transaction.setBegun(true);
-                    }
-                });
+            if (markAsSuccessful) {
+                db.setTransactionSuccessful();
             }
         } catch (Exception e) {
+            log.e(e, "unexpected");
+            error = true;
+        } finally {
+            try {
+                db.endTransaction();
+            } catch (Exception e) {
+                log.e(e, "unexpected");
+                error = true;
+            }
+            
+            if (error) {
+                sendCallback(new JavascriptCallback(task.getErrorId(), null, true));
+            } else {
+                sendCallback(new JavascriptCallback(task.getSuccessId(), null, false));
+            }
+        }                
+    }
+
+    private void executeQuery(SQLiteDatabase db, final WebSqlTask task) {
+        log.d("executeSql: %s", task);
+        
+        execute(db, task);
+    }
+
+    private void beginTransaction(SQLiteDatabase db, final WebSqlTask task) {
+        log.d("beginTransaction: %s", task);
+        try {
+            db.beginTransaction();
+            sendCallback(new JavascriptCallback(task.getSuccessId(), null, false));
+        } catch (Exception e) {
             // couldn't even begin
-            sendCallback(new JavascriptCallback(transaction.getErrorId(), null, true));
+            sendCallback(new JavascriptCallback(task.getErrorId(), null, true));
         }
     }
 }

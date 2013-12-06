@@ -5,6 +5,7 @@
 
     window.SQLiteNativeDB = {
         transactionIds : 0,
+        queryIds : 0,
         callbacks : {},
         callbackIds : 0,
         nativeDBs : {}
@@ -39,15 +40,15 @@
 
         self.sql = sql;
         self.selectArgs = selectArgs;
+        self.queryId = window.SQLiteNativeDB.queryIds++;
     };
 
     var SqliteTransaction = function(callback, error, success, nativeDB) {
         var self = this;
 
         self.callback = callback;
-        self.success = self.runSuccessFunctionAndCleanup(success);
-        self.error = self.runErrorFunctionAndCleanup(error);
-        self.errorId = createCallback(self.error);
+        self.success = success;
+        self.error = error;
         self.nativeDB = nativeDB;
         self.queriesIn = [];
         self.queriesStarted = [];
@@ -64,34 +65,6 @@
             debug('transactionId ' + self.transactionId + ': (queriesIn: ' + self.queriesIn.length + ', queriesStarted: ' + self.queriesStarted.length +
                 ', queriesDone: ' + self.queriesDone.length + ')');
         }
-    };
-
-    SqliteTransaction.prototype.runSuccessFunctionAndCleanup = function(fn) {
-        var self = this;
-
-        return function() {
-            debug('transactionId ' + self.transactionId + ': runSuccessFunctionAndCleanup()');
-            if (fn && typeof fn === 'function') {
-                fn.apply(null, arguments);
-            }
-            self.nativeDB.transactionInProgress = false;
-            self.nativeDB.processNextTransaction();
-        };
-    };
-
-    SqliteTransaction.prototype.runErrorFunctionAndCleanup = function(fn) {
-        var self = this;
-
-
-        return function() {
-            debug('transactionId ' + self.transactionId + ': runErrorFunctionAndCleanup()');
-
-            if (fn && typeof fn === 'function') {
-                fn.apply(null, arguments);
-            }
-
-            self.endAsFailure();
-        };
     };
 
     SqliteTransaction.prototype.wrapQuerySuccess = function(querySuccess, query) {
@@ -189,7 +162,7 @@
 
         var endTransactionDoneId = createCallback(function(){
             debug('transactionId ' + self.transactionId + ': cleaning up after failure.');
-            self.nativeDB.transactionInProgress = false;
+            self.error();
             self.nativeDB.processNextTransaction();
         });
         SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionDoneId,
@@ -202,9 +175,20 @@
         var endTransactionSuccessId = createCallback(function(){
             // mark the entire transaction as successful
             debug('executing transaction success for transactionId ' + self.transactionId);
-            self.success();
+            if (self.success && typeof self.success === 'function') {
+                self.success();
+            }
+            self.nativeDB.processNextTransaction(); // todo: do we need this?
         });
-        SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionSuccessId, self.errorId, true);
+        var errorId = createCallback(function(){
+            debug('executing transaction error for transactionId ' + self.transactionId);
+            if (self.error && typeof self.error === 'function') {
+                self.error();
+            }
+            self.nativeDB.processNextTransaction(); // todo: do we need this?
+        });
+        SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionSuccessId,
+            errorId, true);
     };
 
     /**
@@ -230,7 +214,6 @@
 
         self.name = name;
         self.transactions = [];
-        self.transactionInProgress = false;
     };
 
     NativeDB.prototype.init = function(success) {
@@ -259,9 +242,7 @@
         var self = this;
         debug('processTransaction()');
 
-        if (self.transactions.length && !self.transactionInProgress) {
-
-            self.transactionInProgress = false;
+        if (self.transactions.length) {
 
             var transaction = self.transactions.shift();
 
@@ -269,12 +250,11 @@
             debug('remaining transactions are: ' + JSON.stringify(self.transactions.map(function(transaction){return transaction.transactionId;})));
 
             var transactionErrorId = createCallback(transaction.error);
-            var transactionSuccessId = createCallback(transaction.success);
             var startTransactionSuccessId = createCallback(function (){
                 transaction.callback(transaction);
             });
             SQLiteJavascriptInterface.startTransaction(transaction.transactionId, self.name, startTransactionSuccessId,
-                transactionErrorId, transactionSuccessId);
+                transactionErrorId);
         }
     };
 
@@ -310,7 +290,7 @@
         var queryErrorId = createCallback(query.queryError);
 
         var selectArgsAsJson = query.selectArgs ? JSON.stringify(query.selectArgs) : null;
-        SQLiteJavascriptInterface.executeSql(transaction.transactionId,
+        SQLiteJavascriptInterface.executeSql(query.queryId, transaction.transactionId,
             self.name, query.sql, selectArgsAsJson, querySuccessId, queryErrorId);
     };
 

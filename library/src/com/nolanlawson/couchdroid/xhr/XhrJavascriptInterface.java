@@ -102,6 +102,7 @@ public class XhrJavascriptInterface {
 
         String method = xhrAsJsonNode.findValue("method").asText();
         String url = xhrAsJsonNode.findValue("url").asText();
+        long timeout = xhrAsJsonNode.findValue("timeout").asLong(0);
 
         HttpClient client = new DefaultHttpClient();
         HttpUriRequest request = createRequest(method, url);
