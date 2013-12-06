@@ -1,9 +1,6 @@
 package com.nolanlawson.couchdroid;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +17,7 @@ import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
@@ -35,7 +33,7 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
-    private static final String TAG_WEBVIEW = "CouchDroidWebView";
+    private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 100; // ms
     
     private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
@@ -55,6 +53,7 @@ public class CouchDroid {
     private SQLiteJavascriptInterface sqliteJavascriptInterface;
     private CouchDroidProgressListener listener;
     private CouchDroidProgressListener clientListener;
+    private JSInterfaceVerifierCaller jsInterfaceVerifierCaller;
     
     private CouchDroid(Activity activity, SQLiteDatabase sqliteDatabase) {
         this.activity = activity;
@@ -101,7 +100,8 @@ public class CouchDroid {
         log.i("start()");
         initWebView();
         
-        migrateSqliteTables();
+        jsInterfaceVerifierCaller = new JSInterfaceVerifierCaller();
+        jsInterfaceVerifierCaller.execute((Void)null);
         
     }
     
@@ -441,7 +441,6 @@ public class CouchDroid {
         
         log.d("creating new webivew");
         webView = new WebView(activity);
-        webView.setTag(TAG_WEBVIEW);
         webView.setVisibility(View.GONE);
         
         viewGroup.addView(webView);
@@ -458,6 +457,7 @@ public class CouchDroid {
         webView.addJavascriptInterface(sqliteJavascriptInterface, SQLiteJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new XhrJavascriptInterface(webView), XhrJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new ProgressReporter(activity, listener), ProgressReporter.class.getSimpleName());
+        webView.addJavascriptInterface(new JSInterfaceVerifier(), JSInterfaceVerifier.class.getSimpleName());
         
         final String html = new StringBuilder("<html><head></head><body>")
                 .append(USE_WEINRE
@@ -471,8 +471,6 @@ public class CouchDroid {
         } else {
             webView.loadData(html, "text/html", "UTF-8");
         }
-        
-        loadInitialJavascript();
         
         log.d("loaded webview data: %s", html);
     }
@@ -566,6 +564,52 @@ public class CouchDroid {
                 throw new IllegalArgumentException("You must supply a valid couchDB url using setCouchdbUrl()");
             }
             return couchdbSync;
+        }
+    }
+
+    
+    /* 
+     * stupid hack because there's a race condition with addJavascriptInterface, so we use
+     * this callback to verify that the objects are all loaded in the JS environment
+     * 
+     */
+    private class JSInterfaceVerifier {
+        
+        @JavascriptInterface
+        public void callback() {
+            log.d("notify()");
+
+            if (jsInterfaceVerifierCaller.cancelled) {
+                return;
+            }
+            jsInterfaceVerifierCaller.cancelled = true;
+            
+            loadInitialJavascript();
+            migrateSqliteTables();
+        }
+    }
+    
+    private class JSInterfaceVerifierCaller extends AsyncTask<Void, Void, Void> {
+
+        private boolean cancelled;
+        
+        @Override
+        protected Void doInBackground(Void... params) {
+            
+            while (!cancelled) {
+                
+                log.d("JSInterfaceVerifierCaller notify");
+                loadJavascript("if (!!window.JSInterfaceVerifier){JSInterfaceVerifier.callback();}");
+                
+                try {
+                    Thread.sleep(JSINTERFACE_VERIFIER_CALLER_INTERVAL);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            log.d("JSInterfaceVerifierCaller done");
+            return null;
         }
     }
 }
