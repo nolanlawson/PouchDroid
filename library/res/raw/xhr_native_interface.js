@@ -41,6 +41,7 @@
         self.onreadystatechange = null;
         self.readyState = STATES.UNSENT;
         self.status = 0;
+        self.timeout = 0;
         self.response = null; // used if binary;
         self.responseText = null; // used if non-binary;
         self.requestHeaders = {};

@@ -5,12 +5,9 @@ import java.util.Random;
 
 import android.app.Activity;
 import android.content.ContentValues;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -22,7 +19,7 @@ import com.nolanlawson.couchdroid.CouchDroidProgressListener;
 
 public class MainActivity extends Activity implements CouchDroidProgressListener {
     
-    private static final String COUCHDB_URL = "http://admin:password@192.168.0.3:5984/pokemon";
+    private static final String COUCHDB_URL = "http://admin:password@192.168.10.110:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
@@ -138,57 +135,10 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
             
             textContent.append("\nCompleted in " + totalTimeS + " seconds");
             
-            int dbCount = EXPECTED_COUNT; //TODO: verifyDbCount();
-            
-            textContent.append("\nFound " + dbCount + " rows, expected " + EXPECTED_COUNT);
-            
             getWindow().getDecorView().getRootView().setBackgroundColor(getResources().getColor(
-                    dbCount == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
+                    numRowsLoaded == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
             progressIndeterminate.setVisibility(View.INVISIBLE);
         }
         text.setText(textContent);
-    }
-
-    private int verifyDbCount() {
-        
-        String dbName = couchdbSync.getPouchDatabaseNames().get(0);
-        
-        SQLiteDatabase sqliteDatabase = null; 
-        try {
-            sqliteDatabase = getDatabase(dbName);
-            
-            Cursor cursor = null;
-            try {
-                cursor = sqliteDatabase.rawQuery("select count(*) from 'document-store';", null);
-                int numRows = cursor.moveToNext() ? cursor.getInt(0) : 0;
-                
-                return numRows;
-                
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-        } finally {
-            if (sqliteDatabase != null) {
-                sqliteDatabase.close();
-            }
-        }
-    }
-    
-    private SQLiteDatabase getDatabase(String dbName) {
-        while (true) {
-            try{
-                return openOrCreateDatabase(dbName, 0, null);
-            } catch (SQLiteDatabaseLockedException e) {
-                Log.e("MainActivity", "database locked", e);
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-                // ignore
-            }
-        }
     }
 }

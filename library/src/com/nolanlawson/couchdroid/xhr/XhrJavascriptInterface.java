@@ -89,7 +89,7 @@ public class XhrJavascriptInterface {
                 log.e(e, "");
                 callback(xhrId, 500, "Internal Java error");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.e(e, "uncatchable exception");
             // TODO: what to do?
         }
@@ -102,9 +102,12 @@ public class XhrJavascriptInterface {
 
         String method = xhrAsJsonNode.findValue("method").asText();
         String url = xhrAsJsonNode.findValue("url").asText();
-        long timeout = xhrAsJsonNode.findValue("timeout").asLong(0);
+        
+        JsonNode timeoutValue = xhrAsJsonNode.findValue("timeout");
+        int timeout = timeoutValue != null ? (int)timeoutValue.asLong(0) : 0;
 
         HttpClient client = new DefaultHttpClient();
+        client.getParams().setParameter("http.socket.timeout", timeout);
         HttpUriRequest request = createRequest(method, url);
         for (Entry<String, String> entry : requestHeaders.entrySet()) {
             request.setHeader(entry.getKey(), entry.getValue());
@@ -114,6 +117,7 @@ public class XhrJavascriptInterface {
                     body.toString().getBytes("UTF8")));
         }
         HttpResponse response = client.execute(request);
+        
 
         HttpEntity entity = response.getEntity();
         String content = readInput(entity.getContent());

@@ -79,7 +79,7 @@ public class CouchDroid {
                 }
                 
                 if (type == ProgressType.Copy && numRowsLoaded == numRowsTotal) {
-                    log.d("replicating...");
+                    log.i("Trying to sync to CouchDB %s... (If this hangs, CouchDB may be unreachable!)", couchdbUrl);
                     replicate();
                 }
             }
