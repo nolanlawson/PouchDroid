@@ -25,6 +25,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 
 import android.text.TextUtils;
@@ -87,7 +88,11 @@ public class XhrJavascriptInterface {
     
             } catch (IOException e) {
                 log.e(e, "");
-                callback(xhrId, 500, "Internal Java error");
+                
+                ObjectNode error = objectMapper.createObjectNode();
+                error.put("type", "error");
+                error.put("message", "Internal Java error, most likely a timeout");
+                callback(xhrId, objectMapper.writeValueAsString(error), -1, null);
             }
         } catch (Exception e) {
             log.e(e, "uncatchable exception");
@@ -122,16 +127,18 @@ public class XhrJavascriptInterface {
         HttpEntity entity = response.getEntity();
         String content = readInput(entity.getContent());
         
-        callback(xhrId, response.getStatusLine().getStatusCode(), content);
+        callback(xhrId, null, response.getStatusLine().getStatusCode(), content);
     }
 
-    private void callback(int xhrId, int statusCode, String content) throws IOException {
+    private void callback(int xhrId, String errorJson, int statusCode, String content) throws IOException {
         log.d("callback()");
         
         final String js  = new StringBuilder("javascript:(function(){")
             .append("NativeXMLHttpRequests[")
             .append(xhrId)
             .append("].onNativeCallback(")
+            .append(errorJson)
+            .append(",")
             .append(statusCode)
             .append(",")
             .append(TextUtils.isEmpty(content) ? "\"null\"" : objectMapper.writeValueAsString(content))

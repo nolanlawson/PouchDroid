@@ -48,18 +48,25 @@
 
     }
 
-    NativeXMLHttpRequest.prototype.onNativeCallback = function (statusCode, content) {
+    NativeXMLHttpRequest.prototype.onNativeCallback = function (err, statusCode, content) {
         var self = this;
         debug('onNativeCallback(' + statusCode +', ' + content +')');
 
-        self.status = statusCode;
-        self.readyState = STATES.DONE;
+        if (err) {
+            // TODO: do something?
+            console.log(JSON.stringify(err));
+        } else {
+            self.status = statusCode;
+            self.readyState = STATES.DONE;
 
-        self.responseText = content;
+            self.responseText = content;
 
-        debug('calling onreadystatechange...');
-        self.onreadystatechange();
-        debug('called onreadystatechange.');
+            debug('calling onreadystatechange...');
+            self.onreadystatechange();
+            debug('called onreadystatechange.');
+        }
+
+
     };
 
     NativeXMLHttpRequest.prototype.open = function (method, url) {
@@ -67,12 +74,16 @@
 
         debug('open()');
 
+        self.state = STATES.OPENED;
         self.method = method;
         self.url = url;
     };
 
     NativeXMLHttpRequest.prototype.abort = function () {
+        var self = this;
+
         debug('abort()');
+        self.state = STATES.DONE;
         XhrJavascriptInterface.abort();
     };
 
@@ -100,6 +111,8 @@
         var selfStringified = JSON.stringify(self);
 
         debug('send(' + selfStringified + ',' + body + ')');
+
+        self.state = STATES.LOADING;
 
         XhrJavascriptInterface.send(selfStringified, body);
     };
