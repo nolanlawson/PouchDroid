@@ -1,12 +1,10 @@
 package com.nolanlawson.couchdroid;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -35,6 +33,7 @@ public class CouchDroid {
 
     private static UtilLogger log = new UtilLogger(CouchDroid.class);
 
+    private static String readyMessage;
     private static final String TAG_WEBVIEW = "CouchDroidWebView";
     
     private static final boolean USE_WEINRE = true;
@@ -100,12 +99,11 @@ public class CouchDroid {
     public void start() {
         log.i("start()");
         initWebView();
-        
-        migrateSqliteTables();
-        
     }
     
     private void loadInitialJavascript() {
+        log.d("loadInitialJavascript()");
+        
         loadJavascript(TextUtils.join("\n", Arrays.asList(
                 "var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";",
                 ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims),
@@ -459,7 +457,21 @@ public class CouchDroid {
         webView.addJavascriptInterface(new XhrJavascriptInterface(webView), XhrJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new ProgressReporter(activity, listener), ProgressReporter.class.getSimpleName());
         
+        readyMessage = Long.toHexString(new Random().nextLong()) + "_READY!";
+        
+        // fix for dumb race condition with addJavascriptInterface, where sometimes I can't be sure if the
+        // object has actually been loaded into the Javascript environment.
+        String readyJs = "document.addEventListener('DOMContentLoaded', function() {" +
+        		"var intervalId = setInterval(function() {" +
+            "window.console.log('checking if native interfaces loaded yet...');" + 
+            "if (!!window.SQLiteJavascriptInterface) {" +
+              "window.console.log('" + readyMessage +"');" + 
+              "clearInterval(intervalId);" +
+            "}" +
+          "}, 100);});";
+        
         final String html = new StringBuilder("<html><head></head><body>")
+                .append("<script language='javascript'>").append(readyJs).append("</script>")
                 .append(USE_WEINRE
                         ? "<script src='" + WEINRE_URL +"/target/target-script-min.js#anonymous'></script>"
                         : "")
@@ -471,8 +483,6 @@ public class CouchDroid {
         } else {
             webView.loadData(html, "text/html", "UTF-8");
         }
-        
-        loadInitialJavascript();
         
         log.d("loaded webview data: %s", html);
     }
@@ -489,7 +499,10 @@ public class CouchDroid {
         @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            //log.d(message);
+            if (message != null && message.startsWith(readyMessage)) {
+                loadInitialJavascript();
+                migrateSqliteTables();
+            }
         }
     }
     
