@@ -63,7 +63,7 @@ public class XhrJavascriptInterface {
         log.d("abort()");
         try{
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
-            aborted.add(xhrAsJsonNode.findValue("id").asInt());
+            aborted.add(xhrAsJsonNode.get("id").asInt());
         } catch (IOException e) {
             log.e(e, "");
         }
@@ -81,7 +81,7 @@ public class XhrJavascriptInterface {
         try {
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
     
-            int xhrId = xhrAsJsonNode.findValue("id").asInt();
+            int xhrId = xhrAsJsonNode.get("id").asInt();
             
             try {    
                 send(xhrAsJsonNode, xhrId, body);
@@ -103,13 +103,21 @@ public class XhrJavascriptInterface {
     private void send(JsonNode xhrAsJsonNode, int xhrId, String body) throws IOException {
 
         Map<String, String> requestHeaders = objectMapper.readValue(
-                xhrAsJsonNode.findValue("requestHeaders"), new TypeReference<HashMap<String,String>>(){});
+                xhrAsJsonNode.get("requestHeaders"), new TypeReference<HashMap<String,String>>(){});
 
-        String method = xhrAsJsonNode.findValue("method").asText();
-        String url = xhrAsJsonNode.findValue("url").asText();
+        String method = xhrAsJsonNode.get("method").asText();
+        String url = xhrAsJsonNode.get("url").asText();
         
-        JsonNode timeoutValue = xhrAsJsonNode.findValue("timeout");
+        JsonNode timeoutValue = xhrAsJsonNode.get("timeout");
         int timeout = timeoutValue != null ? (int)timeoutValue.asLong(0) : 0;
+        
+        JsonNode binaryValue = xhrAsJsonNode.get("binary");
+        boolean binary = binaryValue != null && binaryValue.asBoolean();
+        
+        if (binary) {
+            // TODO: implement binary
+            throw new IllegalArgumentException("Client asked for binary, but we haven't implemented binary yet!");
+        }
 
         HttpClient client = new DefaultHttpClient();
         client.getParams().setParameter("http.socket.timeout", timeout);
