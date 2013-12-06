@@ -314,7 +314,7 @@
             self.name, query.sql, selectArgsAsJson, querySuccessId, queryErrorId);
     };
 
-    window.openDatabase = function(name, version, description, size, success) {
+    window.openNativeDatabase = function(name, version, description, size, success) {
         var nativeDB = window.SQLiteNativeDB.nativeDBs[name];
         if (!nativeDB) {
             // doesn't exist yet

@@ -477,7 +477,7 @@ public class SQLiteJavascriptInterface {
     }
 
     private void executeQuery(final WebSqlTransaction transaction) {
-        
+            
         WebSqlQuery webSqlQuery = transaction.getQueries().poll();
         if (webSqlQuery != null) {
             log.d("doUnitOfSqliteWork: executing query for transactionId %s", transaction.getTransactionId());
@@ -490,6 +490,7 @@ public class SQLiteJavascriptInterface {
             } else {
                 final WebSqlQuery finalWebSqlQuery = webSqlQuery;
             
+                
                 dbHelper.post(new SQLiteTask() {
                     
                     @Override
@@ -499,6 +500,8 @@ public class SQLiteJavascriptInterface {
                     }
                 });
             }
+        } else {
+            log.d("found 0 transactions for transaction Id %s", transaction.getTransactionId());
         }
     }
 
