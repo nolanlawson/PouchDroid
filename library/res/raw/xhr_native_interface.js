@@ -7,15 +7,6 @@
 (function () {
     'use strict';
 
-    /*
-    for debugging:
-     pouchDBHelper.db.replicate.to('http://admin:password@192.168.0.3:5984/pokemon', {continuous : false, complete: function complete(err, response){
-     console.log('complete, with err: ' + JSON.stringify(err));
-     console.log('complete, with response: ' + JSON.stringify(response));
-     }, onChange: function onChange(change) {
-     console.log('onChange, with change: ' + JSON.stringify(change));
-     }})
-     */
     var ids = 0;
 
     var STATES = {

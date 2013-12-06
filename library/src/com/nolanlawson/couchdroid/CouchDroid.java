@@ -1,6 +1,9 @@
 package com.nolanlawson.couchdroid;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +37,7 @@ public class CouchDroid {
 
     private static final String TAG_WEBVIEW = "CouchDroidWebView";
     
-    private static final boolean USE_WEINRE = false;
+    private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.10.110:8080";
     
@@ -98,22 +101,23 @@ public class CouchDroid {
         log.i("start()");
         initWebView();
         
-        log.d("attempting to load javascript");
-        loadJavascript("var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";" 
-         + ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims) 
-         + ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface) 
-         + ResourceUtil.loadTextFile(activity, R.raw.xhr_native_interface) 
-         + "var fakeLocalStorage = {};" 
-         + (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
-                        .replaceAll("\\bXMLHttpRequest\\b", "NativeXMLHttpRequest")
-                        .replaceAll("\\blocalStorage\\b", "fakeLocalStorage")
-                        .replaceAll("\\bopenDatabase\\b", "openNativeDatabase")) 
-         + ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper) 
-         + "window.console.log('PouchDB is: ' + typeof PouchDB);" 
-         + "window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper);");
-        
         migrateSqliteTables();
         
+    }
+    
+    private void loadInitialJavascript() {
+        loadJavascript(TextUtils.join("\n", Arrays.asList(
+                "var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";",
+                ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims),
+                ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface),
+                ResourceUtil.loadTextFile(activity, R.raw.xhr_native_interface),
+                "var fakeLocalStorage = {};",
+                (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
+                        .replaceAll("\\bXMLHttpRequest\\b", "NativeXMLHttpRequest")
+                        .replaceAll("\\blocalStorage\\b", "fakeLocalStorage").replaceAll("\\bopenDatabase\\b",
+                        "openNativeDatabase")), ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper),
+                "window.console.log('PouchDB is: ' + typeof PouchDB);",
+                "window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper);")));
     }
     
     /**
@@ -435,8 +439,6 @@ public class CouchDroid {
         
         ViewGroup viewGroup = (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
         
-        webView = (WebView) viewGroup.findViewWithTag(TAG_WEBVIEW);
-        
         log.d("creating new webivew");
         webView = new WebView(activity);
         webView.setTag(TAG_WEBVIEW);
@@ -445,29 +447,32 @@ public class CouchDroid {
         viewGroup.addView(webView);
         
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDatabaseEnabled(true); // we're overriding websql, but we still need to set this
-        webView.getSettings().setDomStorageEnabled(true); // pouch needs to call localStorage for some reason
-        webView.getSettings().setAllowContentAccess(true);
+        webView.getSettings().setDatabaseEnabled(false); // we're overriding websql
+        webView.getSettings().setDomStorageEnabled(false); // pouch needs to call localStorage.  we fake it.
+        webView.getSettings().setAllowContentAccess(false); // don't need it
         
         webView.setWebChromeClient(new MyWebChromeClient());
         
         sqliteJavascriptInterface = new SQLiteJavascriptInterface(activity, webView);
         
-        webView.removeJavascriptInterface(SQLiteJavascriptInterface.class.getSimpleName());
-        webView.removeJavascriptInterface(XhrJavascriptInterface.class.getSimpleName());
-        webView.removeJavascriptInterface(ProgressReporter.class.getSimpleName());
         webView.addJavascriptInterface(sqliteJavascriptInterface, SQLiteJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new XhrJavascriptInterface(webView), XhrJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new ProgressReporter(activity, listener), ProgressReporter.class.getSimpleName());
         
-        final String html = new StringBuilder("<html><body>")
+        final String html = new StringBuilder("<html><head></head><body>")
                 .append(USE_WEINRE
                         ? "<script src='" + WEINRE_URL +"/target/target-script-min.js#anonymous'></script>"
                         : "")
                 .append("</body></html>").toString();
         
-        // fake url to allow loading of weinre
-        webView.loadDataWithBaseURL("http://localhost:9362", html, "text/html", "UTF-8", null);
+        if (USE_WEINRE) {
+            // fake url to contact weinre
+            webView.loadDataWithBaseURL("http://localhost:9362", html, "text/html", "UTF-8", null);
+        } else {
+            webView.loadData(html, "text/html", "UTF-8");
+        }
+        
+        loadInitialJavascript();
         
         log.d("loaded webview data: %s", html);
     }

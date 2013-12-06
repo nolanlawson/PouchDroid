@@ -130,14 +130,14 @@ public class XhrJavascriptInterface {
         callback(xhrId, null, response.getStatusLine().getStatusCode(), content);
     }
 
-    private void callback(int xhrId, String errorJson, int statusCode, String content) throws IOException {
+    private void callback(int xhrId, String error, int statusCode, String content) throws IOException {
         log.d("callback()");
         
         final String js  = new StringBuilder("javascript:(function(){")
             .append("NativeXMLHttpRequests[")
             .append(xhrId)
             .append("].onNativeCallback(")
-            .append(errorJson)
+            .append(error)
             .append(",")
             .append(statusCode)
             .append(",")
