@@ -341,15 +341,19 @@ public class SQLiteJavascriptInterface {
     }
 
     public void close() {
+        log.i("close()");
         this.activity = null;
+        
         for (Entry<String, BasicSQLiteOpenHelper> entry : dbs.entrySet()) {
             String dbName = entry.getKey();
-            BasicSQLiteOpenHelper db = entry.getValue();
+            BasicSQLiteOpenHelper dbHelper = entry.getValue();
             
-            if (db != null) {
-                log.d("closing database with name %s", dbName);
-                db.close();
-                log.d("closed database with name %s", dbName);
+            if (dbHelper != null) {
+                log.i("closing database with name %s", dbName);
+                synchronized (BasicSQLiteOpenHelper.class) {
+                    dbHelper.close();
+                }
+                log.i("closed database with name %s", dbName);
             }
         }
     }

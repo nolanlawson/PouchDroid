@@ -13,7 +13,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.view.View;
@@ -35,7 +34,7 @@ public class CouchDroid {
 
     private static final String TAG_WEBVIEW = "CouchDroidWebView";
     
-    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_WEINRE = false;
     private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.10.110:8080";
     
@@ -96,6 +95,7 @@ public class CouchDroid {
      * You MUST call this on the main application thread.  use runOnUiThread if you're not sure.
      */
     public void start() {
+        log.i("start()");
         initWebView();
         
         log.d("attempting to load javascript");
@@ -453,9 +453,12 @@ public class CouchDroid {
         
         sqliteJavascriptInterface = new SQLiteJavascriptInterface(activity, webView);
         
-        webView.addJavascriptInterface(sqliteJavascriptInterface, "SQLiteJavascriptInterface");
-        webView.addJavascriptInterface(new XhrJavascriptInterface(webView), "XhrJavascriptInterface");
-        webView.addJavascriptInterface(new ProgressReporter(activity, listener), "ProgressReporter");
+        webView.removeJavascriptInterface(SQLiteJavascriptInterface.class.getSimpleName());
+        webView.removeJavascriptInterface(XhrJavascriptInterface.class.getSimpleName());
+        webView.removeJavascriptInterface(ProgressReporter.class.getSimpleName());
+        webView.addJavascriptInterface(sqliteJavascriptInterface, SQLiteJavascriptInterface.class.getSimpleName());
+        webView.addJavascriptInterface(new XhrJavascriptInterface(webView), XhrJavascriptInterface.class.getSimpleName());
+        webView.addJavascriptInterface(new ProgressReporter(activity, listener), ProgressReporter.class.getSimpleName());
         
         final String html = new StringBuilder("<html><body>")
                 .append(USE_WEINRE
@@ -470,7 +473,7 @@ public class CouchDroid {
     }
     
     public void close() {
-        log.d("close()");
+        log.i("close()");
         if (sqliteJavascriptInterface != null) {
             sqliteJavascriptInterface.close();
         }

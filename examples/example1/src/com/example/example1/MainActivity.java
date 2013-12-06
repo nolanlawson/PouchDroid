@@ -21,8 +21,8 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
     
     private static final String COUCHDB_URL = "http://admin:password@192.168.10.110:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
-    private static final boolean RANDOMIZE_DB = true;
-    private static final boolean LOAD_ONLY_ONE_MONSTER = false;
+    private static final boolean RANDOMIZE_DB = false;
+    private static final boolean LOAD_ONLY_ONE_MONSTER = true;
     
     private CouchDroid couchdbSync;
     private SQLiteDatabase sqliteDatabase;
@@ -42,8 +42,8 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         
         String dbName = "pokemon.db";
         if (RANDOMIZE_DB) {
@@ -66,8 +66,8 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
         if (couchdbSync != null) {
             couchdbSync.close();
         }
