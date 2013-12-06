@@ -105,6 +105,7 @@ public class CouchDroid {
         log.d("loadInitialJavascript()");
         
         loadJavascript(TextUtils.join("\n", Arrays.asList(
+                "clearInterval(window.checkJavascriptInterfaceIntervalId);" +
                 "var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";",
                 ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims),
                 ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface),
@@ -462,13 +463,13 @@ public class CouchDroid {
         // fix for dumb race condition with addJavascriptInterface, where sometimes I can't be sure if the
         // object has actually been loaded into the Javascript environment.
         String readyJs = "document.addEventListener('DOMContentLoaded', function() {" +
-        		"var intervalId = setInterval(function() {" +
+        		"window.checkJavascriptInterfaceIntervalId = setInterval(function() {" +
             "window.console.log('checking if native interfaces loaded yet...');" + 
             "if (!!window.SQLiteJavascriptInterface) {" +
               "window.console.log('" + readyMessage +"');" + 
-              "clearInterval(intervalId);" +
+              "" +
             "}" +
-          "}, 100);});";
+          "}, 1000);});";
         
         final String html = new StringBuilder("<html><head></head><body>")
                 .append("<script language='javascript'>").append(readyJs).append("</script>")
@@ -499,7 +500,7 @@ public class CouchDroid {
         @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            if (message != null && message.startsWith(readyMessage)) {
+            if (message != null && message.equals(readyMessage)) {
                 loadInitialJavascript();
                 migrateSqliteTables();
             }
