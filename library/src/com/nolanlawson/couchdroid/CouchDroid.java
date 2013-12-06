@@ -474,9 +474,6 @@ public class CouchDroid {
     
     public void close() {
         log.i("close()");
-        if (sqliteJavascriptInterface != null) {
-            sqliteJavascriptInterface.close();
-        }
         sqliteJavascriptInterface = null;
         activity = null; // release context resources
         webView.loadUrl("about:blank");

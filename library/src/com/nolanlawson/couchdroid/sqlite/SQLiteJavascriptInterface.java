@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -43,7 +42,10 @@ public class SQLiteJavascriptInterface {
     private Activity activity;
     private WebView webView;
     
-    private final Map<String, BasicSQLiteOpenHelper> dbs = new HashMap<String, BasicSQLiteOpenHelper>();
+    // keep static so that we only ever have one access to the dbs
+    // see http://www.androiddesignpatterns.com/2012/05/correctly-managing-your-sqlite-database.html
+    private static final Map<String, BasicSQLiteOpenHelper> dbs = new HashMap<String, BasicSQLiteOpenHelper>();
+    
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PriorityQueue<WebSqlTask> queue = new PriorityQueue<WebSqlTask>();
     
@@ -340,24 +342,6 @@ public class SQLiteJavascriptInterface {
         return rowsResult;
     }
 
-    public void close() {
-        log.i("close()");
-        this.activity = null;
-        
-        for (Entry<String, BasicSQLiteOpenHelper> entry : dbs.entrySet()) {
-            String dbName = entry.getKey();
-            BasicSQLiteOpenHelper dbHelper = entry.getValue();
-            
-            if (dbHelper != null) {
-                log.i("closing database with name %s", dbName);
-                synchronized (BasicSQLiteOpenHelper.class) {
-                    dbHelper.close();
-                }
-                log.i("closed database with name %s", dbName);
-            }
-        }
-    }
-    
     private void doUnitOfSqliteWork() {
         
         log.d("doUnitOfSqliteWork");

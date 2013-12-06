@@ -1,6 +1,5 @@
 package com.nolanlawson.couchdroid.sqlite;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
