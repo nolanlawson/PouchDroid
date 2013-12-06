@@ -142,7 +142,7 @@ public class XhrJavascriptInterface {
         log.d("callback()");
         
         final String js  = new StringBuilder("javascript:(function(){")
-            .append("NativeXMLHttpRequests[")
+            .append("CouchDroid.NativeXMLHttpRequests[")
             .append(xhrId)
             .append("].onNativeCallback(")
             .append(error)

@@ -1,36 +1,51 @@
-/* export SQLiteNativeDB */
+/**
+ * Pretends to be the WebSQL interface while secretly siphoning requests off to the native Android SQL interface.
+ * Sneaky!
+ */
 
 (function(){
     'use strict';
 
-    window.SQLiteNativeDB = {
-        transactionIds : 0,
-        queryIds : 0,
+    function debug(str) {
+        CouchDroid.Util.debug('SQLiteNativeDB', str);
+    }
+
+    var transactionIds = 0;
+    var queryIds = 0;
+    var callbackIds = 0;
+
+    var SQLiteNativeDB = {
         callbacks : {},
-        callbackIds : 0,
         nativeDBs : {}
     };
 
-    function debug(str) {
-        if (DEBUG_MODE && str) {
-            window.console.log('SQLiteNativeDB: ' + str);
+    SQLiteNativeDB.onNativeCallback = function(callbackId, argument) {
+        var self = this;
+        debug('onNativeCallback(' + callbackId + ', ' + argument + ')');
+
+        var callback = self.callbacks[callbackId];
+        if (!callback) {
+            window.console.log('callback not found for id ' + callbackId + '! ' + callback);
+        } else {
+            callback.apply(null, argument ? [argument] : null);
+
+            //TODO: intelligently remove callbacks?
+            //delete self.callbacks[callbackId];
         }
-    }
+    };
 
     function createCallback(fn) {
+
         fn = fn || function(){};
 
-        var callbackId = 'callback_' + (window.SQLiteNativeDB.callbackIds++);
+        var callbackId = 'cb_' + (callbackIds++);
 
         var newFn = function() {
             debug('executing callback with id: ' + callbackId);
             fn.apply(null, arguments);
-
-            //TODO: intelligently remove callbacks
-            //delete window.SQLiteNativeDB.callbacks[callbackId];
         };
 
-        window.SQLiteNativeDB.callbacks[callbackId] = newFn;
+        SQLiteNativeDB.callbacks[callbackId] = newFn;
 
         return callbackId;
     }
@@ -40,7 +55,7 @@
 
         self.sql = sql;
         self.selectArgs = selectArgs;
-        self.queryId = window.SQLiteNativeDB.queryIds++;
+        self.queryId = queryIds++;
     };
 
     var SqliteTransaction = function(callback, error, success, nativeDB) {
@@ -54,14 +69,14 @@
         self.queriesStarted = [];
         self.queriesDone = [];
         self.sentEndAsFailure = false;
-        self.transactionId = window.SQLiteNativeDB.transactionIds++;
+        self.transactionId = transactionIds++;
         debug('created new transaction with id ' + self.transactionId);
     };
 
     SqliteTransaction.prototype.debugQueryStatus = function() {
         var self = this;
 
-        if (DEBUG_MODE) {
+        if (CouchDroid.DEBUG_MODE) {
             debug('transactionId ' + self.transactionId + ': (queriesIn: ' + self.queriesIn.length + ', queriesStarted: ' + self.queriesStarted.length +
                 ', queriesDone: ' + self.queriesDone.length + ')');
         }
@@ -294,14 +309,14 @@
             self.name, query.sql, selectArgsAsJson, querySuccessId, queryErrorId);
     };
 
-    window.openNativeDatabase = function(name, version, description, size, success) {
-        var nativeDB = window.SQLiteNativeDB.nativeDBs[name];
+    SQLiteNativeDB.openNativeDatabase = function(name, version, description, size, success) {
+        var nativeDB = SQLiteNativeDB.nativeDBs[name];
         if (!nativeDB) {
             // doesn't exist yet
             nativeDB =  new NativeDB(name);
             nativeDB.init(success);
 
-            window.SQLiteNativeDB.nativeDBs[name] = nativeDB;
+            SQLiteNativeDB.nativeDBs[name] = nativeDB;
         } else {
             setTimeout(function(){
                 if (success && typeof success === 'function') {
@@ -314,4 +329,5 @@
         return nativeDB;
     };
 
+    CouchDroid.SQLiteNativeDB = SQLiteNativeDB;
 })();

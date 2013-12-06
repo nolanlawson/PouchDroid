@@ -1,11 +1,14 @@
 /**
- * prentends to be an XHR while actually calling native Java code.
+ * pretends to be an XHR while actually calling native Java code.
  *
- * export NativeXMLHttpRequest, NativeXMLHttpRequests
  */
 
 (function () {
     'use strict';
+
+    function debug(str) {
+        CouchDroid.Util.debug('NativeXMLHttpRequest', str);
+    }
 
     var ids = 0;
 
@@ -16,12 +19,6 @@
         LOADING: 3,
         DONE: 4
     };
-
-    function debug(str) {
-        if (DEBUG_MODE && str) {
-            window.console.log('NativeXMLHttpRequest: ' + str);
-        }
-    }
 
     function NativeXMLHttpRequest() {
         var self = this;
@@ -45,7 +42,7 @@
 
         if (err) {
             // TODO: do something?
-            console.log(JSON.stringify(err));
+            window.console.log(JSON.stringify(err));
         } else {
             self.status = statusCode;
             self.readyState = STATES.DONE;
@@ -97,7 +94,7 @@
     NativeXMLHttpRequest.prototype.send = function (body) {
         var self = this;
 
-        window.NativeXMLHttpRequests[self.id] = self;
+        CouchDroid.NativeXMLHttpRequests[self.id] = self;
 
         var selfStringified = JSON.stringify(self);
 
@@ -108,7 +105,6 @@
         XhrJavascriptInterface.send(selfStringified, body);
     };
 
-    window.NativeXMLHttpRequest = NativeXMLHttpRequest;
-    window.NativeXMLHttpRequests = {};
-
+    CouchDroid.NativeXMLHttpRequest = NativeXMLHttpRequest;
+    CouchDroid.NativeXMLHttpRequests = {};
 })();

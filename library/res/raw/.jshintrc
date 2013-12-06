@@ -19,8 +19,8 @@
   "smarttabs": true,
   "globals": {
     "PouchDB" : true,
+    "CouchDroid" : true,
     "SQLiteJavascriptInterface" : true,
-    "XhrJavascriptInterface" : true,
-    "DEBUG_MODE" : true
+    "XhrJavascriptInterface" : true
   }
 }

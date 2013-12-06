@@ -88,7 +88,7 @@ public class CouchDroid {
     }
     
     private void replicate() {
-        loadJavascript(new StringBuilder("window.pouchDBHelper.syncAll(function(){});").toString());
+        loadJavascript(new StringBuilder("CouchDroid.pouchDBHelper.syncAll(function(){});").toString());
     }
 
     /**
@@ -107,17 +107,21 @@ public class CouchDroid {
     
     private void loadInitialJavascript() {
         loadJavascript(TextUtils.join("\n", Arrays.asList(
-                "var DEBUG_MODE = " + UtilLogger.DEBUG_MODE + ";",
                 ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims),
-                ResourceUtil.loadTextFile(activity, R.raw.sqlite_native_interface),
-                ResourceUtil.loadTextFile(activity, R.raw.xhr_native_interface),
-                "var fakeLocalStorage = {};",
+                ResourceUtil.loadTextFile(activity, R.raw.couchdroid),
+                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_util),
+                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_xhr_native_interface),
+                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_sqlite_native_interface),
+                "window.console.log('CouchDroid.NativeXMLHttpRequest is: ' + typeof CouchDroid.NativeXMLHttpRequest);",
+                "window.console.log('CouchDroid.fakeLocalStorage is: ' + typeof CouchDroid.fakeLocalStorage);",
+                "window.console.log('CouchDroid.SQLiteNativeDB.openNativeDatabase is: ' + typeof CouchDroid.SQLiteNativeDB.openNativeDatabase);",
                 (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
-                        .replaceAll("\\bXMLHttpRequest\\b", "NativeXMLHttpRequest")
-                        .replaceAll("\\blocalStorage\\b", "fakeLocalStorage").replaceAll("\\bopenDatabase\\b",
-                        "openNativeDatabase")), ResourceUtil.loadTextFile(activity, R.raw.pouchdb_helper),
+                        .replaceAll("\\bXMLHttpRequest\\b", "CouchDroid.NativeXMLHttpRequest")
+                        .replaceAll("\\blocalStorage\\b", "CouchDroid.fakeLocalStorage")
+                        .replaceAll("\\bopenDatabase\\b", "CouchDroid.SQLiteNativeDB.openNativeDatabase")),
+                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_pouchdb_helper),
                 "window.console.log('PouchDB is: ' + typeof PouchDB);",
-                "window.console.log('PouchDBHelper is: ' + typeof PouchDBHelper);")));
+                "window.console.log('CouchDroid is: ' + typeof CouchDroid);")));
     }
     
     /**
@@ -138,7 +142,6 @@ public class CouchDroid {
 
             @Override
             protected Void doInBackground(Void... params) {
-                
                 for (SqliteTable sqliteTable : sqliteTables) {
                     try {
                         loadTable(sqliteTable);
@@ -219,7 +222,7 @@ public class CouchDroid {
                     .append(dbName);
                 
                 loadJavascript(new StringBuilder()
-                    .append("window.pouchDBHelper = new PouchDBHelper(")
+                    .append("CouchDroid.pouchDBHelper = new CouchDroid.PouchDBHelper(")
                     .append(objectMapper.writeValueAsString(internalPouchdbName))
                     .append(",")
                     .append(objectMapper.writeValueAsString(couchdbUrl))
@@ -270,7 +273,7 @@ public class CouchDroid {
 
                 // call the PouchDBHelper, set the db id, load the documents
                 StringBuilder js = new StringBuilder()
-                        .append("window.pouchDBHelper.putAll(")
+                        .append("CouchDroid.pouchDBHelper.putAll(")
                         .append(objectMapper.writeValueAsString(docsBatch))
                         .append(javascriptCallback)
                         .append(");");

@@ -1,14 +1,9 @@
-/* export PouchDBHelper */
-
-var PouchDBHelper;
-
 (function () {
     'use strict';
 
+
     function debug(str) {
-        if (DEBUG_MODE) {
-            window.console.log('PouchDBHelper: ' + str);
-        }
+        CouchDroid.Util.debug('PouchDBHelper', str);
     }
 
     function attachRevIdsToDocuments(documents, rows) {
@@ -63,7 +58,7 @@ var PouchDBHelper;
         return docs;
     }
 
-    PouchDBHelper = function (dbId, couchdbUrl) {
+    function PouchDBHelper(dbId, couchdbUrl) {
 
         var self = this;
         self.couchdbUrl = couchdbUrl;
@@ -78,11 +73,11 @@ var PouchDBHelper;
             throw err;
         }
 
-        if (DEBUG_MODE) {
+        if (CouchDroid.DEBUG_MODE) {
             debug('created new PouchDBHelper with dbId ' + dbId);
         }
 
-    };
+    }
 
     PouchDBHelper.prototype.syncAll = function(onComplete) {
         var self = this;
@@ -181,5 +176,7 @@ var PouchDBHelper;
 
         self.db.allDocs({include_docs: false, keys : keys}, onBulkGet);
     };
+
+    CouchDroid.PouchDBHelper = PouchDBHelper;
 
 })();

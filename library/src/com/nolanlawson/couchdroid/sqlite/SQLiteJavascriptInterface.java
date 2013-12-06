@@ -66,10 +66,10 @@ public class SQLiteJavascriptInterface {
         try {
             final StringBuilder url = new StringBuilder().append("javascript:(function(){");
             for (JavascriptCallback callback : callbacks) {
-                url.append("SQLiteNativeDB.callbacks['")
-                    .append(callback.getCallbackId())
-                    .append("'](")
-                    .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1()) : "")
+                url.append("CouchDroid.SQLiteNativeDB.onNativeCallback(")
+                    .append(objectMapper.writeValueAsString(callback.getCallbackId()))
+                    .append(",")
+                    .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1()) : "null")
                     .append(");");
             }
             url.append("})();");
