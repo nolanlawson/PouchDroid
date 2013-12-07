@@ -28,9 +28,9 @@ public class CouchDroidRuntime {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 100; // ms
     
-    private static final boolean USE_WEINRE = false;
+    private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
-    private static final String WEINRE_URL = "http://192.168.10.103:8080";
+    private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     
     private Activity activity;
