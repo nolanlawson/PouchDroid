@@ -54,8 +54,8 @@
             debug('called onreadystatechange.');
         }
 
-        // TODO: do we need this xhr anymore? can we delete it?
-        //delete CouchDroid.NativeXMLHttpRequests[self.id];
+        // we don't need the xhr callback anymore; we can delete it
+        delete CouchDroid.NativeXMLHttpRequests[self.id];
     };
 
     NativeXMLHttpRequest.prototype.open = function (method, url) {
