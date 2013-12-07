@@ -22,6 +22,7 @@
 	<modules>
 		<module>library</module>
 		<module>examples</module>
+                <module>tests</module>
 	</modules>
 
 	<scm>

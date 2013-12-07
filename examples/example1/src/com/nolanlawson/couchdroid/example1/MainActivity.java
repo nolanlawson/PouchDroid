@@ -1,4 +1,4 @@
-package com.example.example1;
+package com.nolanlawson.couchdroid.example1;
 
 import java.util.List;
 import java.util.Random;
@@ -13,8 +13,6 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.example.example1.data.PocketMonster;
-import com.example.example1.data.PocketMonsterHelper;
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidMigrationTask;
 import com.nolanlawson.couchdroid.CouchDroidProgressListener;

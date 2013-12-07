@@ -1,4 +1,6 @@
-package com.example.example1.data;
+package com.nolanlawson.couchdroid.example1;
+
+import com.nolanlawson.couchdroid.pouch.PouchDocument;
 
 /**
  * POJO describing a Pocket Monster.
@@ -6,7 +8,7 @@ package com.example.example1.data;
  * @author nolan
  *
  */
-public class PocketMonster {
+public class PocketMonster extends PouchDocument {
 
     private String uniqueId;
     private int nationalDexNumber;
@@ -43,6 +45,15 @@ public class PocketMonster {
     }
     public void setName(String name) {
         this.name = name;
+    }
+    
+    @Override
+    public String getPouchId() {
+        return getUniqueId();
+    }
+    @Override
+    public void setPouchId(String pouchId) {
+        setUniqueId(pouchId);
     }
     
     @Override

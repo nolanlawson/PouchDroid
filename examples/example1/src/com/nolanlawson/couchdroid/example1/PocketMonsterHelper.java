@@ -1,4 +1,4 @@
-package com.example.example1.data;
+package com.nolanlawson.couchdroid.example1;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.util.List;
 
 import android.content.Context;
 
-import com.example.example1.R;
+import com.nolanlawson.couchdroid.example1.R;
 
 public class PocketMonsterHelper {
     public static List<PocketMonster> readInPocketMonsters(Context context) {

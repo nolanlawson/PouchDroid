@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns='http://maven.apache.org/POM/4.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+	xsi:schemaLocation='http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd'>
+	<modelVersion>4.0.0</modelVersion>
+        <parent>
+                <groupId>com.nolanlawson.couchdbsync</groupId>
+                <artifactId>parent</artifactId>
+                <version>0.9</version>
+                <relativePath>../pom.xml</relativePath>
+        </parent>
+	<artifactId>tests</artifactId>
+	<packaging>apk</packaging>
+	<name>CouchDroid Test</name>
+	<dependencies>
+		<dependency>
+			<groupId>com.google.android</groupId>
+			<artifactId>android</artifactId>
+			<version>4.1.1.4</version>
+			<scope>provided</scope>
+		</dependency>
+<dependency>
+			<groupId>com.google.android</groupId>
+			<artifactId>android-test</artifactId>
+			<version>4.1.1.4</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.nolanlawson.couchdroid</groupId>
+			<artifactId>couchdroid</artifactId>
+			<type>apk</type>
+			<version>0.9</version>
+		</dependency>
+		<dependency>
+			<groupId>com.nolanlawson.couchdroid</groupId>
+			<artifactId>couchdroid</artifactId>
+			<scope>provided</scope>
+			<type>jar</type>
+			<version>0.9</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.jayway.maven.plugins.android.generation2</groupId>
+				<artifactId>android-maven-plugin</artifactId>
+                                <version>3.6.0</version>
+				<configuration>
+					<sdk>
+						<path>${env.ANDROID_HOME}</path>
+						<platform>16</platform>
+					</sdk>
+				</configuration>
+				<extensions>true</extensions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
