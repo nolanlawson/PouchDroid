@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -50,6 +51,8 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
     public void onCouchDroidReady(final CouchDroidRuntime runtime) {
 
         
+        text.setText(Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
+        
         // load pokemon data in the background,
         // then launch the migration task in the foreground
         new AsyncTask<Void, Void, Void>() {
@@ -64,6 +67,7 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
             protected void onPostExecute(Void result) {
                 super.onPostExecute(result);
                 
+                text.setText(Html.fromHtml("Done loading pok&eacute;mon data, beginning Pouch transfer..."));
                 startTime = System.currentTimeMillis();
                 
                 
