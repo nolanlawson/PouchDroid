@@ -62,7 +62,9 @@ public class XhrJavascriptInterface {
     public void abort(String xhrJsonObj) {
         log.d("abort()");
         try{
+            
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
+            // TODO: memory leak
             aborted.add(xhrAsJsonNode.get("id").asInt());
         } catch (IOException e) {
             // shouldn't happen

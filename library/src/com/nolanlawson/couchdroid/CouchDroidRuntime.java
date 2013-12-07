@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -27,7 +28,7 @@ public class CouchDroidRuntime {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 100; // ms
     
-    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_WEINRE = false;
     private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.10.103:8080";
     
@@ -197,7 +198,9 @@ public class CouchDroidRuntime {
         @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            //log.d(message);
+            if (Build.VERSION.SDK_INT < 11) { //  I believe they started logging the "Web Console" in 11
+                Log.i("Web Console", message);
+            }
         }
     }
     

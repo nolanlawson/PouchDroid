@@ -19,6 +19,14 @@
         nativeDBs : {}
     };
 
+    SQLiteNativeDB.clearCache = function() {
+        var self = this;
+
+        // allows us to save memory by deleting callbacks in the hashmap
+        self.callbacks = {};
+        self.nativeDBs = {};
+    };
+
     SQLiteNativeDB.onNativeCallback = function(callbackId, argument) {
         var self = this;
         debug('onNativeCallback(' + callbackId + ', ' + argument + ')');
@@ -28,9 +36,6 @@
             window.console.log('callback not found for id ' + callbackId + '! ' + callback);
         } else {
             callback.apply(null, argument ? [argument] : null);
-
-            //TODO: intelligently remove callbacks?
-            //delete self.callbacks[callbackId];
         }
     };
 

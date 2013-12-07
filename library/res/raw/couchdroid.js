@@ -4,9 +4,9 @@ var CouchDroid;
 (function(){
     'use strict';
     CouchDroid = {
-        DEBUG_MODE       : false,
+        DEBUG_MODE       : true,
         //DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper', 'SQLiteNativeDB'],
-        //DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper'],
+        DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper'],
         fakeLocalStorage : {} // for pouchdb
     };
 })();

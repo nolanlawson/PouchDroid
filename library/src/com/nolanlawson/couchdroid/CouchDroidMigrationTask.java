@@ -28,7 +28,7 @@ public class CouchDroidMigrationTask {
     private static UtilLogger log = new UtilLogger(CouchDroidMigrationTask.class);
 
     private static final int BATCH_SIZE_HIMEM = 100;
-    private static final int BATCH_SIZE_LOMEM = 20;
+    private static final int BATCH_SIZE_LOMEM = 10;
     private static final int SDK_INT_CUTOFF = 11; // assume devices < sdk 11 are low-memory (TODO: better method?)
     
     private List<SqliteTable> sqliteTables = new ArrayList<SqliteTable>();
@@ -108,6 +108,7 @@ public class CouchDroidMigrationTask {
                             }
                         } else {
                             // copy next batch
+                            runtime.loadJavascript("CouchDroid.SQLiteNativeDB.clearCache();"); // free up memory
                             migrateSqliteTable(sqliteTable, numRowsLoaded);
                         }
                     }
@@ -291,8 +292,7 @@ public class CouchDroidMigrationTask {
             sql.append(", * from ")
                 .append(sqliteTable.getName())
                 .append(" limit ").append(getBatchSize())
-                .append(" offset ").append(offset)
-                .append(";");
+                .append(" offset ").append(offset);
             
             cursor = sqliteDatabase.rawQuery(sql.toString(), null);
             
@@ -360,7 +360,7 @@ public class CouchDroidMigrationTask {
             cursor = sqliteDatabase.rawQuery(
                     new StringBuilder("select count(*) from ")
                         .append(sqliteTable.getName())
-                        .append(";").toString(), null);
+                        .toString(), null);
             
             if (cursor.moveToNext()) {
                 return cursor.getInt(0);
