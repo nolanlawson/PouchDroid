@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -14,19 +15,19 @@ import android.widget.TextView;
 
 import com.example.example1.data.PocketMonster;
 import com.example.example1.data.PocketMonsterHelper;
+import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidMigrationTask;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.CouchDroidRuntime.OnReadyListener;
 import com.nolanlawson.couchdroid.CouchDroidProgressListener;
 
-public class MainActivity extends Activity implements CouchDroidProgressListener, OnReadyListener {
+public class MainActivity extends CouchDroidActivity implements CouchDroidProgressListener {
     
     private static final String COUCHDB_URL = "http://admin:password@192.168.10.103:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
     
-    private CouchDroidRuntime couchDroidRuntime;
     private SQLiteDatabase sqliteDatabase;
     private long startTime;
     
@@ -41,52 +42,61 @@ public class MainActivity extends Activity implements CouchDroidProgressListener
         text = (TextView) findViewById(android.R.id.text1);
         progress = (ProgressBar) findViewById(android.R.id.progress);
         progressIndeterminate = (ProgressBar) findViewById(R.id.progress_indeterminate);
+        
+        progress.setProgress(0);
+        progressIndeterminate.setVisibility(View.VISIBLE);
+    }
+
+    
+    @Override
+    public void onCouchDroidReady(final CouchDroidRuntime runtime) {
+
+        
+        // load pokemon data in the background,
+        // then launch the migration task in the foreground
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                loadPokemonData();
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                super.onPostExecute(result);
+                
+                startTime = System.currentTimeMillis();
+                
+                
+                new CouchDroidMigrationTask.Builder(runtime, sqliteDatabase)
+                    .setUserId("fooUser")
+                    .setCouchdbUrl(COUCHDB_URL)
+                    .addSqliteTable("Monsters", "uniqueId")
+                    .setProgressListener(MainActivity.this)             
+                    .build()
+                    .start();
+            }
+            
+        }.execute((Void)null);
+
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onPause() {
+        super.onPause();
+        if (sqliteDatabase != null) {
+            sqliteDatabase.close();
+        }
+    }
+
+    private void loadPokemonData() {
         
         String dbName = "pokemon.db";
         if (RANDOMIZE_DB) {
             dbName = "pokemon_" + Long.toString(Math.abs(new Random().nextLong())) + ".db";
         }
         sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
-        
-        loadPokemonData(sqliteDatabase);
-        
-        
-        couchDroidRuntime = new CouchDroidRuntime(this, this);
-        
-        startTime = System.currentTimeMillis();
-        progress.setProgress(0);
-        progressIndeterminate.setVisibility(View.VISIBLE);
-    }
-    
-    @Override
-    public void onReady(CouchDroidRuntime runtime) {
-        
-        new CouchDroidMigrationTask.Builder(runtime, sqliteDatabase)
-            .setUserId("fooUser")
-            .setCouchdbUrl(COUCHDB_URL)
-            .addSqliteTable("Monsters", "uniqueId")
-            .setProgressListener(MainActivity.this)             
-            .build()
-            .start();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (couchDroidRuntime != null) {
-            couchDroidRuntime.close();
-        }
-        if (sqliteDatabase != null) {
-            sqliteDatabase.close();
-        }
-    }
-
-    private void loadPokemonData(SQLiteDatabase sqliteDatabase) {
         
         List<PocketMonster> monsters = PocketMonsterHelper.readInPocketMonsters(this);
         
