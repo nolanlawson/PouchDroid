@@ -99,7 +99,7 @@ public class XhrJavascriptInterface {
                 
                 ObjectNode error = objectMapper.createObjectNode();
                 error.put("type", "error");
-                error.put("message", "Internal Java error, most likely a timeout");
+                error.put("message", "Error connecting with XhrJavascriptInterface, most likely an HTTP timeout");
                 callback(xhrId, objectMapper.writeValueAsString(error), -1, null);
             }
         } catch (Exception e) {

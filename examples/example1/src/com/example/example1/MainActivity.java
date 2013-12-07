@@ -3,7 +3,6 @@ package com.example.example1;
 import java.util.List;
 import java.util.Random;
 
-import android.app.Activity;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
@@ -17,9 +16,8 @@ import com.example.example1.data.PocketMonster;
 import com.example.example1.data.PocketMonsterHelper;
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidMigrationTask;
-import com.nolanlawson.couchdroid.CouchDroidRuntime;
-import com.nolanlawson.couchdroid.CouchDroidRuntime.OnReadyListener;
 import com.nolanlawson.couchdroid.CouchDroidProgressListener;
+import com.nolanlawson.couchdroid.CouchDroidRuntime;
 
 public class MainActivity extends CouchDroidActivity implements CouchDroidProgressListener {
     

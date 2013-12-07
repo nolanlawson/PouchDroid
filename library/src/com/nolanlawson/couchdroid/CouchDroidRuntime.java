@@ -159,7 +159,6 @@ public class CouchDroidRuntime {
         
         webView.setWebChromeClient(new MyWebChromeClient());
         
-        
         webView.addJavascriptInterface(new SQLiteJavascriptInterface(activity, webView), 
                 SQLiteJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new XhrJavascriptInterface(webView), 
@@ -238,6 +237,11 @@ public class CouchDroidRuntime {
         }
     }
     
+    /**
+     * Confirms that our JavaScript bridge is actually operational
+     * @author nolan
+     *
+     */
     private class JSInterfaceVerifierCaller extends AsyncTask<Void, Void, Void> {
 
         private boolean cancelled;
@@ -248,7 +252,11 @@ public class CouchDroidRuntime {
             while (!cancelled) {
                 
                 log.d("JSInterfaceVerifierCaller notify");
-                loadJavascript("if (!!window.JSInterfaceVerifier){JSInterfaceVerifier.callback();}");
+                
+                loadJavascript("if (!!window.SQLiteJavascriptInterface " +
+                		"&& !!window.XhrJavascriptInterface " +
+                		"&& !!window.ProgressReporter " +
+                		"&& !!window.JSInterfaceVerifier){JSInterfaceVerifier.callback();}");
                 
                 try {
                     Thread.sleep(JSINTERFACE_VERIFIER_CALLER_INTERVAL);
