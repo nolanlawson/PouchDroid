@@ -28,38 +28,39 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
 import com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper.SQLiteTask;
+import com.nolanlawson.couchdroid.util.Base64Compat;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class SQLiteJavascriptInterface {
 
     private static UtilLogger log = new UtilLogger(SQLiteJavascriptInterface.class);
-    
+
     private Activity activity;
     private WebView webView;
-    
+
     // keep static so that we only ever have one access to the dbs
-    // see http://www.androiddesignpatterns.com/2012/05/correctly-managing-your-sqlite-database.html
+    // see
+    // http://www.androiddesignpatterns.com/2012/05/correctly-managing-your-sqlite-database.html
     private static final Map<String, BasicSQLiteOpenHelper> dbs = new HashMap<String, BasicSQLiteOpenHelper>();
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PriorityQueue<WebSqlTask> queue = new PriorityQueue<WebSqlTask>();
-    
+
     private int currentTransactionId = -1;
-    
+
     public SQLiteJavascriptInterface(Activity activity, WebView webView) {
         this.activity = activity;
         this.webView = webView;
     }
-    
+
     private void sendCallback(JavascriptCallback callback) {
         sendCallback(Collections.singletonList(callback));
     }
-    
+
     private void sendCallback(List<JavascriptCallback> callbacks) {
         log.d("sendCallback(%s)", callbacks);
 
@@ -67,10 +68,10 @@ public class SQLiteJavascriptInterface {
             final StringBuilder url = new StringBuilder().append("javascript:(function(){");
             for (JavascriptCallback callback : callbacks) {
                 url.append("CouchDroid.SQLiteNativeDB.onNativeCallback(")
-                    .append(objectMapper.writeValueAsString(callback.getCallbackId()))
-                    .append(",")
-                    .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1()) : "null")
-                    .append(");");
+                        .append(objectMapper.writeValueAsString(callback.getCallbackId()))
+                        .append(",")
+                        .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1())
+                                : "null").append(");");
             }
             url.append("})();");
 
@@ -87,15 +88,16 @@ public class SQLiteJavascriptInterface {
             log.e(e, "unexpected");
         }
     }
-    
+
     /**
      * Get the names of the databases that pouch has created
+     * 
      * @return
      */
     public List<String> getDbNames() {
         return new ArrayList<String>(dbs.keySet());
     }
-    
+
     @JavascriptInterface
     public void open(final String dbName, final String callbackId) {
         log.d("open(%s, %s)", dbName, callbackId);
@@ -109,133 +111,115 @@ public class SQLiteJavascriptInterface {
         } catch (Exception e) {
             // shouldn't happen
             log.e(e, "unexpected");
-        } 
+        }
     }
 
     @JavascriptInterface
     public void startTransaction(int transactionId, String dbName, String successId, String errorId) {
         log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, successId, errorId);
-        
-        queue.add(WebSqlTask.forBeginTransaction(transactionId, dbName, successId, errorId));
-        
-        doUnitOfSqliteWork();
-    }
+        try {
     
+            queue.add(WebSqlTask.forBeginTransaction(transactionId, dbName, successId, errorId));
+    
+            doUnitOfSqliteWork();
+        } catch (Exception e) {
+            // shouldn't happen
+            log.e(e, "unexpected");
+        }
+    }
+
     @JavascriptInterface
     public void endTransaction(int transactionId, String dbName, String successId, String errorId,
             boolean markAsSuccessful) {
-        
+
         log.d("endTransaction(%s, %s, %s, %s, %s)", transactionId, dbName, successId, errorId, markAsSuccessful);
-        
-        queue.add(WebSqlTask.forEndTransaction(transactionId, dbName, successId, errorId, markAsSuccessful));
-        
-        doUnitOfSqliteWork();
-    }
+        try {
     
+            queue.add(WebSqlTask.forEndTransaction(transactionId, dbName, successId, errorId, markAsSuccessful));
+    
+            doUnitOfSqliteWork();
+        } catch (Exception e) {
+            // shouldn't happen
+            log.e(e, "unexpected");
+        }
+    }
+
     @JavascriptInterface
-    public void executeSql(int queryId, int transactionId, final String dbName, final String sql, 
+    public void executeSql(int queryId, int transactionId, final String dbName, final String sql,
             final String selectArgsJson, final String querySuccessId, final String queryErrorId) {
-        log.d("executeSql(%s, %s, %s, %s, %s, %s, %s)", queryId, transactionId, dbName, sql, selectArgsJson, 
+        log.d("executeSql(%s, %s, %s, %s, %s, %s, %s)", queryId, transactionId, dbName, sql, selectArgsJson,
                 querySuccessId, queryErrorId);
-        
-        queue.add(WebSqlTask.forExecuteSql(queryId, transactionId, dbName, sql, selectArgsJson, querySuccessId, 
-                queryErrorId));
-        
-        doUnitOfSqliteWork();
-    }
+        try {
     
+            queue.add(WebSqlTask.forExecuteSql(queryId, transactionId, dbName, sql, selectArgsJson, querySuccessId,
+                    queryErrorId));
+    
+            doUnitOfSqliteWork();
+        } catch (Exception e) {
+            // shouldn't happen
+            log.e(e, "unexpected");
+        }
+    }
+
     @SuppressLint("NewApi")
     private void execute(SQLiteDatabase db, WebSqlTask task) {
-        
-        String sql = (String)task.getArguments().get(0);
-        String selectArgsJson = (String)task.getArguments().get(1);
-        String querySuccessId = task.getSuccessId(); 
+
+        String query = (String) task.getArguments().get(0);
+        String selectArgsJson = (String) task.getArguments().get(1);
+        String querySuccessId = task.getSuccessId();
         String queryErrorId = task.getErrorId();
-        
+
         try {
             List<Object> selectArgs = getSelectArgs(selectArgsJson);
-            String query = sql;
             List<Object> batchResults = new ArrayList<Object>();
             ObjectNode queryResult = null;
 
+            String queryLower = query.toLowerCase(Locale.US);
+
             // /* OPTIONAL changes for new Android SDK from HERE:
             if (android.os.Build.VERSION.SDK_INT >= 11
-                    && (query.toLowerCase(Locale.US).startsWith("update") 
-                            || query.toLowerCase(Locale.US).startsWith("delete"))) {
-                synchronized (db) {
-                    SQLiteStatement myStatement = db.compileStatement(query);
+                    && (queryLower.startsWith("update") || queryLower.startsWith("delete"))) {
+                SQLiteStatement myStatement = db.compileStatement(query);
 
-                    if (selectArgs != null) {
-                        for (int j = 0; j < selectArgs.size(); j++) {
-                            if (selectArgs.get(j) instanceof Float || selectArgs.get(j) instanceof Double) {
-                                myStatement.bindDouble(j + 1, (Double) selectArgs.get(j));
-                            } else if (selectArgs.get(j) instanceof Integer) {
-                                myStatement.bindLong(j + 1, (Integer) selectArgs.get(j));
-                            } else if (selectArgs.get(j) instanceof Long) {
-                                myStatement.bindLong(j + 1, (Long) selectArgs.get(j));
-                            } else if (selectArgs.get(j) == null) {
-                                myStatement.bindNull(j + 1);
-                            } else {
-                                myStatement.bindString(j + 1, (String) selectArgs.get(j));
-                            }
-                        }
-                    }
+                bindSelectArgs(myStatement, selectArgs);
 
-                    int rowsAffected = myStatement.executeUpdateDelete();
+                int rowsAffected = myStatement.executeUpdateDelete();
 
-                    queryResult = objectMapper.createObjectNode();
-                    queryResult.put("rowsAffected", rowsAffected);
-                }
-            } else // to HERE. */
-            if (query.toLowerCase(Locale.US).startsWith("insert") && selectArgs != null) {
-                synchronized (db) {
-                    SQLiteStatement myStatement = db.compileStatement(query);
+                queryResult = objectMapper.createObjectNode();
+                queryResult.put("rowsAffected", rowsAffected);
 
-                    for (int j = 0; j < selectArgs.size(); j++) {
-                        if (selectArgs.get(j) instanceof Float || selectArgs.get(j) instanceof Double) {
-                            myStatement.bindDouble(j + 1, (Double) selectArgs.get(j));
-                        } else if (selectArgs.get(j) instanceof Integer) {
-                            myStatement.bindLong(j + 1, (Integer) selectArgs.get(j));
-                        } else if (selectArgs.get(j) instanceof Long) {
-                            myStatement.bindLong(j + 1, (Long) selectArgs.get(j));
-                        } else if (selectArgs.get(j) == null) {
-                            myStatement.bindNull(j + 1);
-                        } else {
-                            myStatement.bindString(j + 1, (String) selectArgs.get(j));
-                        }
-                    }
+                // to HERE. */
+            } else if (queryLower.startsWith("insert") && selectArgs != null) {
+                SQLiteStatement myStatement = db.compileStatement(query);
 
-                    long insertId = myStatement.executeInsert();
+                bindSelectArgs(myStatement, selectArgs);
 
-                    int rowsAffected = (insertId == -1) ? 0 : 1;
+                long insertId = myStatement.executeInsert();
 
-                    queryResult = objectMapper.createObjectNode();
-                    queryResult.put("insertId", insertId);
-                    queryResult.put("rowsAffected", rowsAffected);
-                }
+                int rowsAffected = (insertId == -1) ? 0 : 1;
+
+                queryResult = objectMapper.createObjectNode();
+                queryResult.put("insertId", insertId);
+                queryResult.put("rowsAffected", rowsAffected);
             } else {
+                // pragma command or something else
                 String[] params = null;
 
                 if (selectArgs != null) {
                     params = new String[selectArgs.size()];
 
-                    for (int j = 0; j < selectArgs.size(); j++) {
-                        if (selectArgs.get(j) == null)
-                            params[j] = "";
-                        else
-                            params[j] = String.valueOf(selectArgs.get(j));
+                    for (int i = 0, len = selectArgs.size(); i < len; i++) {
+                        Object val = selectArgs.get(i);
+                        params[i] = (val == null) ? "" : String.valueOf(val);
                     }
                 }
 
-                synchronized (db) {
-                    Cursor myCursor = db.rawQuery(query, params);
+                Cursor myCursor = db.rawQuery(query, params);
 
-                    queryResult = this.getRowsResultFromQuery(myCursor);
+                queryResult = this.getRowsResultFromQuery(myCursor);
 
-                    myCursor.close();
-                }
+                myCursor.close();
             }
-            
 
             if (queryResult != null) {
                 ObjectNode r = objectMapper.createObjectNode();
@@ -252,13 +236,36 @@ public class SQLiteJavascriptInterface {
             sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true));
         }
     }
-    
+
+    private void bindSelectArgs(SQLiteStatement statement, List<Object> selectArgs) {
+        if (selectArgs == null) {
+            return;
+        }
+
+        for (int i = 0, len = selectArgs.size(); i < len; i++) {
+
+            Object val = selectArgs.get(i);
+
+            if (val == null) {
+                statement.bindNull(i + 1);
+            } else if (val instanceof Float || val instanceof Double) {
+                statement.bindDouble(i + 1, (Double) val);
+            } else if (val instanceof Integer) {
+                statement.bindLong(i + 1, (Integer) val);
+            } else if (val instanceof Long) {
+                statement.bindLong(i + 1, (Long) val);
+            } else {
+                statement.bindString(i + 1, (String) val);
+            }
+        }
+    }
+
     private ObjectNode createSqlError(String message) {
         ObjectNode sqlErrorObject = objectMapper.createObjectNode();
 
         sqlErrorObject.put("type", "error");
         sqlErrorObject.put("result", message);
-        
+
         return sqlErrorObject;
     }
 
@@ -293,85 +300,84 @@ public class SQLiteJavascriptInterface {
 
         ArrayNode rowsArrayResult = rowsResult.putArray("rows");
 
-        // If query result has rows
         if (cur.moveToFirst()) {
-            String key = "";
+            //  query result has rows
             int colCount = cur.getColumnCount();
-
+    
             // Build up JSON result object for each row
             do {
                 ObjectNode row = objectMapper.createObjectNode();
-                try {
-                    for (int i = 0; i < colCount; ++i) {
-                        key = cur.getColumnName(i);
-
-                        // for old Android SDK remove lines from HERE:
-                        if (android.os.Build.VERSION.SDK_INT >= 11) {
-                            switch (cur.getType(i)) {
-                                case Cursor.FIELD_TYPE_NULL:
-                                    row.putNull(key);
-                                    break;
-                                case Cursor.FIELD_TYPE_INTEGER:
-                                    row.put(key, cur.getInt(i));
-                                    break;
-                                case Cursor.FIELD_TYPE_FLOAT:
-                                    row.put(key, cur.getFloat(i));
-                                    break;
-                                case Cursor.FIELD_TYPE_STRING:
-                                    row.put(key, cur.getString(i));
-                                    break;
-                                case Cursor.FIELD_TYPE_BLOB:
-                                    row.put(key, new String(Base64.encode(cur.getBlob(i), Base64.DEFAULT)));
-                                    break;
-                            }
-                        } else // to HERE.
-                        {
-                            row.put(key, cur.getString(i));
-                        }
+                for (int i = 0; i < colCount; ++i) {
+                    String key = cur.getColumnName(i);
+    
+                    // for old Android SDK remove lines from HERE:
+                    if (android.os.Build.VERSION.SDK_INT >= 11) {
+                        putValueBasedOnType(cur, row, key, i);
+                        // to HERE.
+                    } else {
+                        row.put(key, cur.getString(i));
                     }
-
-                    rowsArrayResult.add(row);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
-
+    
+                rowsArrayResult.add(row);
+    
             } while (cur.moveToNext());
         }
 
         return rowsResult;
     }
 
+    @SuppressLint("NewApi")
+    private void putValueBasedOnType(Cursor cur, ObjectNode row, String key, int i) {
+        switch (cur.getType(i)) {
+            case Cursor.FIELD_TYPE_NULL:
+                row.putNull(key);
+                break;
+            case Cursor.FIELD_TYPE_INTEGER:
+                row.put(key, cur.getInt(i));
+                break;
+            case Cursor.FIELD_TYPE_FLOAT:
+                row.put(key, cur.getFloat(i));
+                break;
+            case Cursor.FIELD_TYPE_STRING:
+                row.put(key, cur.getString(i));
+                break;
+            case Cursor.FIELD_TYPE_BLOB:
+                row.put(key, new String(Base64Compat.encode(cur.getBlob(i), Base64Compat.DEFAULT)));
+                break;
+        }        
+    }
+
     private void doUnitOfSqliteWork() {
-        
+
         log.d("doUnitOfSqliteWork");
-        
+
         WebSqlTask task;
         while ((task = queue.poll()) != null) {
-            
+
             if (task.getTransactionId() < currentTransactionId && task.getType() != WebSqlTask.Type.BeginTransaction) {
-                log.d("skipping because of canceled transaction: %s");
+                log.d("skipping because of canceled transaction: %s", task.getTransactionId());
                 continue;
             }
-            
+
             currentTransactionId = task.getTransactionId();
-            
+
             perform(task);
         }
     }
 
     private void perform(final WebSqlTask task) {
         log.d("perform(%s)", task);
-        
+
         BasicSQLiteOpenHelper dbHelper = dbs.get(task.getDbName());
         if (dbHelper == null) {
             log.d("couldn't find db for name %s", task.getDbName());
             sendCallback(new JavascriptCallback(task.getErrorId(), "couldn't find db", true));
             return;
         }
-        
+
         dbHelper.post(new SQLiteTask() {
-            
+
             @Override
             public void run(SQLiteDatabase db) {
                 switch (task.getType()) {
@@ -387,15 +393,15 @@ public class SQLiteJavascriptInterface {
                         break;
                 }
             }
-        });          
+        });
     }
-    
+
     private void endTransaction(SQLiteDatabase db, final WebSqlTask task) {
         log.d("endTransaction: %s", task);
         boolean error = false;
-        
-        boolean markAsSuccessful = (Boolean)task.getArguments().get(0);
-        
+
+        boolean markAsSuccessful = (Boolean) task.getArguments().get(0);
+
         try {
             if (markAsSuccessful) {
                 db.setTransactionSuccessful();
@@ -410,18 +416,18 @@ public class SQLiteJavascriptInterface {
                 log.e(e, "unexpected");
                 error = true;
             }
-            
+
             if (error) {
                 sendCallback(new JavascriptCallback(task.getErrorId(), null, true));
             } else {
                 sendCallback(new JavascriptCallback(task.getSuccessId(), null, false));
             }
-        }                
+        }
     }
 
     private void executeQuery(SQLiteDatabase db, final WebSqlTask task) {
         log.d("executeSql: %s", task);
-        
+
         execute(db, task);
     }
 

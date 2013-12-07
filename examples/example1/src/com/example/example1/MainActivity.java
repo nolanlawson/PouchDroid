@@ -21,7 +21,7 @@ import com.nolanlawson.couchdroid.CouchDroidProgressListener;
 
 public class MainActivity extends Activity implements CouchDroidProgressListener, OnReadyListener {
     
-    private static final String COUCHDB_URL = "http://admin:password@192.168.10.110:5984/pokemon";
+    private static final String COUCHDB_URL = "http://admin:password@192.168.10.103:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;

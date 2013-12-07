@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -15,6 +13,7 @@ import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.text.TextUtils;
 
 import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
@@ -28,7 +27,9 @@ public class CouchDroidMigrationTask {
 
     private static UtilLogger log = new UtilLogger(CouchDroidMigrationTask.class);
 
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE_HIMEM = 100;
+    private static final int BATCH_SIZE_LOMEM = 20;
+    private static final int SDK_INT_CUTOFF = 11; // assume devices < sdk 11 are low-memory (TODO: better method?)
     
     private List<SqliteTable> sqliteTables = new ArrayList<SqliteTable>();
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -54,7 +55,14 @@ public class CouchDroidMigrationTask {
     }
     
     public void start() {
-        migrateSqliteTables();
+        try {
+            initPouchDBHelper();
+            migrateSqliteTable(sqliteTables.get(0), 0);
+        } catch (Exception e) {
+            // shouldn't happen
+            log.e(e, "very unexpected exception");
+            throw new RuntimeException(e);
+        }
     }
     
     private CouchDroidProgressListener wrapClientListener() {
@@ -65,13 +73,48 @@ public class CouchDroidMigrationTask {
             @Override
             public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
                 log.d("onProgress(%s,  %s, %s, %s", type, tableName, numRowsTotal, numRowsLoaded);
-                if (clientListener != null) {
-                    clientListener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
-                }
-                
-                if (type == ProgressType.Copy && numRowsLoaded == numRowsTotal) {
-                    log.i("Trying to sync to CouchDB %s... (If this hangs, CouchDB may be unreachable!)", couchdbUrl);
-                    replicate();
+                try {
+                    if (clientListener != null) {
+                        clientListener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
+                    }
+                    
+                    if (type == ProgressType.Copy) {
+                        
+                        // find sqliteTable by name
+                        SqliteTable sqliteTable = null;
+                        int sqliteTableIdx = -1;
+                        for (int i = 0, len = sqliteTables.size(); i < len; i++) {
+                            SqliteTable candidate = sqliteTables.get(i);
+                            if (candidate.getName().equals(tableName)) {
+                                sqliteTable = candidate;
+                                sqliteTableIdx = i;
+                                break;
+                            }
+                        }
+                        
+                        if (sqliteTable == null) {
+                            throw new IllegalStateException("couldn't find sqlite table for name: " + tableName);
+                        }
+                        
+                        if (numRowsLoaded == numRowsTotal) {
+                            // copying complete
+                            if (sqliteTableIdx < sqliteTables.size() - 1) {
+                                // copy next table
+                                migrateSqliteTable(sqliteTables.get(sqliteTableIdx + 1), 0);
+                            } else {
+                                // begin replication of all tables
+                                log.i("Trying to sync to CouchDB %s... (If this hangs, CouchDB may be unreachable!)", couchdbUrl);
+                                replicate();
+                            }
+                        } else {
+                            // copy next batch
+                            migrateSqliteTable(sqliteTable, numRowsLoaded);
+                        }
+                    }
+                } catch (Exception e) {
+                    // shouldn't happen
+                    log.e(e, "very unexpected exception");
+                    throw new RuntimeException(e);
                 }
             }
         };
@@ -91,18 +134,25 @@ public class CouchDroidMigrationTask {
     /*
      * migrate sqlite tables from sqlite to PouchDB
      */
-    private void migrateSqliteTables() {
+    private void migrateSqliteTable(final SqliteTable sqliteTable, final int offset) {
         
         new AsyncTask<Void, Void, Void>() {
 
             @Override
             protected Void doInBackground(Void... params) {
-                for (SqliteTable sqliteTable : sqliteTables) {
-                    try {
-                        loadTable(sqliteTable);
-                    } catch (IOException e) {
-                        log.e(e, "unexpected"); // shouldn't happen
+                try {
+                    // TODO: only need to do this once
+                    List<SqliteColumn> sqliteColumns = getColumnsForTable(sqliteTable.getName());
+                    int totalNumRows = countNumRows(sqliteTable);
+                    
+                    if (offset == 0) {
+                        // notify listener at zero
+                        runtime.loadJavascript(createInitReportProgressJs(sqliteTable, totalNumRows));
                     }
+                        
+                    loadBatchFromTable(sqliteTable, sqliteColumns, offset, totalNumRows);
+                } catch (IOException e) {
+                    log.e(e, "unexpected"); // shouldn't happen
                 }
                 
                 return null;
@@ -110,63 +160,46 @@ public class CouchDroidMigrationTask {
         }.execute(((Void)null));
     }
     
-    private void loadTable(SqliteTable sqliteTable) throws IOException {
-        log.d("loadTable: %s", sqliteTable);
-        List<SqliteColumn> sqliteColumns = getColumnsForTable(sqliteTable.getName());
+    private void loadBatchFromTable(SqliteTable sqliteTable, 
+            List<SqliteColumn> sqliteColumns, int offset, int totalNumRows) throws IOException {
+        log.d("load batch for table: %s, offset %s", sqliteTable, offset);
         
-        int offset = 0;
+        /**
+         * the resulting, compressed batch object looks like this:
+         * {
+         *  table : "MyTable",
+         *  user : "Bobby B",
+         *  columns : ["id", "name", "date", ...],
+         *  uuids:['foo','bar','baz'...],
+         *  docs : [[..values...], [...values...]...]
+         *  }
+         */
         
-        int totalNumRows = countNumRows(sqliteTable);
+        ObjectNode batch = objectMapper.createObjectNode();
+        batch.put("table", sqliteTable.getName());
+        batch.put("sqliteDB", dbName);
+        batch.put("appPackage", runtime.getActivity().getPackageName());
+        batch.put("user", userId);
+        ArrayNode columns = batch.putArray("columns");
         
-        // notify listener at zero
-        runtime.loadJavascript(createInitReportProgressJs(sqliteTable, totalNumRows));
-        
-        initPouchDBHelper();
-        
-        while (true) {
-            
-            /**
-             * the resulting, compressed batch object looks like this:
-             * {
-             *  table : "MyTable",
-             *  user : "Bobby B",
-             *  columns : ["id", "name", "date", ...],
-             *  uuids:['foo','bar','baz'...],
-             *  docs : [[..values...], [...values...]...]
-             *  }
-             */
-            
-            ObjectNode batch = objectMapper.createObjectNode();
-            batch.put("table", sqliteTable.getName());
-            batch.put("sqliteDB", dbName);
-            batch.put("appPackage", runtime.getActivity().getPackageName());
-            batch.put("user", userId);
-            ArrayNode columns = batch.putArray("columns");
-            
-            for (SqliteColumn column : sqliteColumns) {
-                columns.add(column.getName());
-            }
-            ArrayNode documents = batch.putArray("docs");
-            ArrayNode uuids = batch.putArray("uuids");
-            
-            convertBatchToJsonList(documents, uuids, offset, sqliteColumns, sqliteTable);
-            
-            if (documents.size() == 0) {
-                break;
-            }
-
-            CharSequence reportProgress = createReportProgressJs(sqliteTable, totalNumRows, offset);
-            
-            log.d("loadBatchIntoPouchdb: %s docs", documents.size());
-            loadBatchIntoPouchdb(batch, reportProgress);
-            log.d("Loaded %d objects into pouchdb", documents.size());
-            
-            if (documents.size() < BATCH_SIZE) {
-                break;
-            }
-            
-            offset += BATCH_SIZE;
+        for (SqliteColumn column : sqliteColumns) {
+            columns.add(column.getName());
         }
+        ArrayNode documents = batch.putArray("docs");
+        ArrayNode uuids = batch.putArray("uuids");
+        
+        convertBatchToJsonList(documents, uuids, offset, sqliteColumns, sqliteTable);
+        
+        if (documents.size() == 0) {
+            return; // hit exactly BATCH_SIZE * n documents
+        }
+
+        CharSequence reportProgress = createReportProgressJs(sqliteTable, totalNumRows, offset);
+        
+        log.d("report progress js is %s", reportProgress);
+        log.d("loadBatchIntoPouchdb: %s docs", documents.size());
+        loadBatchIntoPouchdb(batch, reportProgress);
+        log.d("Loaded %d objects into pouchdb", documents.size());
     }
 
     private void initPouchDBHelper() throws IOException {
@@ -257,7 +290,7 @@ public class CouchDroidMigrationTask {
             }
             sql.append(", * from ")
                 .append(sqliteTable.getName())
-                .append(" limit ").append(BATCH_SIZE)
+                .append(" limit ").append(getBatchSize())
                 .append(" offset ").append(offset)
                 .append(";");
             
@@ -316,6 +349,10 @@ public class CouchDroidMigrationTask {
         }
     }
     
+    private int getBatchSize() {
+        return Build.VERSION.SDK_INT < SDK_INT_CUTOFF ? BATCH_SIZE_LOMEM : BATCH_SIZE_HIMEM;
+    }
+
     private int countNumRows(SqliteTable sqliteTable) {
         Cursor cursor = null;
         

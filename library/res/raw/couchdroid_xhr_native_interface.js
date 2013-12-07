@@ -94,6 +94,24 @@
     NativeXMLHttpRequest.prototype.send = function (body) {
         var self = this;
 
+        body = body || '';
+
+        if (typeof body !== 'string') {
+            // TODO
+            /*
+             * according to the xhr spec, this could be:
+             *   void send();
+                 void send(ArrayBuffer data);
+                 void send(ArrayBufferView data);
+                 void send(Blob data);
+                 void send(Document data);
+                 void send(DOMString? data);
+                 void send(FormData data);
+             */
+            window.console.log('body isn\'t a string!  we don\'t know what to do!: ' + JSON.stringify(body));
+            body = JSON.stringify(body);
+        }
+
         CouchDroid.NativeXMLHttpRequests[self.id] = self;
 
         var selfStringified = JSON.stringify(self);

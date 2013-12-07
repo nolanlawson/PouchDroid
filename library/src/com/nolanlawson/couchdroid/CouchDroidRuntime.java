@@ -7,7 +7,7 @@ import java.util.List;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.os.RecoverySystem.ProgressListener;
+import android.os.Build;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +29,7 @@ public class CouchDroidRuntime {
     
     private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
-    private static final String WEINRE_URL = "http://192.168.10.110:8080";
+    private static final String WEINRE_URL = "http://192.168.10.103:8080";
     
     
     private Activity activity;
@@ -142,7 +142,7 @@ public class CouchDroidRuntime {
         
         ViewGroup viewGroup = (ViewGroup) activity.getWindow().getDecorView().findViewById(android.R.id.content);
         
-        log.d("creating new webivew");
+        log.d("creating new webview");
         webView = new WebView(activity);
         webView.setVisibility(View.GONE);
         
@@ -151,7 +151,10 @@ public class CouchDroidRuntime {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDatabaseEnabled(false); // we're overriding websql
         webView.getSettings().setDomStorageEnabled(false); // pouch needs to call localStorage.  we fake it.
-        webView.getSettings().setAllowContentAccess(false); // don't need it
+        
+        if (Build.VERSION.SDK_INT >= 11) {
+            webView.getSettings().setAllowContentAccess(false); // don't need it
+        }
         
         webView.setWebChromeClient(new MyWebChromeClient());
         

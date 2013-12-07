@@ -65,14 +65,20 @@ public class XhrJavascriptInterface {
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
             aborted.add(xhrAsJsonNode.get("id").asInt());
         } catch (IOException e) {
-            log.e(e, "");
+            // shouldn't happen
+            log.e(e, "unexpected");
         }
     }
     
     @JavascriptInterface
     public void send(String xhrJsonObj) {
         log.d("send()");
-        this.send(xhrJsonObj, "");
+        try {
+            this.send(xhrJsonObj, "");
+        } catch (Exception e) {
+            // shouldn't happen
+            log.e(e, "unexpected");
+        }
     }
     
     @JavascriptInterface
@@ -95,13 +101,18 @@ public class XhrJavascriptInterface {
                 callback(xhrId, objectMapper.writeValueAsString(error), -1, null);
             }
         } catch (Exception e) {
+            // shouldn't happen
             log.e(e, "uncatchable exception");
-            // TODO: what to do?
         }
     }
 
     private void send(JsonNode xhrAsJsonNode, int xhrId, String body) throws IOException {
 
+        if (aborted.contains(xhrId)) {
+            log.i("aborted %d", xhrId);
+            return;
+        }
+        
         Map<String, String> requestHeaders = objectMapper.readValue(
                 xhrAsJsonNode.get("requestHeaders"), new TypeReference<HashMap<String,String>>(){});
 
@@ -118,7 +129,7 @@ public class XhrJavascriptInterface {
             // TODO: implement binary
             throw new IllegalArgumentException("Client asked for binary, but we haven't implemented binary yet!");
         }
-
+        
         HttpClient client = new DefaultHttpClient();
         client.getParams().setParameter("http.socket.timeout", timeout);
         HttpUriRequest request = createRequest(method, url);
@@ -134,6 +145,11 @@ public class XhrJavascriptInterface {
 
         HttpEntity entity = response.getEntity();
         String content = readInput(entity.getContent());
+        
+        if (aborted.contains(xhrId)) {
+            log.i("aborted %d", xhrId);
+            return;
+        }
         
         callback(xhrId, null, response.getStatusLine().getStatusCode(), content);
     }
