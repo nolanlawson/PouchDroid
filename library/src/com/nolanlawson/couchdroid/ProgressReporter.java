@@ -3,7 +3,8 @@ package com.nolanlawson.couchdroid;
 import android.app.Activity;
 import android.webkit.JavascriptInterface;
 
-import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
+import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener;
+import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener.ProgressType;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class ProgressReporter {

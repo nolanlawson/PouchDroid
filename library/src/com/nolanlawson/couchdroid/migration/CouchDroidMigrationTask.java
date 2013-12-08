@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid;
+package com.nolanlawson.couchdroid.migration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,9 +17,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
 
-import com.nolanlawson.couchdroid.CouchDroidProgressListener.ProgressType;
-import com.nolanlawson.couchdroid.migration.SqliteColumn;
-import com.nolanlawson.couchdroid.migration.SqliteTable;
+import com.nolanlawson.couchdroid.CouchDroidRuntime;
+import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener.ProgressType;
 import com.nolanlawson.couchdroid.util.SqliteUtil;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
@@ -122,7 +121,6 @@ public class CouchDroidMigrationTask {
                             }
                         } else {
                             // copy next batch
-                            runtime.loadJavascript("CouchDroid.SQLiteNativeDB.clearCache();"); // free up memory
                             migrateSqliteTable(sqliteTableInfo, 
                                     numRowsLoaded);
                         }

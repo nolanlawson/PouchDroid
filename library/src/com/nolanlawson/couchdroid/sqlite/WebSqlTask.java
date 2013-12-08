@@ -10,11 +10,11 @@ public class WebSqlTask implements Comparable<WebSqlTask> {
     private int transactionId;
     private int queryId;
     private String dbName;
-    private String successId;
-    private String errorId;
+    private int successId;
+    private int errorId;
     private List<Object> arguments;
     
-    private WebSqlTask(Type type, int transactionId, int queryId, String dbName, String successId, String errorId,
+    private WebSqlTask(Type type, int transactionId, int queryId, String dbName, int successId, int errorId,
             List<Object> arguments) {
         this.type = type;
         this.transactionId = transactionId;
@@ -36,10 +36,10 @@ public class WebSqlTask implements Comparable<WebSqlTask> {
     public String getDbName() {
         return dbName;
     }
-    public String getSuccessId() {
+    public int getSuccessId() {
         return successId;
     }
-    public String getErrorId() {
+    public int getErrorId() {
         return errorId;
     }
     public List<Object> getArguments() {
@@ -65,19 +65,19 @@ public class WebSqlTask implements Comparable<WebSqlTask> {
         return "WebSqlTask [type=" + type + ", transactionId=" + transactionId + ", queryId=" + queryId + ", dbName="
                 + dbName + ", successId=" + successId + ", errorId=" + errorId + ", arguments=" + arguments + "]";
     }
-    public static WebSqlTask forBeginTransaction(int transactionId, final String dbName, final String successId, 
-            final String errorId) {
+    public static WebSqlTask forBeginTransaction(int transactionId, String dbName, int successId, 
+            int errorId) {
         return new WebSqlTask(Type.BeginTransaction, transactionId, 0, dbName, successId, errorId, null);
     }
     
-    public static WebSqlTask forEndTransaction(int transactionId, String dbName, String successId, String errorId,
+    public static WebSqlTask forEndTransaction(int transactionId, String dbName, int successId, int errorId,
             boolean markAsSuccessful) {
         return new WebSqlTask(Type.EndTransaction, transactionId, 0, dbName, successId, errorId, 
                 Arrays.<Object>asList(markAsSuccessful));
     }
     
     public static WebSqlTask forExecuteSql(int queryId, int transactionId, String dbName, String sql, 
-            String selectArgsJson, String querySuccessId, String queryErrorId) {
+            String selectArgsJson, int querySuccessId, int queryErrorId) {
         
         return new WebSqlTask(Type.ExecSql, transactionId, queryId, dbName, querySuccessId, queryErrorId, 
                 Arrays.<Object>asList(sql, selectArgsJson));

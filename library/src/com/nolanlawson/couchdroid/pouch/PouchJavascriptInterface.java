@@ -12,7 +12,7 @@ import android.text.TextUtils;
 import android.util.SparseArray;
 import android.webkit.JavascriptInterface;
 
-import com.nolanlawson.couchdroid.PouchDB.Callback;
+import com.nolanlawson.couchdroid.pouch.PouchDB.Callback;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class PouchJavascriptInterface {

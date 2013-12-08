@@ -19,11 +19,12 @@
         nativeDBs : {}
     };
 
-    SQLiteNativeDB.clearCache = function() {
+    SQLiteNativeDB.clearCallbacks = function(callbackIds) {
 
         // allows us to save memory by deleting callbacks in the hashmap
-        SQLiteNativeDB.callbacks = {};
-        SQLiteNativeDB.nativeDBs = {};
+        callbackIds.forEach(function(callbackId){
+            delete SQLiteNativeDB.callbacks[callbackId];
+        });
     };
 
     SQLiteNativeDB.onNativeCallback = function(callbackId, argument) {
@@ -41,7 +42,7 @@
 
         fn = fn || function(){};
 
-        var callbackId = 'cb_' + (callbackIds++);
+        var callbackId = callbackIds++;
 
         var newFn = function() {
             debug('executing callback with id: ' + callbackId);

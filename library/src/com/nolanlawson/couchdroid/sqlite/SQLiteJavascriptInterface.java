@@ -10,12 +10,13 @@ package com.nolanlawson.couchdroid.sqlite;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -28,9 +29,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 
+import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper.SQLiteTask;
 import com.nolanlawson.couchdroid.util.Base64Compat;
 import com.nolanlawson.couchdroid.util.UtilLogger;
@@ -39,8 +41,7 @@ public class SQLiteJavascriptInterface {
 
     private static UtilLogger log = new UtilLogger(SQLiteJavascriptInterface.class);
 
-    private Activity activity;
-    private WebView webView;
+    private CouchDroidRuntime runtime;
 
     // keep static so that we only ever have one access to the dbs
     // see
@@ -49,40 +50,29 @@ public class SQLiteJavascriptInterface {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PriorityQueue<WebSqlTask> queue = new PriorityQueue<WebSqlTask>();
+    private final SparseArray<Set<Integer>> transactionIdsToCallbackIds = new SparseArray<Set<Integer>>();
 
     private int currentTransactionId = -1;
 
-    public SQLiteJavascriptInterface(Activity activity, WebView webView) {
-        this.activity = activity;
-        this.webView = webView;
+    public SQLiteJavascriptInterface(CouchDroidRuntime runtime) {
+        this.runtime = runtime;
     }
 
     private void sendCallback(JavascriptCallback callback) {
-        sendCallback(Collections.singletonList(callback));
-    }
-
-    private void sendCallback(List<JavascriptCallback> callbacks) {
-        log.d("sendCallback(%s)", callbacks);
+        log.d("sendCallback(%s)", callback);
 
         try {
-            final StringBuilder url = new StringBuilder().append("javascript:(function(){");
-            for (JavascriptCallback callback : callbacks) {
-                url.append("CouchDroid.SQLiteNativeDB.onNativeCallback(")
-                        .append(objectMapper.writeValueAsString(callback.getCallbackId()))
-                        .append(",")
-                        .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1())
-                                : "null").append(");");
+            StringBuilder js = new StringBuilder()
+                .append("CouchDroid.SQLiteNativeDB.onNativeCallback(")
+                .append(objectMapper.writeValueAsString(callback.getCallbackId()))
+                .append(",")
+                .append(callback.getArg1() != null ? objectMapper.writeValueAsString(callback.getArg1())
+                        : "null").append(");");
+            
+            if (!TextUtils.isEmpty(callback.getExtraJavascript())) {
+                js.append(callback.getExtraJavascript());
             }
-            url.append("})();");
-
-            log.d("calling javascript: %s", url);
-
-            webView.post(new Runnable() {
-                @Override
-                public void run() {
-                    webView.loadUrl(url.toString());
-                }
-            });
+            runtime.loadJavascript(js);
         } catch (IOException e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -99,15 +89,22 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void open(final String dbName, final String callbackId) {
+    public void open(final String dbName, final int callbackId) {
         log.d("open(%s, %s)", dbName, callbackId);
+        
+        Activity activity = runtime.getActivity();
+        
+        if (activity == null) {
+            return; // app closed
+        }
+        
         try {
             BasicSQLiteOpenHelper db = dbs.get(dbName);
             if (db == null) { // doesn't exist yet
                 db = new BasicSQLiteOpenHelper(activity, dbName);
                 dbs.put(dbName, db);
             }
-            sendCallback(new JavascriptCallback(callbackId, null, false));
+            sendCallback(new JavascriptCallback(callbackId, null));
         } catch (Exception e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -115,12 +112,12 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void startTransaction(int transactionId, String dbName, String successId, String errorId) {
+    public void startTransaction(int transactionId, String dbName, int successId, int errorId) {
         log.d("startTransaction(%s, %s, %s, %s)", transactionId, dbName, successId, errorId);
         try {
     
             queue.add(WebSqlTask.forBeginTransaction(transactionId, dbName, successId, errorId));
-    
+            registerCallbackIds(transactionId, successId, errorId);
             doUnitOfSqliteWork();
         } catch (Exception e) {
             // shouldn't happen
@@ -129,14 +126,15 @@ public class SQLiteJavascriptInterface {
     }
 
     @JavascriptInterface
-    public void endTransaction(int transactionId, String dbName, String successId, String errorId,
+    public void endTransaction(int transactionId, String dbName, int successId, int errorId,
             boolean markAsSuccessful) {
 
         log.d("endTransaction(%s, %s, %s, %s, %s)", transactionId, dbName, successId, errorId, markAsSuccessful);
         try {
     
             queue.add(WebSqlTask.forEndTransaction(transactionId, dbName, successId, errorId, markAsSuccessful));
-    
+            registerCallbackIds(transactionId, successId, errorId);
+            
             doUnitOfSqliteWork();
         } catch (Exception e) {
             // shouldn't happen
@@ -146,14 +144,15 @@ public class SQLiteJavascriptInterface {
 
     @JavascriptInterface
     public void executeSql(int queryId, int transactionId, final String dbName, final String sql,
-            final String selectArgsJson, final String querySuccessId, final String queryErrorId) {
+            final String selectArgsJson, final int querySuccessId, final int queryErrorId) {
         log.d("executeSql(%s, %s, %s, %s, %s, %s, %s)", queryId, transactionId, dbName, sql, selectArgsJson,
                 querySuccessId, queryErrorId);
         try {
     
             queue.add(WebSqlTask.forExecuteSql(queryId, transactionId, dbName, sql, selectArgsJson, querySuccessId,
                     queryErrorId));
-    
+            registerCallbackIds(transactionId, querySuccessId, queryErrorId);
+            
             doUnitOfSqliteWork();
         } catch (Exception e) {
             // shouldn't happen
@@ -166,8 +165,8 @@ public class SQLiteJavascriptInterface {
 
         String query = (String) task.getArguments().get(0);
         String selectArgsJson = (String) task.getArguments().get(1);
-        String querySuccessId = task.getSuccessId();
-        String queryErrorId = task.getErrorId();
+        int querySuccessId = task.getSuccessId();
+        int queryErrorId = task.getErrorId();
 
         try {
             List<Object> selectArgs = getSelectArgs(selectArgsJson);
@@ -230,10 +229,10 @@ public class SQLiteJavascriptInterface {
                 batchResults.add(r);
             }
             log.d("query success");
-            sendCallback(new JavascriptCallback(querySuccessId, queryResult, false));
+            sendCallback(new JavascriptCallback(querySuccessId, queryResult));
         } catch (Exception e) {
             log.e(e, "unexpected");
-            sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage()), true));
+            sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage())));
         }
     }
 
@@ -372,7 +371,7 @@ public class SQLiteJavascriptInterface {
         BasicSQLiteOpenHelper dbHelper = dbs.get(task.getDbName());
         if (dbHelper == null) {
             log.d("couldn't find db for name %s", task.getDbName());
-            sendCallback(new JavascriptCallback(task.getErrorId(), "couldn't find db", true));
+            sendCallback(new JavascriptCallback(task.getErrorId(), "couldn't find db"));
             return;
         }
 
@@ -418,9 +417,9 @@ public class SQLiteJavascriptInterface {
             }
 
             if (error) {
-                sendCallback(new JavascriptCallback(task.getErrorId(), null, true));
+                sendCallback(new JavascriptCallback(task.getErrorId(), null, createClearCallbacksJson(task)));
             } else {
-                sendCallback(new JavascriptCallback(task.getSuccessId(), null, false));
+                sendCallback(new JavascriptCallback(task.getSuccessId(), null, createClearCallbacksJson(task)));
             }
         }
     }
@@ -435,10 +434,30 @@ public class SQLiteJavascriptInterface {
         log.d("beginTransaction: %s", task);
         try {
             db.beginTransaction();
-            sendCallback(new JavascriptCallback(task.getSuccessId(), null, false));
+            sendCallback(new JavascriptCallback(task.getSuccessId(), null));
         } catch (Exception e) {
             // couldn't even begin
-            sendCallback(new JavascriptCallback(task.getErrorId(), null, true));
+            sendCallback(new JavascriptCallback(task.getErrorId(), null));
         }
+    }
+    
+    private void registerCallbackIds(int transactionId, int successId, int errorId) {
+        Set<Integer> callbackIds = transactionIdsToCallbackIds.get(transactionId);
+        if (callbackIds == null) {
+            callbackIds = new HashSet<Integer>();
+            transactionIdsToCallbackIds.put(transactionId, callbackIds);
+        }
+        callbackIds.add(successId);
+        callbackIds.add(errorId);
+    }
+    
+    private CharSequence createClearCallbacksJson(WebSqlTask task) {
+        // when a transaction is ended, we can safely remove all its accumulated callbacks
+        Set<Integer> callbackIds = transactionIdsToCallbackIds.get(task.getTransactionId());
+        if (callbackIds == null) {
+            return "";
+        }
+        transactionIdsToCallbackIds.remove(task.getTransactionId());
+        return new StringBuilder("CouchDroid.SQLiteNativeDB.clearCallbacks([").append(TextUtils.join(",", callbackIds)).append("]);");
     }
 }

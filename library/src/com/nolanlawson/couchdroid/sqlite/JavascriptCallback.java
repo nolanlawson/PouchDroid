@@ -1,35 +1,37 @@
 package com.nolanlawson.couchdroid.sqlite;
 
 public class JavascriptCallback {
-    private String callbackId;
+    private int callbackId;
     private Object arg1;
-    private boolean error;
+    private CharSequence extraJavascript;
     
-    public JavascriptCallback(String callbackId, Object arg1, boolean error) {
+    public JavascriptCallback(int callbackId, Object arg1, CharSequence extraJavascript) {
         this.callbackId = callbackId;
         this.arg1 = arg1;
-        this.error = error;
+        this.extraJavascript = extraJavascript;
     }
     
-    public boolean isError() {
-        return error;
+    public JavascriptCallback(int callbackId, Object arg1) {
+        this(callbackId, arg1, null);
     }
-    public String getCallbackId() {
+    
+    public CharSequence getExtraJavascript() {
+        return extraJavascript;
+    }
+
+    public int getCallbackId() {
         return callbackId;
     }
     public Object getArg1() {
         return arg1;
     }
-    public void setCallbackId(String callbackId) {
-        this.callbackId = callbackId;
-    }
     public void setArg1(Object arg1) {
         this.arg1 = arg1;
     }
-    
-    
+
     @Override
     public String toString() {
-        return "JavascriptCallback [callbackId=" + callbackId + ", arg1=" + arg1 + "]";
+        return "JavascriptCallback [callbackId=" + callbackId + ", arg1=" + arg1 + ", extraJavascript="
+                + extraJavascript + "]";
     }
 }

@@ -16,6 +16,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
+import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener;
 import com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface;
 import com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface;
 import com.nolanlawson.couchdroid.util.ResourceUtil;
@@ -80,7 +81,7 @@ public class CouchDroidRuntime {
         
     }
     
-    /* package */ Activity getActivity() {
+    public Activity getActivity() {
         return activity;
     }
 
@@ -124,7 +125,11 @@ public class CouchDroidRuntime {
                 "window.console.log('CouchDroid is: ' + typeof CouchDroid);")));
     }
     
-    /* package */ void loadJavascript(final CharSequence javascript) {
+    /**
+     * Load the given Javascript in is own function, when the DOM is ready, on the UI thread.
+     * @param javascript
+     */
+    public void loadJavascript(final CharSequence javascript) {
         log.d("loadJavascript(): %s", javascript);
         webView.post(new Runnable() {
             
@@ -160,7 +165,7 @@ public class CouchDroidRuntime {
         
         webView.setWebChromeClient(new MyWebChromeClient());
         
-        webView.addJavascriptInterface(new SQLiteJavascriptInterface(activity, webView), 
+        webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), 
                 SQLiteJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new XhrJavascriptInterface(webView), 
                 XhrJavascriptInterface.class.getSimpleName());
@@ -275,7 +280,7 @@ public class CouchDroidRuntime {
         public void onReady(CouchDroidRuntime runtime);
     }
 
-    /*package*/ void addListener(CouchDroidProgressListener listener) {
+    public void addListener(CouchDroidProgressListener listener) {
         clientProgressListeners.add(listener);
     }
 }

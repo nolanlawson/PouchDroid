@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid;
+package com.nolanlawson.couchdroid.migration;
 
 /**
  * This class is called on progress updates to let you know how far along the syncing is.

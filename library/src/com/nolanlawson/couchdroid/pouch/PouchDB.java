@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid;
+package com.nolanlawson.couchdroid.pouch;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,9 +8,7 @@ import org.codehaus.jackson.type.TypeReference;
 import android.app.Activity;
 import android.text.TextUtils;
 
-import com.nolanlawson.couchdroid.pouch.PouchDocument;
-import com.nolanlawson.couchdroid.pouch.PouchDocumentMapper;
-import com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface;
+import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.util.JsonUtil;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
