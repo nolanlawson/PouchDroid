@@ -26,8 +26,8 @@
     SQLiteNativeDB.clearCache = function() {
 
         // allows us to save memory by deleting callbacks in the hashmap
-        // TODO: is it necessary to keep the "important" ones?
-        //SQLiteNativeDB.callbacks = {};
+        // TODO: is it necessary to keep the "important" ones?  This is a memory leak.
+        SQLiteNativeDB.callbacks = {};
         SQLiteNativeDB.nativeDBs = {};
     };
 

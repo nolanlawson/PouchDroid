@@ -28,6 +28,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 
+import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -108,7 +109,7 @@ public class XhrJavascriptInterface {
         }
     }
 
-    private void send(JsonNode xhrAsJsonNode, int xhrId, String body) throws IOException {
+    private void send(JsonNode xhrAsJsonNode, final int xhrId, String body) throws IOException {
 
         if (aborted.contains(xhrId)) {
             log.i("aborted %d", xhrId);
@@ -132,28 +133,58 @@ public class XhrJavascriptInterface {
             throw new IllegalArgumentException("Client asked for binary, but we haven't implemented binary yet!");
         }
         
-        HttpClient client = new DefaultHttpClient();
+        final HttpClient client = new DefaultHttpClient();
         client.getParams().setParameter("http.socket.timeout", timeout);
-        HttpUriRequest request = createRequest(method, url);
+        final HttpUriRequest request = createRequest(method, url);
+        
         for (Entry<String, String> entry : requestHeaders.entrySet()) {
             request.setHeader(entry.getKey(), entry.getValue());
         }
+        
         if (!TextUtils.isEmpty(body)) {
             ((HttpEntityEnclosingRequestBase)request).setEntity(new ByteArrayEntity(
                     body.toString().getBytes("UTF8")));
         }
-        HttpResponse response = client.execute(request);
         
+        new AsyncTask<Void, Void, SimpleHttpResponse>() {
 
-        HttpEntity entity = response.getEntity();
-        String content = readInput(entity.getContent());
-        
-        if (aborted.contains(xhrId)) {
-            log.i("aborted %d", xhrId);
-            return;
-        }
-        
-        callback(xhrId, null, response.getStatusLine().getStatusCode(), content);
+            @Override
+            protected SimpleHttpResponse doInBackground(Void... params) {
+                try {
+                    HttpResponse response = client.execute(request);
+                    
+                    HttpEntity entity = response.getEntity();
+                    String content = readInput(entity.getContent());
+                    
+                    return new SimpleHttpResponse(content, response.getStatusLine().getStatusCode());
+                } catch (Exception e) {
+                    log.e(e, "exception within doInBackground");
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(SimpleHttpResponse response) {
+                super.onPostExecute(response);
+                
+                if (response == null) {
+                    log.e("http response is null");
+                }
+                
+                try {
+                    
+                    if (aborted.contains(xhrId)) {
+                        log.i("aborted %d", xhrId);
+                        return;
+                    }
+                    callback(xhrId, null, response.statusCode, response.body);
+                    
+                } catch (Exception e) {
+                    log.e(e, "exception within onPostExecute");
+                }
+            }
+            
+        }.execute((Void)null);
     }
 
     private void callback(int xhrId, String error, int statusCode, String content) throws IOException {
@@ -223,5 +254,17 @@ public class XhrJavascriptInterface {
                 }
         }
         throw new IllegalArgumentException("we don't understand the http method: " + method);
+    }
+    
+    private static class SimpleHttpResponse {
+        String body;
+        int statusCode;
+        
+        SimpleHttpResponse(String body, int statusCode) {
+            this.body = body;
+            this.statusCode = statusCode;
+        }
+        
+        
     }
 }
