@@ -43,22 +43,24 @@ CouchDroid includes a small utility called CouchDroidMigrationTask, which will m
 Limitations
 -----------
 
-CouchDroid needs a WebView in order to run JavaScript.  Hence, you can't use it in a background Service, and it does consume UI cycles.  For small user databases, though, you probably won't notice.
+1. CouchDroid needs a WebView in order to run JavaScript.  Hence, you can't use it in a background Service, and it does consume UI thread cycles.  For small user databases, though, you probably won't notice.
+1. The PouchDB API is asynchronous, which means JavaScript-style callback hell has invaded Java land.  Just avoid [the pyramid of doom][3] and you should be fine.
+
 
 Scenarios
 ----------
 
 ### 1. You already have SQLite user data, and you want to sync it to CouchDB.
 
-The CouchDroidMigrationTask tool is designed specifically for this.  Set it to run when the user is in a relatively long-running Activity.  It will copy the existing SQLite tables and write it to a new PouchDB (overwriting if necessary).
+The CouchDroidMigrationTask tool is designed specifically for this.  It will copy the existing SQLite tables and write it to a new PouchDB (overwriting if necessary).
 
-Once you have a ```PouchDB``` object, you can set up a one-way replication to CouchDB.  It will only send the diffs, and only when the service is available.  (Did I mention PouchDB is awesome?)
+Once you have a ```PouchDB``` object, you can set up a one-way replication to CouchDB.  Of course, it will only send the diffs, and only when the service is available.  (Did I mention PouchDB is awesome?)
 
 ### 2. You're writing a new app, and you want to use pure CouchDroid.
 
 It's just PouchDB!  Follow the PouchDB APIs, which have been translated as faithfully as possible into Java.
 
-CouchDroid uses Jackson for JSON serialization/deserialization, which means that most of your POJOs/List<Object>/etc. will "just work."
+CouchDroid uses Jackson for JSON serialization/deserialization, which means that, for the most part, POJOs will "just work."
 
 License
 ----------
@@ -71,3 +73,4 @@ Nolan Lawson
 
 [1]: https://github.com/pgsqlite/PG-SQLitePlugin-Android-2013.09
 [2]: http://guide.couchdb.org/draft/conflicts.html
+[3]: http://tritarget.org/blog/2012/11/28/the-pyramid-of-doom-a-javascript-style-trap/]
