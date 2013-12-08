@@ -169,6 +169,7 @@ public class XhrJavascriptInterface {
                 
                 if (response == null) {
                     log.e("http response is null");
+                    return;
                 }
                 
                 try {
