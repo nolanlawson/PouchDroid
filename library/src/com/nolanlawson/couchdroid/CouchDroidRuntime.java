@@ -27,7 +27,7 @@ public class CouchDroidRuntime {
 
     private static UtilLogger log = new UtilLogger(CouchDroidRuntime.class);
 
-    private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 100; // ms
+    private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
     private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
@@ -189,10 +189,7 @@ public class CouchDroidRuntime {
     
     public void close() {
         log.i("close()");
-        activity = null; // release context resources
-        if (webView != null) {
-            webView.loadUrl("about:blank");
-        }
+        activity = null; // release context resources (TODO: is this necessary?)
     }
     
     private class MyWebChromeClient extends WebChromeClient {
