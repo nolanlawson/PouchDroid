@@ -10,12 +10,16 @@
         CouchDroid.Util.debug('SQLiteNativeDB', str);
     }
 
+    var IMPORTANT_PREFIX = '!cb_';
+    var UNIMPORTANT_PREFIX = 'cb_';
+
     var transactionIds = 0;
     var queryIds = 0;
     var callbackIds = 0;
 
     var SQLiteNativeDB = {
         callbacks : {},
+        importantCallbacks : {},
         nativeDBs : {}
     };
 
@@ -23,21 +27,16 @@
 
         // allows us to save memory by deleting callbacks in the hashmap
         // TODO: is it necessary to keep the "important" ones?
-        Object.keys(SQLiteNativeDB.callbacks).forEach(function(key){
-
-            if (key.indexOf('!cb_') !== 0) { //not important
-                delete SQLiteNativeDB.callbacks[key];
-            }
-        });
-
+        //SQLiteNativeDB.callbacks = {};
         SQLiteNativeDB.nativeDBs = {};
-
     };
 
     SQLiteNativeDB.onNativeCallback = function(callbackId, argument) {
         debug('onNativeCallback(' + callbackId + ', ' + argument + ')');
 
-        var callback = SQLiteNativeDB.callbacks[callbackId];
+        var important = (callbackId.indexOf(IMPORTANT_PREFIX) === 0 && true);
+
+        var callback = important ? SQLiteNativeDB.importantCallbacks[callbackId] : SQLiteNativeDB.callbacks[callbackId];
         if (!callback) {
             window.console.log('callback not found for id ' + callbackId + '! ' + callback);
         } else {
@@ -49,14 +48,18 @@
 
         fn = fn || function(){};
 
-        var callbackId = (important ? '!cb_' : 'cb_') + (callbackIds++);
+        var callbackId = (important ? IMPORTANT_PREFIX : UNIMPORTANT_PREFIX) + (callbackIds++);
 
         var newFn = function() {
             debug('executing callback with id: ' + callbackId);
             fn.apply(null, arguments);
         };
 
-        SQLiteNativeDB.callbacks[callbackId] = newFn;
+        if (important) {
+            SQLiteNativeDB.importantCallbacks[callbackId] = newFn;
+        } else {
+            SQLiteNativeDB.callbacks[callbackId] = newFn;
+        }
 
         return callbackId;
     }

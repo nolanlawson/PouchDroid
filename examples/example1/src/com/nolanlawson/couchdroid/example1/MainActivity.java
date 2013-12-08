@@ -20,7 +20,7 @@ import com.nolanlawson.couchdroid.CouchDroidRuntime;
 
 public class MainActivity extends CouchDroidActivity implements CouchDroidProgressListener {
     
-    private static final String COUCHDB_URL = "http://admin:password@192.168.10.103:5984/pokemon";
+    private static final String COUCHDB_URL = "http://admin:password@192.168.0.3:5984/pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
@@ -40,7 +40,6 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
         progress = (ProgressBar) findViewById(android.R.id.progress);
         progressIndeterminate = (ProgressBar) findViewById(R.id.progress_indeterminate);
         
-        progress.setProgress(0);
         progressIndeterminate.setVisibility(View.VISIBLE);
     }
 
@@ -48,7 +47,7 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
     @Override
     public void onCouchDroidReady(final CouchDroidRuntime runtime) {
 
-        
+        progress.setProgress(0);
         text.setText(Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
         
         // load pokemon data in the background,
