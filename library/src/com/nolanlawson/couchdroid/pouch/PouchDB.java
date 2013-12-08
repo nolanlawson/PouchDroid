@@ -2583,7 +2583,116 @@ public class PouchDB<T extends PouchDocument> {
     public void replicateTo(String remoteDB, ReplicateCallback complete) {
         replicateTo(remoteDB, null, complete);
     }
-
+    /**
+     * <h2>Replicate a database<a id="replication"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">PouchDB</span><span class="p">.</span><span class="nx">replicate</span><span class="p">(</span><span class="nx">source</span><span class="p">,</span> <span class="nx">target</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">])</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Replicate data from <code>source</code> to <code>target</code>, both the
+     * <code>source</code> and <code>target</code> can be strings used to
+     * represent a database of a PouchDB object. If
+     * <code>options.continuous</code> is <code>true</code> then this will track
+     * future changes and also replicate them.
+     * </p>
+     * 
+     * <p>
+     * If you want to sync data in both directions you can call this twice
+     * reversing the <code>source</code> and <code>target</code> arguments.
+     * </p>
+     * 
+     * <ul>
+     * <li><code>options.filter</code>: Reference a filter function from a
+     * design document to selectively get updates.</li>
+     * <li><code>options.query_params</code>: Query params send to the filter
+     * function.</li>
+     * <li><code>options.doc_ids</code>: Only replicate docs with these ids.</li>
+     * <li><code>options.complete</code>: Function called when all changes have
+     * been processed.</li>
+     * <li><code>options.onChange</code>: Function called on each change
+     * processed..</li>
+     * <li><code>options.continuous</code>: If true starts subscribing to future
+     * changes in the <code>source</code> database and continue replicating
+     * them.</li>
+     * <li><code>options.server</code>: Initialize the replication on the
+     * server. The response is the CouchDB <code>POST _replicate</code> response
+     * and is different from the PouchDB replication response. Also,
+     * <code>options.onChange</code> is not supported on server replications.</li>
+     * <li><code>options.create_target</code>: Create target database if it does
+     * not exist. Only for server replications.</li>
+     * </ul>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">PouchDB</span><span class="p">.</span><span class="nx">replicate</span><span class="p">(</span><span class="s1">&#39;mydb&#39;</span><span class="p">,</span> <span class="s1">&#39;http://localhost:5984/mydb&#39;</span><span class="p">,</span> <span class="p">{</span>
+     *   <span class="nx">onChange</span><span class="o">:</span> <span class="nx">onChange</span><span class="p">,</span>
+     *   <span class="nx">complete</span><span class="o">:</span> <span class="nx">onComplete</span>
+     * <span class="p">});;</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * There are also shorthands for replication given existing PouchDB objects,
+     * these behave the same as <code>PouchDB.replicate()</code>:
+     * </p>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">replicate</span><span class="p">.</span><span class="nx">to</span><span class="p">(</span><span class="nx">remoteDB</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">]);</span>
+     * <span class="c1">// or</span>
+     * <span class="nx">db</span><span class="p">.</span><span class="nx">replicate</span><span class="p">.</span><span class="nx">from</span><span class="p">(</span><span class="nx">remoteDB</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">]);</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h4>Example Response:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s1">&#39;ok&#39;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+     *   <span class="s1">&#39;docs_read&#39;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+     *   <span class="s1">&#39;docs_written&#39;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+     *   <span class="s1">&#39;start_time&#39;</span><span class="o">:</span> <span class="s2">&quot;Sun Sep 23 2012 08:14:45 GMT-0500 (CDT)&quot;</span><span class="p">,</span>
+     *   <span class="s1">&#39;end_time&#39;</span><span class="o">:</span> <span class="s2">&quot;Sun Sep 23 2012 08:14:45 GMT-0500 (CDT)&quot;</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Note that the response for server replications (via
+     * <code>options.server</code>) is slightly different. See the <a
+     * href="http://wiki.apache.org/couchdb/Replication">CouchDB Wiki</a>.
+     * </p>
+     * 
+     * @see <a href=
+     *      'http://pouchdb.com/api.html#replication'>http://pouchdb.com/api.html#replication</a
+     *      >
+     * @param remoteDB
+     * @param options
+     * @param complete
+     */   
+    public void replicateTo(String remoteDB) {
+        replicateTo(remoteDB, null);
+    }
+    
     /**
      * <h2>Replicate a database<a id="replication"></a></h2>
      * 
@@ -2802,6 +2911,115 @@ public class PouchDB<T extends PouchDocument> {
      */
     public void replicateFrom(String remoteDB, ReplicateCallback complete) {
         replicateFrom(remoteDB, null, complete);
+    }
+    /**
+     * <h2>Replicate a database<a id="replication"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">PouchDB</span><span class="p">.</span><span class="nx">replicate</span><span class="p">(</span><span class="nx">source</span><span class="p">,</span> <span class="nx">target</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">])</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Replicate data from <code>source</code> to <code>target</code>, both the
+     * <code>source</code> and <code>target</code> can be strings used to
+     * represent a database of a PouchDB object. If
+     * <code>options.continuous</code> is <code>true</code> then this will track
+     * future changes and also replicate them.
+     * </p>
+     * 
+     * <p>
+     * If you want to sync data in both directions you can call this twice
+     * reversing the <code>source</code> and <code>target</code> arguments.
+     * </p>
+     * 
+     * <ul>
+     * <li><code>options.filter</code>: Reference a filter function from a
+     * design document to selectively get updates.</li>
+     * <li><code>options.query_params</code>: Query params send to the filter
+     * function.</li>
+     * <li><code>options.doc_ids</code>: Only replicate docs with these ids.</li>
+     * <li><code>options.complete</code>: Function called when all changes have
+     * been processed.</li>
+     * <li><code>options.onChange</code>: Function called on each change
+     * processed..</li>
+     * <li><code>options.continuous</code>: If true starts subscribing to future
+     * changes in the <code>source</code> database and continue replicating
+     * them.</li>
+     * <li><code>options.server</code>: Initialize the replication on the
+     * server. The response is the CouchDB <code>POST _replicate</code> response
+     * and is different from the PouchDB replication response. Also,
+     * <code>options.onChange</code> is not supported on server replications.</li>
+     * <li><code>options.create_target</code>: Create target database if it does
+     * not exist. Only for server replications.</li>
+     * </ul>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">PouchDB</span><span class="p">.</span><span class="nx">replicate</span><span class="p">(</span><span class="s1">&#39;mydb&#39;</span><span class="p">,</span> <span class="s1">&#39;http://localhost:5984/mydb&#39;</span><span class="p">,</span> <span class="p">{</span>
+     *   <span class="nx">onChange</span><span class="o">:</span> <span class="nx">onChange</span><span class="p">,</span>
+     *   <span class="nx">complete</span><span class="o">:</span> <span class="nx">onComplete</span>
+     * <span class="p">});;</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * There are also shorthands for replication given existing PouchDB objects,
+     * these behave the same as <code>PouchDB.replicate()</code>:
+     * </p>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">replicate</span><span class="p">.</span><span class="nx">to</span><span class="p">(</span><span class="nx">remoteDB</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">]);</span>
+     * <span class="c1">// or</span>
+     * <span class="nx">db</span><span class="p">.</span><span class="nx">replicate</span><span class="p">.</span><span class="nx">from</span><span class="p">(</span><span class="nx">remoteDB</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">]);</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h4>Example Response:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s1">&#39;ok&#39;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+     *   <span class="s1">&#39;docs_read&#39;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+     *   <span class="s1">&#39;docs_written&#39;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+     *   <span class="s1">&#39;start_time&#39;</span><span class="o">:</span> <span class="s2">&quot;Sun Sep 23 2012 08:14:45 GMT-0500 (CDT)&quot;</span><span class="p">,</span>
+     *   <span class="s1">&#39;end_time&#39;</span><span class="o">:</span> <span class="s2">&quot;Sun Sep 23 2012 08:14:45 GMT-0500 (CDT)&quot;</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Note that the response for server replications (via
+     * <code>options.server</code>) is slightly different. See the <a
+     * href="http://wiki.apache.org/couchdb/Replication">CouchDB Wiki</a>.
+     * </p>
+     * 
+     * @see <a href=
+     *      'http://pouchdb.com/api.html#replication'>http://pouchdb.com/api.html#replication</a
+     *      >
+     * @param remoteDB
+     * @param options
+     * @param complete
+     */
+    public void replicateFrom(String remoteDB) {
+        replicateFrom(remoteDB, null);
     }
 
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
