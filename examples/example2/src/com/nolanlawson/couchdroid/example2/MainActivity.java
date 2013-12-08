@@ -130,7 +130,7 @@ public class MainActivity extends CouchDroidActivity {
     }
     
     private void runBulkGets() {
-        dinosaurPouch.allDocs(Maps.quickMap("include_docs", true), new AllDocsCallback<Dinosaur>() {
+        dinosaurPouch.allDocs(true, new AllDocsCallback<Dinosaur>() {
             
             @Override
             public void onCallback(PouchError err, AllDocsInfo<Dinosaur> info) {

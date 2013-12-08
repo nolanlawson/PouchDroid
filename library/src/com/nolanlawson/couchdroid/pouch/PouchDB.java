@@ -1,5 +1,6 @@
 package com.nolanlawson.couchdroid.pouch;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -1195,12 +1196,19 @@ public class PouchDB<T extends PouchDocument> {
         });
     }
     
-    public void allDocs(Map<String, Object> options) {
-        allDocs(options, null);
-    }
-    
     public void allDocs(AllDocsCallback<T> callback) {
         allDocs(null, callback);
+    }
+    
+    public void allDocs(boolean includeDocs, Map<String, Object> otherOptions, final AllDocsCallback<T> callback) {
+        // included as a convenience method, because I'm sure otherwise people will forge to set include_docs=true
+        Map<String, Object> options = otherOptions != null ? otherOptions : new HashMap<String, Object>();
+        options.put("include_docs", includeDocs);
+        allDocs(options, callback);
+    }
+    
+    public void allDocs(boolean includeDocs, AllDocsCallback<T> callback) {
+        allDocs(includeDocs, null, callback);
     }
     
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
