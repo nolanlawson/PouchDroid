@@ -3,8 +3,6 @@ package com.nolanlawson.couchdroid.pouch;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.codehaus.jackson.type.TypeReference;
-
 import android.app.Activity;
 import android.text.TextUtils;
 
@@ -21,6 +19,8 @@ public class PouchDB<T extends PouchDocument> {
     private int id;
     private CouchDroidRuntime runtime;
 
+    private Class<T> documentClass;
+    
     /**
      * <p>
      * This method creates a database or opens an existing one. If you use a
@@ -65,8 +65,8 @@ public class PouchDB<T extends PouchDocument> {
      *      'http://pouchdb.com/api.html#create_database'>http://pouchdb.com/api.html#create_databas
      *      e < / a >
      */
-    public PouchDB(CouchDroidRuntime runtime) {
-        this(runtime, null, false);
+    public static <T extends PouchDocument> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime) {
+        return newPouchDB(documentClass, runtime, null, false);
     }
 
     /**
@@ -113,8 +113,8 @@ public class PouchDB<T extends PouchDocument> {
      *      'http://pouchdb.com/api.html#create_database'>http://pouchdb.com/api.html#create_databas
      *      e < / a >
      */
-    public PouchDB(CouchDroidRuntime runtime, String name) {
-        this(runtime, name, false);
+    public static <T extends PouchDocument> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime, String name) {
+        return newPouchDB(documentClass, runtime, name, false);
     }
 
     /**
@@ -161,8 +161,14 @@ public class PouchDB<T extends PouchDocument> {
      *      'http://pouchdb.com/api.html#create_database'>http://pouchdb.com/api.html#create_databas
      *      e < / a >
      */
-    public PouchDB(CouchDroidRuntime runtime, String name, boolean autoCompaction) {
+    public static <T extends PouchDocument> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime, 
+            String name, boolean autoCompaction) {
+        return new PouchDB<T>(documentClass, runtime, name, autoCompaction);
+    }
+    
+    private PouchDB(Class<T> documentClass, CouchDroidRuntime runtime, String name, boolean autoCompaction) {
         this.id = POUCH_IDS.incrementAndGet();
+        this.documentClass = documentClass;
         this.runtime = runtime;
 
         runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBs[").append(id).append("] = new PouchDB(")
@@ -1105,8 +1111,19 @@ public class PouchDB<T extends PouchDocument> {
         post(doc, null, null);
     }    
     
-    public void get(String docid, Map<String, Object> options, GetCallback<T> callback) {
-        loadAction("get", JsonUtil.simpleString(docid), options, callback);
+    public void get(String docid, Map<String, Object> options, final GetCallback<T> callback) {
+        loadAction("get", JsonUtil.simpleString(docid), options, new InnerGetCallback<T>(documentClass) {
+
+            @Override
+            public void onCallback(PouchError err, T info) {
+                callback.onCallback(err, info);
+            }
+
+            @Override
+            public Class<?> getDeserializedClass() {
+                return documentClass;
+            }
+        });
     }
     
     public void get(String docid, Map<String, Object> options) {
@@ -1171,7 +1188,7 @@ public class PouchDB<T extends PouchDocument> {
         int callbackId = PouchJavascriptInterface.INSTANCE.addCallback(new Callback<Object>() {
 
             @Override
-            public void onCallback(final Map<String, Object> err, final Object info) {
+            public void onCallback(final PouchError err, final Object info) {
                 Activity activity = runtime.getActivity();
                 if (activity != null) {
                     // ensure it runs on the ui thread
@@ -1192,7 +1209,7 @@ public class PouchDB<T extends PouchDocument> {
             }
 
             @Override
-            public TypeReference<?> getDeserializedClass() {
+            public Class<?> getDeserializedClass() {
                 return innerCallback.getDeserializedClass();
             }
         });
@@ -1217,21 +1234,37 @@ public class PouchDB<T extends PouchDocument> {
          * @param info
          *            contains additional information given by PouchDB
          */
-        public void onCallback(Map<String, Object> err, E info);
+        public void onCallback(PouchError err, E info);
         
-        public TypeReference<?> getDeserializedClass();
+        public Class<?> getDeserializedClass();
     }
     
     public static abstract class StandardCallback implements Callback<PouchResponse> {
-        public TypeReference<?> getDeserializedClass() {
-            return new TypeReference<PouchResponse>() {
-            };
+        public Class<?> getDeserializedClass() {
+
+            return PouchResponse.class;
         }
     }
     public static abstract class GetCallback<T> implements Callback<T> {
-        public TypeReference<?> getDeserializedClass() {
-            return new TypeReference<T>() {
-            };
+        
+
+        public GetCallback() {
+        }
+        
+        public Class<?> getDeserializedClass() {
+            return null; // overridden
+        }
+    }
+    public static abstract class InnerGetCallback<T> implements Callback<T> {
+        
+        private Class<T> documentClass;
+
+        public InnerGetCallback(Class<T> documentClass) {
+            this.documentClass = documentClass;
+        }
+        
+        public Class<?> getDeserializedClass() {
+            return documentClass;
         }
     }
 }

@@ -2,7 +2,6 @@ package com.nolanlawson.couchdroid.pouch;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -58,10 +57,9 @@ public class PouchJavascriptInterface {
             return;
         }
 
-        Map<String, Object> errObj = null;
+        PouchError errObj = null;
         if (!TextUtils.isEmpty(errObjJson)) {
-            errObj = objectMapper.readValue(errObjJson, new TypeReference<LinkedHashMap<String, Object>>() {
-            });
+            errObj = objectMapper.readValue(errObjJson, PouchError.class);
         }
         Object infoObj = null;
         if (!TextUtils.isEmpty(infoObjJson)) {

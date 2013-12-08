@@ -55,4 +55,17 @@ public class JsonUtil {
             throw new RuntimeException("unexpected", e);
         }
     }
+    
+    public static String simplePojo(Object pojo) {
+        if (pojo == null) {
+            return "{}";
+        }
+        try {
+            return objectMapper.writeValueAsString(pojo);
+        } catch (IOException e) {
+            // shouldn't happen
+            e.printStackTrace();
+            throw new RuntimeException("unexpected", e);
+        }        
+    }
 }

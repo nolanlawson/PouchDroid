@@ -2,7 +2,6 @@ package com.nolanlawson.couchdroid.example2;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,6 +13,7 @@ import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchDB.GetCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.StandardCallback;
+import com.nolanlawson.couchdroid.pouch.PouchError;
 import com.nolanlawson.couchdroid.pouch.PouchResponse;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
@@ -41,7 +41,7 @@ public class MainActivity extends CouchDroidActivity {
         log.i("onCouchDroidReady()");
         
         String dbName = "dinosaurs-" + (Integer.toHexString(new Random().nextInt())) + ".db";
-        dinosaurPouch = new PouchDB<Dinosaur>(runtime, dbName);
+        dinosaurPouch = PouchDB.newPouchDB(Dinosaur.class, runtime, dbName);
         
         runPuts();
     }
@@ -60,7 +60,7 @@ public class MainActivity extends CouchDroidActivity {
         StandardCallback onPut  = new StandardCallback() {
 
             @Override
-            public void onCallback(Map<String, Object> err, PouchResponse info) {
+            public void onCallback(PouchError err, PouchResponse info) {
                 log.i("put: got response: err: %s, info: %s", err, info);
                 if (numRun.incrementAndGet() == 3) {
                     runGets();
@@ -78,9 +78,9 @@ public class MainActivity extends CouchDroidActivity {
         final List<Dinosaur> dinosaurs = new ArrayList<Dinosaur>();
         
         GetCallback<Dinosaur> onGet = new GetCallback<Dinosaur>() {
-
+            
             @Override
-            public void onCallback(Map<String, Object> err, Dinosaur dinosaur) {
+            public void onCallback(PouchError err, Dinosaur dinosaur) {
                 log.i("get: got response: err: %s, doc: %s", err, dinosaur);
                 dinosaurs.add(dinosaur);
                 if (dinosaurs.size() == 3) {
@@ -99,7 +99,7 @@ public class MainActivity extends CouchDroidActivity {
         StandardCallback onDelete  = new StandardCallback() {
 
             @Override
-            public void onCallback(Map<String, Object> err, PouchResponse info) {
+            public void onCallback(PouchError err, PouchResponse info) {
                 log.i("delete: got response: err: %s, info: %s", err, info);
             }
         };
@@ -107,5 +107,12 @@ public class MainActivity extends CouchDroidActivity {
         dinosaurPouch.remove(dinosaurs.get(0), onDelete);
         dinosaurPouch.remove(dinosaurs.get(1), onDelete);
         dinosaurPouch.remove(dinosaurs.get(2), onDelete);
+        
+        Dinosaur fakeDinosaur = new Dinosaur("Terry", "Pterodactylus antiquus", "bugs", 76, 0.5);
+        dinosaurPouch.remove(fakeDinosaur, onDelete);//fake delete
+        fakeDinosaur.setPouchId("fakeId");
+        dinosaurPouch.remove(fakeDinosaur, onDelete);//fake delete
+        fakeDinosaur.setPouchId("fakeRev");
+        dinosaurPouch.remove(fakeDinosaur, onDelete);//fake delete
     }
 }
