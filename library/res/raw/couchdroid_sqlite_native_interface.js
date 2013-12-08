@@ -10,23 +10,18 @@
         CouchDroid.Util.debug('SQLiteNativeDB', str);
     }
 
-    var IMPORTANT_PREFIX = '!cb_';
-    var UNIMPORTANT_PREFIX = 'cb_';
-
     var transactionIds = 0;
     var queryIds = 0;
     var callbackIds = 0;
 
     var SQLiteNativeDB = {
         callbacks : {},
-        importantCallbacks : {},
         nativeDBs : {}
     };
 
     SQLiteNativeDB.clearCache = function() {
 
         // allows us to save memory by deleting callbacks in the hashmap
-        // TODO: is it necessary to keep the "important" ones?  This is a memory leak.
         SQLiteNativeDB.callbacks = {};
         SQLiteNativeDB.nativeDBs = {};
     };
@@ -34,9 +29,7 @@
     SQLiteNativeDB.onNativeCallback = function(callbackId, argument) {
         debug('onNativeCallback(' + callbackId + ', ' + argument + ')');
 
-        var important = (callbackId.indexOf(IMPORTANT_PREFIX) === 0 && true);
-
-        var callback = important ? SQLiteNativeDB.importantCallbacks[callbackId] : SQLiteNativeDB.callbacks[callbackId];
+        var callback = SQLiteNativeDB.callbacks[callbackId];
         if (!callback) {
             window.console.log('callback not found for id ' + callbackId + '! ' + callback);
         } else {
@@ -44,22 +37,18 @@
         }
     };
 
-    function createCallback(fn, important) {
+    function createCallback(fn) {
 
         fn = fn || function(){};
 
-        var callbackId = (important ? IMPORTANT_PREFIX : UNIMPORTANT_PREFIX) + (callbackIds++);
+        var callbackId = 'cb_' + (callbackIds++);
 
         var newFn = function() {
             debug('executing callback with id: ' + callbackId);
             fn.apply(null, arguments);
         };
 
-        if (important) {
-            SQLiteNativeDB.importantCallbacks[callbackId] = newFn;
-        } else {
-            SQLiteNativeDB.callbacks[callbackId] = newFn;
-        }
+        SQLiteNativeDB.callbacks[callbackId] = newFn;
 
         return callbackId;
     }
@@ -193,7 +182,7 @@
             debug('transactionId ' + self.transactionId + ': cleaning up after failure.');
             self.error();
             self.nativeDB.processNextTransaction();
-        }, true);
+        });
         SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionDoneId,
             endTransactionDoneId, false);
     };
@@ -208,14 +197,14 @@
                 self.success();
             }
             self.nativeDB.processNextTransaction(); // todo: do we need this?
-        }, true);
+        });
         var errorId = createCallback(function(){
             debug('executing transaction error for transactionId ' + self.transactionId);
             if (self.error && typeof self.error === 'function') {
                 self.error();
             }
             self.nativeDB.processNextTransaction(); // todo: do we need this?
-        }, true);
+        });
         SQLiteJavascriptInterface.endTransaction(self.transactionId, self.nativeDB.name, endTransactionSuccessId,
             errorId, true);
     };
@@ -253,7 +242,7 @@
             if (success && typeof success === 'function') {
                 success();
             }
-        }, true);
+        });
 
         SQLiteJavascriptInterface.open(self.name, callbackId);
     };
@@ -278,10 +267,10 @@
             debug('processing transaction with id ' + transaction.transactionId);
             debug('remaining transactions are: ' + JSON.stringify(self.transactions.map(function(transaction){return transaction.transactionId;})));
 
-            var transactionErrorId = createCallback(transaction.error, true);
+            var transactionErrorId = createCallback(transaction.error);
             var startTransactionSuccessId = createCallback(function (){
                 transaction.callback(transaction);
-            }, true);
+            });
             SQLiteJavascriptInterface.startTransaction(transaction.transactionId, self.name, startTransactionSuccessId,
                 transactionErrorId);
         }
@@ -315,8 +304,8 @@
             query.querySuccess(transaction, payload);
             debug('querySuccess called.');
             transaction.debugQueryStatus();
-        }, false);
-        var queryErrorId = createCallback(query.queryError, false);
+        });
+        var queryErrorId = createCallback(query.queryError);
 
         var selectArgsAsJson = query.selectArgs ? JSON.stringify(query.selectArgs) : null;
         SQLiteJavascriptInterface.executeSql(query.queryId, transaction.transactionId,
