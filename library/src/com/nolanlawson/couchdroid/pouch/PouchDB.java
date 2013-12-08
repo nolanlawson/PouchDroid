@@ -194,7 +194,7 @@ public class PouchDB<T extends PouchDocument> {
      *      'http://pouchdb.com/api.html#delete_database'>http://pouchdb.com/api.html#delete_database
      *      < / a >
      */
-    public void destroy(DestroyCallback callback) {
+    public void destroy(StandardCallback callback) {
         destroy(null, callback);
     }
 
@@ -281,7 +281,7 @@ public class PouchDB<T extends PouchDocument> {
      *      'http://pouchdb.com/api.html#delete_database'>http://pouchdb.com/api.html#delete_database
      *      < / a >
      */
-    public void destroy(Map<String, Object> options, DestroyCallback callback) {
+    public void destroy(Map<String, Object> options, StandardCallback callback) {
         loadAction("destroy", options, callback);
         
         // won't need this database anymore
@@ -387,7 +387,7 @@ public class PouchDB<T extends PouchDocument> {
      * @param doc
      * @param callback
      */
-    public void put(T doc, Map<String, Object> options, PutPostCallback callback) {
+    public void put(T doc, Map<String, Object> options, StandardCallback callback) {
         loadAction("put", PouchDocumentMapper.toJson(doc), options, callback);
     }
     
@@ -591,7 +591,7 @@ public class PouchDB<T extends PouchDocument> {
      * @param doc
      * @param callback
      */
-    public void put(T doc, PutPostCallback callback) {
+    public void put(T doc, StandardCallback callback) {
         put(doc, null, callback);
     }
     /**
@@ -795,7 +795,7 @@ public class PouchDB<T extends PouchDocument> {
      * @param callback
      */
    
-    public void post(T doc, Map<String, Object> options, PutPostCallback callback) {
+    public void post(T doc, Map<String, Object> options, StandardCallback callback) {
         loadAction("post", PouchDocumentMapper.toJson(doc), options, callback);
     }
     /**
@@ -999,7 +999,7 @@ public class PouchDB<T extends PouchDocument> {
      * @param callback
      */
     
-    public void post(T doc, PutPostCallback callback) {
+    public void post(T doc, StandardCallback callback) {
         post(doc, null, callback);
     }
     
@@ -1121,7 +1121,7 @@ public class PouchDB<T extends PouchDocument> {
         get(docid, null, null);
     }    
 
-    public void remove(T doc, Map<String, Object> options, RemoveCallback callback) {
+    public void remove(T doc, Map<String, Object> options, StandardCallback callback) {
         loadAction("remove", PouchDocumentMapper.toJson(doc), options, callback);
     }
     
@@ -1129,15 +1129,13 @@ public class PouchDB<T extends PouchDocument> {
         remove(doc, options, null);
     }
     
-    public void remove(T doc, RemoveCallback callback) {
+    public void remove(T doc, StandardCallback callback) {
         remove(doc, null, callback);
     }
     
     public void remove(T doc) {
         remove(doc, null, null);
     }    
-    
-    
     
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
         loadAction(action, null, options, callback);
@@ -1152,8 +1150,11 @@ public class PouchDB<T extends PouchDocument> {
         if (!TextUtils.isEmpty(arg1)) {
             js.append(arg1).append(",");
         }
+        if (options != null && !options.isEmpty()) {
+            js.append(JsonUtil.simpleMap(options)).append(",");
+        }
         
-        js.append(JsonUtil.simpleMap(options)).append(",").append(getFunctionForCallback(callback)).append(");");
+        js.append(getFunctionForCallback(callback)).append(");");
         
         runtime.loadJavascript(js);
     }
@@ -1221,27 +1222,15 @@ public class PouchDB<T extends PouchDocument> {
         public TypeReference<?> getDeserializedClass();
     }
     
-    public static abstract class DestroyCallback implements Callback<Map<String, Object>> {
+    public static abstract class StandardCallback implements Callback<PouchResponse> {
         public TypeReference<?> getDeserializedClass() {
-            return new TypeReference<Map<String, Object>>() {
-            };
-        }
-    }
-    public static abstract class PutPostCallback implements Callback<Map<String, Object>> {
-        public TypeReference<?> getDeserializedClass() {
-            return new TypeReference<Map<String, Object>>() {
+            return new TypeReference<PouchResponse>() {
             };
         }
     }
     public static abstract class GetCallback<T> implements Callback<T> {
         public TypeReference<?> getDeserializedClass() {
             return new TypeReference<T>() {
-            };
-        }
-    }
-    public static abstract class RemoveCallback implements Callback<Map<String, Object>> {
-        public TypeReference<?> getDeserializedClass() {
-            return new TypeReference<Map<String, Object>>() {
             };
         }
     }

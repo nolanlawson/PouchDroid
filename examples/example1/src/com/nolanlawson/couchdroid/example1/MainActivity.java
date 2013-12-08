@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -56,7 +57,11 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
 
             @Override
             protected Void doInBackground(Void... params) {
-                loadPokemonData();
+                try {
+                    loadPokemonData();
+                } catch (Exception e) {
+                    Log.e("MainActivity", "loadPokemonData() threw error; app is probably closing...", e);
+                }
                 return null;
             }
 

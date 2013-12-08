@@ -3,6 +3,7 @@ package com.nolanlawson.couchdroid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -184,7 +185,8 @@ public class CouchDroidRuntime {
         
         if (USE_WEINRE) {
             // fake url to contact weinre
-            webView.loadDataWithBaseURL("http://localhost:9362", html, "text/html", "UTF-8", null);
+            int port = new Random().nextInt(2000) + 8000;
+            webView.loadDataWithBaseURL("http://localhost:"+port, html, "text/html", "UTF-8", null);
         } else {
             webView.loadData(html, "text/html", "UTF-8");
         }
