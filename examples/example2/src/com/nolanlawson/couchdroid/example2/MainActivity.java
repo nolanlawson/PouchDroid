@@ -12,20 +12,23 @@ import android.view.Menu;
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.pouch.AllDocsInfo;
-import com.nolanlawson.couchdroid.pouch.AllDocsInfo.Row;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.GetCallback;
+import com.nolanlawson.couchdroid.pouch.PouchDB.ReplicateCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.StandardCallback;
 import com.nolanlawson.couchdroid.pouch.PouchError;
 import com.nolanlawson.couchdroid.pouch.PouchInfo;
-import com.nolanlawson.couchdroid.util.Maps;
+import com.nolanlawson.couchdroid.pouch.ReplicateInfo;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class MainActivity extends CouchDroidActivity {
 
     private static UtilLogger log = new UtilLogger(MainActivity.class);
+    
+    private static final String REMOTE_COUCHDB_URL = "http://admin:password@192.168.0.3:5984/dinosaurs";
+    
     private PouchDB<Dinosaur> dinosaurPouch;
     
     @Override
@@ -136,12 +139,13 @@ public class MainActivity extends CouchDroidActivity {
             public void onCallback(PouchError err, AllDocsInfo<Dinosaur> info) {
                 log.i("allDocs: got response: err: %s, info: %s", err, info);
                 List<Dinosaur> dinosaurs = info.getDocuments();
+                log.i(" -> dinosaurs are: %s", dinosaurs);
                 runDeletes(dinosaurs);
             }
         });
     }
 
-    private void runDeletes(final List<Dinosaur> dinosaurs) {
+    private void runDeletes(List<Dinosaur> dinosaurs) {
 
         final AtomicInteger numRun = new AtomicInteger(0);
         
@@ -150,15 +154,13 @@ public class MainActivity extends CouchDroidActivity {
             @Override
             public void onCallback(PouchError err, PouchInfo info) {
                 log.i("delete: got response: err: %s, info: %s", err, info);
-                if (numRun.incrementAndGet() == dinosaurs.size() + 3) {
-                    // do the next thing
+                if (numRun.incrementAndGet() == 4) {
+                    runReplicate();
                 }
             }
         };
         
-        dinosaurPouch.remove(dinosaurs.get(0), onDelete);
-        dinosaurPouch.remove(dinosaurs.get(1), onDelete);
-        dinosaurPouch.remove(dinosaurs.get(2), onDelete);
+        dinosaurPouch.remove(dinosaurs.get(0), onDelete); // delete T-Rex
         
         Dinosaur fakeDinosaur = new Dinosaur("Terry", "Pterodactylus antiquus", "bugs", 76, 0.5);
         dinosaurPouch.remove(fakeDinosaur, onDelete);//fake delete
@@ -166,5 +168,17 @@ public class MainActivity extends CouchDroidActivity {
         dinosaurPouch.remove(fakeDinosaur, onDelete);//fake delete
         fakeDinosaur.setPouchId("fakeRev");
         dinosaurPouch.remove(fakeDinosaur, onDelete);//fake delete
+    }
+
+    private void runReplicate() {
+        
+        dinosaurPouch.replicateTo(REMOTE_COUCHDB_URL, new ReplicateCallback() {
+            
+            @Override
+            public void onCallback(PouchError err, ReplicateInfo info) {
+                log.i("replicateTo: got response: err: %s, info: %s", err, info);
+            }
+        });
+        
     }
 }

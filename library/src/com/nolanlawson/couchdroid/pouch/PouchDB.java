@@ -1,7 +1,7 @@
 package com.nolanlawson.couchdroid.pouch;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1118,7 +1118,7 @@ public class PouchDB<T extends PouchDocument> {
     
     public void get(String docid, Map<String, Object> options, final GetCallback<T> callback) {
         loadAction("get", JsonUtil.simpleString(docid), options, callback == null ? null : 
-            new InnerGetCallback<T>(documentClass) {
+            new Callback<T>() {
 
             @Override
             public void onCallback(PouchError err, T info) {
@@ -1128,6 +1128,11 @@ public class PouchDB<T extends PouchDocument> {
             @Override
             public Class<?> getPrimaryClass() {
                 return documentClass;
+            }
+
+            @Override
+            public Class<?> getGenericClass() {
+                return null;
             }
         });
     }
@@ -1162,9 +1167,9 @@ public class PouchDB<T extends PouchDocument> {
     
     public void bulkDocs(List<T> docs, Map<String, Object> options, BulkCallback callback) {
         
-        Map<String, List<T>> map = new LinkedHashMap<String, List<T>>();
-        map.put("docs", docs);
-        String mapAsJson = JsonUtil.simpleMap(options);
+        String mapAsJson = new StringBuilder("{\"docs\":")
+                .append(PouchDocumentMapper.toJson(docs))
+                .append("}").toString();
         
         loadAction("bulkDocs", mapAsJson, options, callback);
     }
@@ -1202,7 +1207,7 @@ public class PouchDB<T extends PouchDocument> {
     
     public void allDocs(boolean includeDocs, Map<String, Object> otherOptions, final AllDocsCallback<T> callback) {
         // included as a convenience method, because I'm sure otherwise people will forge to set include_docs=true
-        Map<String, Object> options = otherOptions != null ? otherOptions : new HashMap<String, Object>();
+        Map<String, Object> options = otherOptions != null ? otherOptions : new LinkedHashMap<String, Object>();
         options.put("include_docs", includeDocs);
         allDocs(options, callback);
     }
@@ -1211,30 +1216,71 @@ public class PouchDB<T extends PouchDocument> {
         allDocs(includeDocs, null, callback);
     }
     
+    public void replicateTo(String remoteDB, Map<String, Object> options, ReplicateCallback complete) {
+        loadAction("replicate.to", JsonUtil.simpleString(remoteDB), options, complete, "complete");
+    }
+    
+    public void replicateTo(String remoteDB, ReplicateCallback complete) {
+        replicateTo(remoteDB, null, complete);
+    }
+    
+    public void replicateFrom(String remoteDB, Map<String, Object> options, ReplicateCallback complete) {
+        loadAction("replicate.from", JsonUtil.simpleString(remoteDB), options, complete, "complete");
+    }
+    
+    public void replicateFrom(String remoteDB, ReplicateCallback complete) {
+        replicateFrom(remoteDB, null, complete);
+    }
+    
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
-        loadAction(action, null, options, callback);
+        loadAction(action, null, options, callback, null);
     }
     
     private void loadAction(String action, String arg1, Map<String, Object> options, Callback<?> callback) {
-        log.d("loadAction(%s, %s, %s, %s", action, arg1, options, callback);
+        loadAction(action, arg1, options, callback, null);
+    }
+    
+    private void loadAction(String action, String arg1, Map<String, Object> options, Callback<?> callback, String callbackOptionKey) {
+        log.d("loadAction(%s, %s, %s, %s, %s", action, arg1, options, callback, callbackOptionKey);
         
-        StringBuilder js = new StringBuilder("CouchDroid.pouchDBs[").append(id).append("].")
-                .append(action).append("(");
-        
+        List<CharSequence> arguments = new LinkedList<CharSequence>();
         if (!TextUtils.isEmpty(arg1)) {
-            js.append(arg1).append(",");
+            arguments.add(arg1);
         }
-        if (options != null && !options.isEmpty()) {
-            js.append(JsonUtil.simpleMap(options)).append(",");
+        if (callbackOptionKey != null) {
+            // callback is an option, encode it properly in the options map
+            // TODO: this is hacky; do it properly
+            options = options == null ? new LinkedHashMap<String, Object>() : new LinkedHashMap<String, Object>(options);
+            options.remove(callbackOptionKey);
+            arguments.add(new StringBuilder(JsonUtil.simpleMap(options))
+                .insert(1, new StringBuilder() // insert after open brace
+                        .append(JsonUtil.simpleString(callbackOptionKey))
+                        .append(":")
+                        .append(createFunctionForCallback(callback))));
+            
+        } else {
+            // callback is an arg, not an option in the map
+            if (options != null && !options.isEmpty()) {
+                arguments.add(JsonUtil.simpleMap(options));
+            }
+            if (callback != null) {
+                arguments.add(createFunctionForCallback(callback));
+            }
         }
         
-        js.append(getFunctionForCallback(callback)).append(");");
+
+        
+        StringBuilder js = new StringBuilder("CouchDroid.pouchDBs[")
+                .append(id).append("].")
+                .append(action).append("(")
+                .append(TextUtils.join(",",arguments))
+                .append(");");
         
         runtime.loadJavascript(js);
     }
     
     @SuppressWarnings("rawtypes")
-    private CharSequence getFunctionForCallback(final Callback innerCallback) {
+    private CharSequence createFunctionForCallback(final Callback innerCallback) {
 
         if (innerCallback == null) {
             // user doesn't give a shit
@@ -1349,18 +1395,15 @@ public class PouchDB<T extends PouchDocument> {
             return null;
         }
     }
-    public static abstract class InnerGetCallback<T> implements Callback<T> {
-        
-        private Class<T> documentClass;
+    
+    public static abstract class ReplicateCallback implements Callback<ReplicateInfo> {
 
-        public InnerGetCallback(Class<T> documentClass) {
-            this.documentClass = documentClass;
-        }
-        
+        @Override
         public Object getPrimaryClass() {
-            return documentClass;
+            return ReplicateInfo.class;
         }
-        
+
+        @Override
         public Class<?> getGenericClass() {
             return null;
         }

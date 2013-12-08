@@ -121,6 +121,7 @@ public class XhrJavascriptInterface {
 
         String method = xhrAsJsonNode.get("method").asText();
         String url = xhrAsJsonNode.get("url").asText();
+        log.d("xhrId: %s, method: %s, url: %s, body: %s", xhrId, method, url, body);
         
         JsonNode timeoutValue = xhrAsJsonNode.get("timeout");
         int timeout = timeoutValue != null ? (int)timeoutValue.asLong(0) : 0;
@@ -168,7 +169,9 @@ public class XhrJavascriptInterface {
                 super.onPostExecute(response);
                 
                 if (response == null) {
-                    log.e("http response is null");
+                    log.e("http response is null.  Did you remember to add " +
+                    		"<uses-permission android:name=\"android.permission.INTERNET\"/> " +
+                    		"to your AndroidManifest.xml?");
                     return;
                 }
                 
@@ -228,8 +231,6 @@ public class XhrJavascriptInterface {
     }
 
     private static HttpUriRequest createRequest(String method, String url) {
-        log.d("method is %s, url is %s", method, url);
-        
         method = method.toUpperCase(Locale.US);
 
         if (TextUtils.isEmpty(method)) {
