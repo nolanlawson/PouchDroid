@@ -93,7 +93,7 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
         
         String dbName = "pokemon.db";
         if (RANDOMIZE_DB) {
-            dbName = "pokemon_" + Long.toString(Math.abs(new Random().nextLong())) + ".db";
+            dbName = "pokemon_" + Integer.toHexString(Math.abs(new Random().nextInt())) + ".db";
         }
         sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
         
