@@ -1,6 +1,7 @@
 package com.nolanlawson.couchdroid.example2;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,11 +11,16 @@ import android.view.Menu;
 
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
+import com.nolanlawson.couchdroid.pouch.AllDocsInfo;
+import com.nolanlawson.couchdroid.pouch.AllDocsInfo.Row;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
+import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
+import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.GetCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.StandardCallback;
 import com.nolanlawson.couchdroid.pouch.PouchError;
-import com.nolanlawson.couchdroid.pouch.PouchResponse;
+import com.nolanlawson.couchdroid.pouch.PouchInfo;
+import com.nolanlawson.couchdroid.util.Maps;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class MainActivity extends CouchDroidActivity {
@@ -60,7 +66,7 @@ public class MainActivity extends CouchDroidActivity {
         StandardCallback onPut  = new StandardCallback() {
 
             @Override
-            public void onCallback(PouchError err, PouchResponse info) {
+            public void onCallback(PouchError err, PouchInfo info) {
                 log.i("put: got response: err: %s, info: %s", err, info);
                 if (numRun.incrementAndGet() == 3) {
                     runGets();
@@ -84,7 +90,7 @@ public class MainActivity extends CouchDroidActivity {
                 log.i("get: got response: err: %s, doc: %s", err, dinosaur);
                 dinosaurs.add(dinosaur);
                 if (dinosaurs.size() == 3) {
-                    runDeletes(dinosaurs);
+                    runBulkPuts();
                 }
             }
         };
@@ -94,13 +100,59 @@ public class MainActivity extends CouchDroidActivity {
         dinosaurPouch.get("3", onGet);
     }
     
-    private void runDeletes(List<Dinosaur> dinosaurs) {
+    private void runBulkPuts() {
+        
+        List<Dinosaur> newDinosaurs = Arrays.asList(
+                new Dinosaur("Steggy", "Stegosaurus armatus", "Dirt", 2, 0.3),
+                new Dinosaur("Birdo", "Archaeopteryx lithographica", "Dragonflies prolly", 65, 0.8),
+                new Dinosaur("Ducky", "Hadrosaurus foulkii", "Seaweed", 52, 0.3)
+                );
+        
+        dinosaurPouch.bulkDocs(newDinosaurs, new BulkCallback() {
+            
+            @Override
+            public void onCallback(PouchError err, List<PouchInfo> info) {
+                log.i("bulkDocs: got response: err: %s, info: %s", err, info);
+                runBulkGetsWithoutIncludeDocs();
+            }
+        });
+    }
+    
+    private void runBulkGetsWithoutIncludeDocs() {
+        dinosaurPouch.allDocs(new AllDocsCallback<Dinosaur>() {
+            
+            @Override
+            public void onCallback(PouchError err, AllDocsInfo<Dinosaur> info) {
+                log.i("allDocs(without include_docs): got response: err: %s, info: %s", err, info);
+                runBulkGets();
+            }
+        });
+    }
+    
+    private void runBulkGets() {
+        dinosaurPouch.allDocs(Maps.quickMap("include_docs", true), new AllDocsCallback<Dinosaur>() {
+            
+            @Override
+            public void onCallback(PouchError err, AllDocsInfo<Dinosaur> info) {
+                log.i("allDocs: got response: err: %s, info: %s", err, info);
+                List<Dinosaur> dinosaurs = info.getDocuments();
+                runDeletes(dinosaurs);
+            }
+        });
+    }
+
+    private void runDeletes(final List<Dinosaur> dinosaurs) {
+
+        final AtomicInteger numRun = new AtomicInteger(0);
         
         StandardCallback onDelete  = new StandardCallback() {
 
             @Override
-            public void onCallback(PouchError err, PouchResponse info) {
+            public void onCallback(PouchError err, PouchInfo info) {
                 log.i("delete: got response: err: %s, info: %s", err, info);
+                if (numRun.incrementAndGet() == dinosaurs.size() + 3) {
+                    // do the next thing
+                }
             }
         };
         

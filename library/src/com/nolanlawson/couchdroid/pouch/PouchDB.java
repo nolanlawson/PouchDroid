@@ -1,7 +1,11 @@
 package com.nolanlawson.couchdroid.pouch;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.codehaus.jackson.type.TypeReference;
 
 import android.app.Activity;
 import android.text.TextUtils;
@@ -1112,7 +1116,8 @@ public class PouchDB<T extends PouchDocument> {
     }    
     
     public void get(String docid, Map<String, Object> options, final GetCallback<T> callback) {
-        loadAction("get", JsonUtil.simpleString(docid), options, new InnerGetCallback<T>(documentClass) {
+        loadAction("get", JsonUtil.simpleString(docid), options, callback == null ? null : 
+            new InnerGetCallback<T>(documentClass) {
 
             @Override
             public void onCallback(PouchError err, T info) {
@@ -1120,7 +1125,7 @@ public class PouchDB<T extends PouchDocument> {
             }
 
             @Override
-            public Class<?> getDeserializedClass() {
+            public Class<?> getPrimaryClass() {
                 return documentClass;
             }
         });
@@ -1153,6 +1158,50 @@ public class PouchDB<T extends PouchDocument> {
     public void remove(T doc) {
         remove(doc, null, null);
     }    
+    
+    public void bulkDocs(List<T> docs, Map<String, Object> options, BulkCallback callback) {
+        
+        Map<String, List<T>> map = new LinkedHashMap<String, List<T>>();
+        map.put("docs", docs);
+        String mapAsJson = JsonUtil.simpleMap(options);
+        
+        loadAction("bulkDocs", mapAsJson, options, callback);
+    }
+    
+    public void bulkDocs(List<T> docs, Map<String, Object> options) {
+        bulkDocs(docs, options, null);
+    }
+    
+    public void bulkDocs(List<T> docs, BulkCallback callback) {
+        bulkDocs(docs, null, callback);
+    }
+    
+    public void bulkDocs(List<T> docs) {
+        bulkDocs(docs, null, null);
+    }
+    
+    public void allDocs(Map<String, Object> options, final AllDocsCallback<T> callback) {
+        loadAction("allDocs", options, callback == null ? null : new AllDocsCallback<T>() {
+            
+            @Override
+            public void onCallback(PouchError err, AllDocsInfo<T> info) {
+                callback.onCallback(err, info);
+            }
+
+            @Override
+            public Class<?> getGenericClass() {
+                return documentClass;
+            }
+        });
+    }
+    
+    public void allDocs(Map<String, Object> options) {
+        allDocs(options, null);
+    }
+    
+    public void allDocs(AllDocsCallback<T> callback) {
+        allDocs(null, callback);
+    }
     
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
         loadAction(action, null, options, callback);
@@ -1209,8 +1258,13 @@ public class PouchDB<T extends PouchDocument> {
             }
 
             @Override
-            public Class<?> getDeserializedClass() {
-                return innerCallback.getDeserializedClass();
+            public Object getPrimaryClass() {
+                return innerCallback.getPrimaryClass();
+            }
+            
+            @Override
+            public Class<?> getGenericClass() {
+                return innerCallback.getGenericClass();
             }
         });
 
@@ -1236,13 +1290,41 @@ public class PouchDB<T extends PouchDocument> {
          */
         public void onCallback(PouchError err, E info);
         
-        public Class<?> getDeserializedClass();
+        public Object getPrimaryClass();
+        
+        public Class<?> getGenericClass();
     }
     
-    public static abstract class StandardCallback implements Callback<PouchResponse> {
-        public Class<?> getDeserializedClass() {
+    public static abstract class BulkCallback implements Callback<List<PouchInfo>> {
+        public Object getPrimaryClass() {
 
-            return PouchResponse.class;
+            return new TypeReference<List<PouchInfo>>(){};
+        }
+        public Class<?> getGenericClass() {
+            return null;
+        }
+    }
+    
+    public static abstract class AllDocsCallback<T extends PouchDocument> implements Callback<AllDocsInfo<T>> {
+
+        @Override
+        public Object getPrimaryClass() {
+            return AllDocsInfo.class;
+        }
+        
+        public Class<?> getGenericClass() {
+            return null; // overridden
+        }
+        
+    }
+    
+    public static abstract class StandardCallback implements Callback<PouchInfo> {
+        public Object getPrimaryClass() {
+
+            return PouchInfo.class;
+        }
+        public Class<?> getGenericClass() {
+            return null;
         }
     }
     public static abstract class GetCallback<T> implements Callback<T> {
@@ -1251,8 +1333,12 @@ public class PouchDB<T extends PouchDocument> {
         public GetCallback() {
         }
         
-        public Class<?> getDeserializedClass() {
+        public Object getPrimaryClass() {
             return null; // overridden
+        }
+        
+        public Class<?> getGenericClass() {
+            return null;
         }
     }
     public static abstract class InnerGetCallback<T> implements Callback<T> {
@@ -1263,8 +1349,12 @@ public class PouchDB<T extends PouchDocument> {
             this.documentClass = documentClass;
         }
         
-        public Class<?> getDeserializedClass() {
+        public Object getPrimaryClass() {
             return documentClass;
+        }
+        
+        public Class<?> getGenericClass() {
+            return null;
         }
     }
 }

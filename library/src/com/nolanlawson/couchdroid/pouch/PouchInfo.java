@@ -1,12 +1,12 @@
 package com.nolanlawson.couchdroid.pouch;
 
 /**
- * The standard response that Pouch gives back.  Looks like this:
+ * The standard response that Pouch gives back on success.  Looks like this:
  * {ok=true, id=13B8A234-AA30-4833-821A-78725BEDD546, rev=1-98d278dd695a3d4e47a91e5d58acc441}
  * @author nolan
  *
  */
-public final class PouchResponse {
+public final class PouchInfo {
 
     private boolean ok;
     private String id;
@@ -49,7 +49,7 @@ public final class PouchResponse {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        PouchResponse other = (PouchResponse) obj;
+        PouchInfo other = (PouchInfo) obj;
         if (id == null) {
             if (other.id != null)
                 return false;

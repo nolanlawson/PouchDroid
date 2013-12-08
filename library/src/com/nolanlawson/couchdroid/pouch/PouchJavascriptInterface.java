@@ -1,10 +1,10 @@
 package com.nolanlawson.couchdroid.pouch;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.JavaType;
 import org.codehaus.jackson.type.TypeReference;
 
 import android.text.TextUtils;
@@ -63,7 +63,21 @@ public class PouchJavascriptInterface {
         }
         Object infoObj = null;
         if (!TextUtils.isEmpty(infoObjJson)) {
-            infoObj = objectMapper.readValue(infoObjJson, callback.getDeserializedClass());
+            Object primaryClass = callback.getPrimaryClass();
+            Class<?> genericClass = callback.getGenericClass();
+            if (genericClass != null) {
+                // the primary class has a generic
+                JavaType javaType = objectMapper.getTypeFactory().constructParametricType(
+                        (Class)primaryClass, genericClass);
+                infoObj = objectMapper.readValue(infoObjJson, javaType);
+                
+            } else if (primaryClass instanceof Class) {
+                // the primary class is a simple class
+                infoObj = objectMapper.readValue(infoObjJson, (Class)primaryClass);
+            } else {
+                // the primary class uses TypeReference for more complex types, e.g. collections
+                infoObj = objectMapper.readValue(infoObjJson, (TypeReference)primaryClass);
+            }
         }
         
         callback.onCallback(errObj, infoObj);
