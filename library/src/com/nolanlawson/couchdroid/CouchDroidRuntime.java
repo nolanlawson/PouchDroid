@@ -16,6 +16,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
+import com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface;
 import com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface;
 import com.nolanlawson.couchdroid.util.ResourceUtil;
 import com.nolanlawson.couchdroid.util.UtilLogger;
@@ -31,7 +32,6 @@ public class CouchDroidRuntime {
     private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
-    
     
     private Activity activity;
     private WebView webView;
@@ -125,6 +125,7 @@ public class CouchDroidRuntime {
     }
     
     /* package */ void loadJavascript(final CharSequence javascript) {
+        log.d("loadJavascript(): %s", javascript);
         webView.post(new Runnable() {
             
             @Override
@@ -151,7 +152,7 @@ public class CouchDroidRuntime {
         
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDatabaseEnabled(false); // we're overriding websql
-        webView.getSettings().setDomStorageEnabled(false); // pouch needs to call localStorage.  we fake it.
+        webView.getSettings().setDomStorageEnabled(USE_WEINRE); // pouch needs to call localStorage.  we fake it.
         
         if (Build.VERSION.SDK_INT >= 11) {
             webView.getSettings().setAllowContentAccess(false); // don't need it
@@ -165,6 +166,8 @@ public class CouchDroidRuntime {
                 XhrJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new ProgressReporter(activity, progressListener), 
                 ProgressReporter.class.getSimpleName());
+        webView.addJavascriptInterface(PouchJavascriptInterface.INSTANCE, 
+                PouchJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new JSInterfaceVerifier(), 
                 JSInterfaceVerifier.class.getSimpleName());
         
@@ -256,6 +259,7 @@ public class CouchDroidRuntime {
                 loadJavascript("if (!!window.SQLiteJavascriptInterface " +
                 		"&& !!window.XhrJavascriptInterface " +
                 		"&& !!window.ProgressReporter " +
+                		"&& !!window.PouchJavascriptInterface " +
                 		"&& !!window.JSInterfaceVerifier){JSInterfaceVerifier.callback();}");
                 
                 try {
