@@ -10,6 +10,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
@@ -190,10 +191,15 @@ public class CouchDroidMigrationTask {
          *  }
          */
         
+        Activity activity = runtime.getActivity();
+        if (activity == null) {
+            return; // app closed
+        }
+        
         ObjectNode batch = objectMapper.createObjectNode();
         batch.put("table", sqliteTable.getName());
         batch.put("sqliteDB", dbName);
-        batch.put("appPackage", runtime.getActivity().getPackageName());
+        batch.put("appPackage", activity.getPackageName());
         batch.put("user", userId);
         ArrayNode columns = batch.putArray("columns");
         
@@ -219,9 +225,14 @@ public class CouchDroidMigrationTask {
 
     private void initPouchDBHelper() throws IOException {
         
+        Activity activity = runtime.getActivity();
+        if (activity == null) {
+            return; // app closed
+        }
+        
         // ensure that pouchdb talks to the same database every time, i.e. uniquify its name
         StringBuilder internalPouchdbName = new StringBuilder()
-            .append(runtime.getActivity().getPackageName())
+            .append(activity.getPackageName())
             .append("_")
             .append(userId)
             .append("_")
