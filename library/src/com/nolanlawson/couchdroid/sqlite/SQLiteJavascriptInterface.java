@@ -52,7 +52,7 @@ public class SQLiteJavascriptInterface {
     private final PriorityQueue<WebSqlTask> queue = new PriorityQueue<WebSqlTask>();
     private final SparseArray<Set<Integer>> transactionIdsToCallbackIds = new SparseArray<Set<Integer>>();
 
-    private int currentTransactionId = -1;
+    private Integer currentTransactionId = null;
 
     public SQLiteJavascriptInterface(CouchDroidRuntime runtime) {
         this.runtime = runtime;
@@ -118,7 +118,7 @@ public class SQLiteJavascriptInterface {
     
             queue.add(WebSqlTask.forBeginTransaction(transactionId, dbName, successId, errorId));
             registerCallbackIds(transactionId, successId, errorId);
-            doUnitOfSqliteWork();
+            processQueue();
         } catch (Exception e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -135,7 +135,7 @@ public class SQLiteJavascriptInterface {
             queue.add(WebSqlTask.forEndTransaction(transactionId, dbName, successId, errorId, markAsSuccessful));
             registerCallbackIds(transactionId, successId, errorId);
             
-            doUnitOfSqliteWork();
+            processQueue();
         } catch (Exception e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -153,7 +153,7 @@ public class SQLiteJavascriptInterface {
                     queryErrorId));
             registerCallbackIds(transactionId, querySuccessId, queryErrorId);
             
-            doUnitOfSqliteWork();
+            processQueue();
         } catch (Exception e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -347,18 +347,23 @@ public class SQLiteJavascriptInterface {
         }        
     }
 
-    private void doUnitOfSqliteWork() {
+    private synchronized void processQueue() {
 
-        log.d("doUnitOfSqliteWork");
+        log.d("processQueue");
 
         WebSqlTask task;
-        while ((task = queue.poll()) != null) {
+        while ((task = queue.peek()) != null) {
 
-            if (task.getTransactionId() < currentTransactionId && task.getType() != WebSqlTask.Type.BeginTransaction) {
+            if (currentTransactionId == null && task.getType() != WebSqlTask.Type.BeginTransaction) {
                 log.d("skipping because of canceled transaction: %s", task.getTransactionId());
+                queue.poll();
                 continue;
+            } else if (currentTransactionId != null && task.getTransactionId() != currentTransactionId) {
+                log.d("skipping because we're already in another transaction. (#%s tried to line-jump #%s)", 
+                        task.getTransactionId(), currentTransactionId);
+                break;
             }
-
+            queue.poll();
             currentTransactionId = task.getTransactionId();
 
             perform(task);
@@ -421,6 +426,7 @@ public class SQLiteJavascriptInterface {
             } else {
                 sendCallback(new JavascriptCallback(task.getSuccessId(), null, createClearCallbacksJson(task)));
             }
+            currentTransactionId = null;
         }
     }
 
