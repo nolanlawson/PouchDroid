@@ -873,7 +873,11 @@ function HttpPouch(opts, callback) {
     var fetched = function (err, res) {
       // If the result of the ajax call (res) contains changes (res.results)
       if (res && res.results) {
-        results.last_seq = res.last_seq;
+          try {
+            results.last_seq = res.last_seq;
+          } catch (err) {
+              window.console.log('err at 1: ' + JSON.stringify(err));
+          }
         // For each change
         var req = {};
         req.query = opts.query_params;
@@ -5277,7 +5281,11 @@ function writeCheckpoint(src, target, id, checkpoint, callback) {
       if (err && err.status === 404) {
         doc = {_id: id};
       }
+        try {
       doc.last_seq = checkpoint;
+        } catch (err) {
+            window.console.log('err at 2: ' + JSON.stringify(err));
+        }
       db.put(doc, callback);
     });
   }

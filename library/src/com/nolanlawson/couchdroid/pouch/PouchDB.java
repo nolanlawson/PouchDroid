@@ -3049,7 +3049,9 @@ public class PouchDB<T extends PouchDocument> {
                     new StringBuilder()
                             // insert after open brace
                             .append(JsonUtil.simpleString(callbackOptionKey)).append(":")
-                            .append(createFunctionForCallback(callback))));
+                            .append(createFunctionForCallback(callback))
+                            .append(options.isEmpty() ? "" : ",")
+                            ));
 
         } else {
             // callback is an arg, not an option in the map

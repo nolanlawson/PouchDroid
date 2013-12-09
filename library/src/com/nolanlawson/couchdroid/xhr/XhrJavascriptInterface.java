@@ -1,8 +1,9 @@
 package com.nolanlawson.couchdroid.xhr;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -28,6 +29,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 
+import android.annotation.SuppressLint;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
@@ -61,7 +63,7 @@ public class XhrJavascriptInterface {
     
     @JavascriptInterface
     public void abort(String xhrJsonObj) {
-        log.d("abort()");
+        log.d("abort(%s)", xhrJsonObj);
         try{
             
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
@@ -75,7 +77,7 @@ public class XhrJavascriptInterface {
     
     @JavascriptInterface
     public void send(String xhrJsonObj) {
-        log.d("send()");
+        log.d("send(%s)", xhrJsonObj);
         try {
             this.send(xhrJsonObj, "");
         } catch (Exception e) {
@@ -86,7 +88,7 @@ public class XhrJavascriptInterface {
     
     @JavascriptInterface
     public void send(String xhrJsonObj, String body) {
-        log.d("send()");
+        log.d("send(%s, %s)", xhrJsonObj, body);
         try {
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
     
@@ -109,6 +111,7 @@ public class XhrJavascriptInterface {
         }
     }
 
+    @SuppressLint("NewApi")
     private void send(JsonNode xhrAsJsonNode, final int xhrId, String body) throws IOException {
 
         if (aborted.contains(xhrId)) {
@@ -152,11 +155,12 @@ public class XhrJavascriptInterface {
             @Override
             protected SimpleHttpResponse doInBackground(Void... params) {
                 try {
+                    log.d("xhrid %s executing request...", xhrId);
                     HttpResponse response = client.execute(request);
-                    
+                    log.d("xhrid %s got response.", xhrId);
                     HttpEntity entity = response.getEntity();
                     String content = readInput(entity.getContent());
-                    
+                    log.d("xhrid %s read content.", xhrId);
                     return new SimpleHttpResponse(content, response.getStatusLine().getStatusCode());
                 } catch (Exception e) {
                     log.e(e, "exception within doInBackground");
@@ -188,7 +192,7 @@ public class XhrJavascriptInterface {
                 }
             }
             
-        }.execute((Void)null);
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (Void)null);
     }
 
     private void callback(int xhrId, String error, int statusCode, String content) throws IOException {
@@ -217,17 +221,16 @@ public class XhrJavascriptInterface {
     }
 
     private static String readInput(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte bytes[] = new byte[1024];
-
-        int n = in.read(bytes);
-
-        while (n != -1) {
-            out.write(bytes, 0, n);
-            n = in.read(bytes);
+        
+        StringBuilder sb = new StringBuilder();
+        BufferedReader buff = new BufferedReader(new InputStreamReader(in));
+        String line = "";
+        while ((line = buff.readLine()) != null) {
+            log.d("line: %s", line);
+            sb.append(line).append("\n");
         }
-
-        return new String(out.toString());
+        log.d("response: %s", sb);
+        return sb.toString();
     }
 
     private static HttpUriRequest createRequest(String method, String url) {

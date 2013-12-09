@@ -2,6 +2,7 @@ package com.nolanlawson.couchdroid.example3;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import android.os.Bundle;
@@ -14,8 +15,11 @@ import com.nolanlawson.couchdroid.pouch.AllDocsInfo;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
+import com.nolanlawson.couchdroid.pouch.PouchDB.ReplicateCallback;
 import com.nolanlawson.couchdroid.pouch.PouchError;
 import com.nolanlawson.couchdroid.pouch.PouchInfo;
+import com.nolanlawson.couchdroid.pouch.ReplicateInfo;
+import com.nolanlawson.couchdroid.util.Maps;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class MainActivity extends CouchDroidActivity {
@@ -109,18 +113,40 @@ public class MainActivity extends CouchDroidActivity {
     private void replicate() {
         
         // bi-directional replication on both pouches
-        pouch1.replicateFrom(REMOTE_COUCHDB_URL);
-        pouch1.replicateTo(REMOTE_COUCHDB_URL);
-        pouch2.replicateFrom(REMOTE_COUCHDB_URL);
-        pouch2.replicateTo(REMOTE_COUCHDB_URL);
+        ReplicateCallback onReplicateFrom = new ReplicateCallback() {
+            
+            @Override
+            public void onCallback(PouchError err, ReplicateInfo info) {
+                log.i("replicate.from: %s, %s", err, info);
+            }
+        };
+        
+        ReplicateCallback onReplicateTo = new ReplicateCallback() {
+            
+            @Override
+            public void onCallback(PouchError err, ReplicateInfo info) {
+                log.i("replicate.to  : %s, %s", err, info);
+            }
+        };
+        
+        Map<String, Object> options = Maps.quickMap("continuous", true);
+        
+        pouch1.replicateFrom(REMOTE_COUCHDB_URL, options, onReplicateFrom);
+        pouch1.replicateTo(REMOTE_COUCHDB_URL, options, onReplicateTo);
+        pouch2.replicateFrom(REMOTE_COUCHDB_URL, options, onReplicateFrom);
+        pouch2.replicateTo(REMOTE_COUCHDB_URL, options, onReplicateTo);
+        
+        final int DELAY = 10000;
         
         handler.postDelayed(new Runnable() {
             
             @Override
             public void run() {
                 checkPouchContents();
+                
+                handler.postDelayed(this, DELAY); // continuous
             }
-        }, 10000);
+        }, DELAY);
         
     }
 

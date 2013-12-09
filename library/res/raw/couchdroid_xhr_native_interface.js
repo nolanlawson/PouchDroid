@@ -50,7 +50,11 @@
             self.responseText = content;
 
             debug('calling onreadystatechange...');
-            self.onreadystatechange();
+            try {
+                self.onreadystatechange();
+            } catch (err2) {
+                window.console.log('onreadystatechange threw error: ' + JSON.stringify(err2));
+            }
             debug('called onreadystatechange.');
         }
 
@@ -73,7 +77,13 @@
 
         debug('abort()');
         self.state = STATES.DONE;
-        XhrJavascriptInterface.abort();
+        var selfStringified = JSON.stringify(self);
+        try {
+            XhrJavascriptInterface.abort(selfStringified);
+        } catch (error) {
+            window.console.log('failed to call XhrJavascriptInterface.abort() with selfStringified ' + selfStringified);
+        }
+
     };
 
     NativeXMLHttpRequest.prototype.setRequestHeader = function (key, value) {
@@ -120,8 +130,12 @@
         debug('send(' + selfStringified + ',' + body + ')');
 
         self.state = STATES.LOADING;
-
-        XhrJavascriptInterface.send(selfStringified, body);
+        try {
+            XhrJavascriptInterface.send(selfStringified, body);
+        } catch (error) {
+            window.console.log('failed to call XhrJavascriptInterface with selfStringified' +
+                selfStringified + ' and body ' + body);
+        }
     };
 
     CouchDroid.NativeXMLHttpRequest = NativeXMLHttpRequest;
