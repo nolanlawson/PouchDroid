@@ -45,6 +45,11 @@ Limitations
 1. The PouchDB API is asynchronous. This means that JavaScript-style callback hell has invaded your Java cathedral.  Just avoid [the pyramid of doom][3] and you should be fine.
 1. Android 2.1 (API level 7) and up is supported.
 
+Details
+----------
+
+More details in [this blog post](http://nolanlawson.com/2013/12/08/porting-pouchdb-to-android-initial-work-and-thoughts/).
+
 <!--
 Scenarios
 ----------
