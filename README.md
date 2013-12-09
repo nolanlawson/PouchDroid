@@ -3,12 +3,14 @@ CouchDroid
 
 Effortlessly sync your Android user data to and from CouchDB.
 
+**Version 0.9-very-beta**
+
 Introduction
 -------------
 
 ### What is this?
 
-CouchDroid is an Android adapter for PouchDB.  It offers a simple, SQLite-backed key-value store that can automatically sync with a CouchDB database via HTTP/HTTPS.
+CouchDroid is an Android adapter for [PouchDB][4].  It offers a simple key-value store, backed by SQLite, that can automatically sync with a remote [CouchDB][5] database via HTTP/HTTPS.
 
 ### Why do I care?
 
@@ -18,35 +20,32 @@ Syncing is hard.  You don't want to have to manage revisions, conflicts, and inc
 
 CouchDB is awesome.  If you use its built-in user authentication, you can write Ajax apps with barely any server code at all (if any).  PouchDB is awesome too - it runs cross-browser, and it offers automagical two-way sync between the client and CouchDB.
 
-For instance, let's say you want to have a web site where your users sign in and can view their Android data.  Bam - set up a one-way sync to Couch, then write an Ajax app to call Couch and show the results.
-
-Or let's say your user has multiple devices, and you want to keep their data in sync.  Bam - set up a two-way sync, and all the data is magically the same everywhere.  [Conflicts are resolved in a reasonable way][2].
-
 ### How does this work?
 
-Rather than rewrite PouchDB in Java, CouchDroid fires up an invisible WebView, which it basically uses as a JavaScript interpreter to run PouchDB with its WebSQL adapter.  Calls to WebSQL are rerouted to the native Android SQLite API, while calls to XMLHttpRequest are rerouted to the Apache HttpClient API.
+Rather than rewrite PouchDB in Java, CouchDroid fires up an invisible WebView, which it basically uses as a JavaScript interpreter to run PouchDB with its WebSQL adapter.  Calls to WebSQL are rerouted to the native Android SQLite API, while calls to XMLHttpRequest are rerouted to the Apache HttpClient API.  [Jackson][6] is used for JSON serialization/deserialization.
 
 ### Isn't the performance terrible?
 
-Not really.  Since most of the heavy lifting is done in SQLite/HTTP, relatively little code is executed on the UI thread.  It even manages to run on a vintage HTC Magic (2008) rocking Android 2.1 Eclair.  And with Chrome included as the standard WebView in 4.4 KitKat, it's only gonna get faster.
+Not really.  Since most of the heavy lifting is done in SQLite/HTTP, relatively little code is executed on the UI thread.  It even manages to run on my vintage HTC Magic (2008) rocking Android 2.1 Eclair.  And with Chrome included as the standard WebView in 4.4 KitKat, it's only gonna get faster.
 
 ### Why not just use Cordova/PhoneGap?
 
-I thought it would be overkill to include all the Cordova libraries.  Plus, standard Android Cordova apps run all the WebSQL requests on the UI thread, meaning that even a spinning progress bar would stutter (PSA: there's [a Cordova plugin for that][1]).  And getting Ajax to work would require tedious configuration of CORS/JSONP to get around web security, whereas CouchDroid works on a freshly-installed CouchDB.
+I thought it would be overkill to include all the Cordova libraries.  Plus, standard Android Cordova apps run the WebSQL requests on the UI thread, meaning that even a spinning progress bar would stutter (PSA: there's [a Cordova plugin for that][1]).  And getting Ajax to work would require tedious configuration of CORS/JSONP to get around web security, whereas CouchDroid works on a freshly-installed CouchDB.
 
-CouchDroid doesn't have any external dependencies, other than PouchDB.  The APK clocks in at a meager *TODO*.
+Also CouchDroid doesn't have any external dependencies, other than PouchDB and Jackson.  The APK clocks in at about 1MB.
 
 ### But I already store user data in SQLite!
 
-CouchDroid includes a small utility called CouchDroidMigrationTask, which will migrate your existing SQLite tables into a sensible key-value format.  If you don't want to dive head-first into Pouch, you can use it purely for one-way sync to CouchDB.
+CouchDroid includes a small utility called CouchDroidMigrationTask, which will migrate your existing SQLite tables into a reasonable key-value format.  So, if you don't want to dive head-first into Pouch, you can use it purely for one-way sync to CouchDB.
 
 Limitations
 -----------
 
-1. CouchDroid needs a WebView in order to run JavaScript.  Hence, you can't use it in a background Service, and it does consume UI thread cycles.  For small user databases, though, you probably won't notice.
-1. The PouchDB API is asynchronous, which means JavaScript-style callback hell has invaded Java land.  Just avoid [the pyramid of doom][3] and you should be fine.
+1. CouchDroid needs a WebView in order to run JavaScript.  Hence, you can't use it in a background Service, and it does consume UI thread cycles.  For small databases, though, you probably won't notice.
+1. The PouchDB API is asynchronous. This means that JavaScript-style callback hell has invaded your Java cathedral.  Just avoid [the pyramid of doom][3] and you should be fine.
+1. Android 2.1 (API level 7) and up is supported.
 
-
+<!--
 Scenarios
 ----------
 
@@ -61,7 +60,7 @@ Once you have a ```PouchDB``` object, you can set up a one-way replication to Co
 It's just PouchDB!  Follow the PouchDB APIs, which have been translated as faithfully as possible into Java.
 
 CouchDroid uses Jackson for JSON serialization/deserialization, which means that, for the most part, POJOs will "just work."
-
+-->
 License
 ----------
 
@@ -74,3 +73,6 @@ Nolan Lawson
 [1]: https://github.com/pgsqlite/PG-SQLitePlugin-Android-2013.09
 [2]: http://guide.couchdb.org/draft/conflicts.html
 [3]: http://tritarget.org/blog/2012/11/28/the-pyramid-of-doom-a-javascript-style-trap/]
+[4]: http://pouchdb.com/
+[5]: http://couchdb.apache.org/
+[6]: http://jackson.codehaus.org/
