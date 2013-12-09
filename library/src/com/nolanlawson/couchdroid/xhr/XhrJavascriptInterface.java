@@ -31,6 +31,7 @@ import org.codehaus.jackson.type.TypeReference;
 
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -150,7 +151,7 @@ public class XhrJavascriptInterface {
                     body.toString().getBytes("UTF8")));
         }
         
-        new AsyncTask<Void, Void, SimpleHttpResponse>() {
+        AsyncTask<Void, Void, SimpleHttpResponse> task = new AsyncTask<Void, Void, SimpleHttpResponse>() {
 
             @Override
             protected SimpleHttpResponse doInBackground(Void... params) {
@@ -192,7 +193,14 @@ public class XhrJavascriptInterface {
                 }
             }
             
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (Void)null);
+        };
+        if (Build.VERSION.SDK_INT >= 11) {
+            // take advantage of multiple executors
+            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (Void)null);
+        } else {
+            // just use the default
+            task.execute((Void)null);
+        }   
     }
 
     private void callback(int xhrId, String error, int statusCode, String content) throws IOException {
@@ -223,7 +231,7 @@ public class XhrJavascriptInterface {
     private static String readInput(InputStream in) throws IOException {
         
         StringBuilder sb = new StringBuilder();
-        BufferedReader buff = new BufferedReader(new InputStreamReader(in));
+        BufferedReader buff = new BufferedReader(new InputStreamReader(in), 0x1000);
         String line = "";
         while ((line = buff.readLine()) != null) {
             log.d("line: %s", line);
