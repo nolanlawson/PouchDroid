@@ -101,7 +101,7 @@ public class SQLiteJavascriptInterface {
         try {
             BasicSQLiteOpenHelper db = dbs.get(dbName);
             if (db == null) { // doesn't exist yet
-                db = new BasicSQLiteOpenHelper(activity, dbName);
+                db = new BasicSQLiteOpenHelper(activity.getApplicationContext(), dbName);
                 dbs.put(dbName, db);
             }
             sendCallback(new JavascriptCallback(callbackId, null));
