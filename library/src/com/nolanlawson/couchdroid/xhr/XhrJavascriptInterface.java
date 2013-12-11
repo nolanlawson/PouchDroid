@@ -34,8 +34,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 
+import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 /**
@@ -54,10 +54,10 @@ public class XhrJavascriptInterface {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     
-    private WebView webView;
+    private CouchDroidRuntime runtime;
     
-    public XhrJavascriptInterface(WebView webView) {
-        this.webView = webView;
+    public XhrJavascriptInterface(CouchDroidRuntime runtime) {
+        this.runtime = runtime;
     }
 
     private Set<Integer> aborted = new HashSet<Integer>();
@@ -206,7 +206,7 @@ public class XhrJavascriptInterface {
     private void callback(int xhrId, String error, int statusCode, String content) throws IOException {
         log.d("callback()");
         
-        final String js  = new StringBuilder("javascript:(function(){")
+        final String js  = new StringBuilder()
             .append("CouchDroid.NativeXMLHttpRequests[")
             .append(xhrId)
             .append("].onNativeCallback(")
@@ -215,17 +215,10 @@ public class XhrJavascriptInterface {
             .append(statusCode)
             .append(",")
             .append(TextUtils.isEmpty(content) ? "\"null\"" : objectMapper.writeValueAsString(content))
-            .append(");})();").toString();
+            .append(");").toString();
         
-        log.d("javascript is %s", js);
+        runtime.loadJavascript(js);
         
-        webView.post(new Runnable() {
-            
-            @Override
-            public void run() {
-                webView.loadUrl(js);
-            }
-        });
     }
 
     private static String readInput(InputStream in) throws IOException {

@@ -158,7 +158,7 @@ public class CouchDroidRuntime {
         
         webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), 
                 SQLiteJavascriptInterface.class.getSimpleName());
-        webView.addJavascriptInterface(new XhrJavascriptInterface(webView), 
+        webView.addJavascriptInterface(new XhrJavascriptInterface(this), 
                 XhrJavascriptInterface.class.getSimpleName());
         webView.addJavascriptInterface(new ProgressReporter(activity, progressListener), 
                 ProgressReporter.class.getSimpleName());
