@@ -8,3 +8,4 @@ target
 .DS_Store
 android-support-v4.jar
 .idea
+node_modules

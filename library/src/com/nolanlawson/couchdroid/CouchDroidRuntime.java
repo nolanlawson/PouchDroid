@@ -31,8 +31,9 @@ public class CouchDroidRuntime {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
-    private static final boolean USE_WEINRE = false;
+    private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = true;
+    private static final boolean USE_MINIFIED_COUCHDROID = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     private Activity activity;
@@ -108,20 +109,9 @@ public class CouchDroidRuntime {
     }
     
     private void loadInitialJavascript() {
-        loadJavascript(TextUtils.join("\n", Arrays.asList(
-                ResourceUtil.loadTextFile(activity, R.raw.ecmascript_shims),
-                ResourceUtil.loadTextFile(activity, R.raw.couchdroid),
-                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_util),
-                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_xhr_native_interface),
-                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_sqlite_native_interface),
-                "window.console.log('CouchDroid.NativeXMLHttpRequest is: ' + typeof CouchDroid.NativeXMLHttpRequest);",
-                "window.console.log('CouchDroid.fakeLocalStorage is: ' + typeof CouchDroid.fakeLocalStorage);",
-                "window.console.log('CouchDroid.SQLiteNativeDB.openNativeDatabase is: ' + typeof CouchDroid.SQLiteNativeDB.openNativeDatabase);",
-                (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)
-                        .replaceAll("\\bXMLHttpRequest\\b", "CouchDroid.NativeXMLHttpRequest")
-                        .replaceAll("\\blocalStorage\\b", "CouchDroid.fakeLocalStorage")
-                        .replaceAll("\\bopenDatabase\\b", "CouchDroid.SQLiteNativeDB.openNativeDatabase")),
-                ResourceUtil.loadTextFile(activity, R.raw.couchdroid_pouchdb_helper),
+        loadJavascript(TextUtils.join(";", Arrays.asList(
+                ResourceUtil.loadTextFile(activity, USE_MINIFIED_COUCHDROID ? R.raw.couchdroid_min : R.raw.couchdroid),
+                (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)),
                 "window.console.log('PouchDB is: ' + typeof PouchDB);",
                 "window.console.log('CouchDroid is: ' + typeof CouchDroid);")));
     }

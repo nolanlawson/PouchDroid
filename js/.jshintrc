@@ -21,6 +21,7 @@
     "PouchDB" : true,
     "CouchDroid" : true,
     "SQLiteJavascriptInterface" : true,
-    "XhrJavascriptInterface" : true
+    "XhrJavascriptInterface" : true,
+    "module": true
   }
 }

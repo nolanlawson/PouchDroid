@@ -2014,7 +2014,7 @@ function webSqlPouch(opts, callback) {
   var instanceId = null;
   var name = opts.name;
 
-  var db = CouchDroid.SQLiteNativeDB.openNativeDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
+  var db = openDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
   if (!db) {
     return PouchUtils.call(callback, Pouch.Errors.UNKNOWN_ERROR);
   }
@@ -2673,11 +2673,11 @@ function webSqlPouch(opts, callback) {
 }
 
 webSqlPouch.valid = function () {
-  return typeof window !== 'undefined' && !!window.CouchDroid.SQLiteNativeDB.openNativeDatabase;
+  return typeof window !== 'undefined' && !!window.openDatabase;
 };
 
 webSqlPouch.destroy = function (name, opts, callback) {
-  var db = CouchDroid.SQLiteNativeDB.openNativeDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
+  var db = openDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
   db.transaction(function (tx) {
     tx.executeSql('DROP TABLE IF EXISTS ' + DOC_STORE, []);
     tx.executeSql('DROP TABLE IF EXISTS ' + BY_SEQ_STORE, []);
@@ -2761,9 +2761,9 @@ function ajax(options, callback) {
     call(cb, errObj);
   };
 
-  if (typeof window !== 'undefined' && window.CouchDroid.NativeXMLHttpRequest) {
+  if (typeof window !== 'undefined' && window.XMLHttpRequest) {
     var timer, timedout = false;
-    var xhr = new CouchDroid.NativeXMLHttpRequest();
+    var xhr = new XMLHttpRequest();
 
     xhr.open(options.method, options.url);
     xhr.withCredentials = true;
@@ -5765,7 +5765,7 @@ PouchUtils.Changes = function () {
     //do a useless change on a storage thing
     //in order to get other windows's listeners to activate
     if (!isChromeApp()) {
-      CouchDroid.fakeLocalStorage[db_name] = (CouchDroid.fakeLocalStorage[db_name] === "a") ? "b" : "a";
+      localStorage[db_name] = (localStorage[db_name] === "a") ? "b" : "a";
     } else {
       chrome.storage.local.set({db_name: db_name});
     }
