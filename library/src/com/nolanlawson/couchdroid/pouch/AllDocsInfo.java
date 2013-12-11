@@ -27,7 +27,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
     * @author nolan
     *
     */
-public class AllDocsInfo<T extends PouchDocument> {
+public class AllDocsInfo<T extends PouchDocumentInterface> {
     
     private int totalRows;
     private int offset;
@@ -70,7 +70,7 @@ public class AllDocsInfo<T extends PouchDocument> {
         return docs;
     }
 
-    public static class Row<T extends PouchDocument> {
+    public static class Row<T extends PouchDocumentInterface> {
         private T doc;
         private String id;
         private String key;
