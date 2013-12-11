@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.example1;
+package com.nolanlawson.couchdroid.example1.pojo;
 
 import com.nolanlawson.couchdroid.pouch.PouchDocument;
 

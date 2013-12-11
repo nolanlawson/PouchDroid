@@ -32,7 +32,7 @@ Not really.  Since most of the heavy lifting is done in SQLite/HTTP, relatively 
 
 I thought it would be overkill to include all the Cordova libraries.  Plus, standard Android Cordova apps run the WebSQL requests on the UI thread, meaning that even a spinning progress bar would stutter (PSA: there's [a Cordova plugin for that][1]).  And getting Ajax to work would require tedious configuration of CORS/JSONP to get around web security, whereas CouchDroid works on a freshly-installed CouchDB.
 
-Also CouchDroid doesn't have any external dependencies, other than PouchDB and Jackson.  The APK clocks in at about 1MB.
+Also CouchDroid doesn't have any external dependencies, other than PouchDB and Jackson.  The APK clocks in at about 700K (400K with ProGuard).
 
 ### But I already store user data in SQLite!
 

@@ -156,16 +156,11 @@ public class CouchDroidRuntime {
         
         webView.setWebChromeClient(new MyWebChromeClient());
         
-        webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), 
-                SQLiteJavascriptInterface.class.getSimpleName());
-        webView.addJavascriptInterface(new XhrJavascriptInterface(this), 
-                XhrJavascriptInterface.class.getSimpleName());
-        webView.addJavascriptInterface(new ProgressReporter(activity, progressListener), 
-                ProgressReporter.class.getSimpleName());
-        webView.addJavascriptInterface(PouchJavascriptInterface.INSTANCE, 
-                PouchJavascriptInterface.class.getSimpleName());
-        webView.addJavascriptInterface(new JSInterfaceVerifier(), 
-                JSInterfaceVerifier.class.getSimpleName());
+        webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), "SQLiteJavascriptInterface");
+        webView.addJavascriptInterface(new XhrJavascriptInterface(this), "XhrJavascriptInterface");
+        webView.addJavascriptInterface(new ProgressReporter(activity, progressListener), "ProgressReporter");
+        webView.addJavascriptInterface(PouchJavascriptInterface.INSTANCE, "PouchJavascriptInterface");
+        webView.addJavascriptInterface(new JSInterfaceVerifier(), "JSInterfaceVerifier");
         
         final String html = new StringBuilder("<html><head></head><body>")
                 .append(USE_WEINRE

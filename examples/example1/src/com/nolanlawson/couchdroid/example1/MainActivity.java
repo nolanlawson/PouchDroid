@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
+import com.nolanlawson.couchdroid.example1.pojo.PocketMonster;
 import com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask;
 import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener;
 
