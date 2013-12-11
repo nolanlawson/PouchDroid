@@ -177,8 +177,10 @@ public class PouchDB<T extends PouchDocument> {
         this.documentClass = documentClass;
         this.runtime = runtime;
 
-        runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBs[").append(id).append("] = new PouchDB(")
-                .append(JsonUtil.simpleMap("name", name, "autoCompaction", autoCompaction)).append(");"));
+        runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBs[")
+                .append(id).append("] = new PouchDB(")
+                .append(JsonUtil.simpleMap("name", name, "adapter", "websql", "autoCompaction", autoCompaction))
+                .append(");"));
     }
 
     /**
