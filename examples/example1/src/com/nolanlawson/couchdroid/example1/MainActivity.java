@@ -49,6 +49,7 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
     @Override
     public void onCouchDroidReady(final CouchDroidRuntime runtime) {
 
+        
         progress.setProgress(0);
         text.setText(Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
         
@@ -171,4 +172,5 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
         }
         text.setText(textContent);
     }
+
 }

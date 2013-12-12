@@ -38,6 +38,8 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
     }
     
     /**
+     * Creates or opens a new (asynchronous) PouchDB.
+     * 
      * {@code name} defaults to the global PouchDb database name.
      * <br/>{@code autoCompaction} defaults to false. 
      *
@@ -48,16 +50,68 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
     }
     
     /**
+     * Creates or opens a new (asynchronous) PouchDB.
+     * 
      * {@code name} defaults to the global PouchDb database name.
      * <br/>{@code autoCompaction} defaults to false. 
      *
      * @see PouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
      */
-    public static <T extends PouchDocument> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime,
+    public static <T extends PouchDocumentInterface> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime,
             String name) {
         return newPouchDB(documentClass, runtime, name, false);
     }
+    
+    /**
+     * Creates or opens a new synchronous PouchDB.
+     * 
+     * <p/><strong>Warning: synchronous calls look good in Java, but they will block the current thread! We assume
+     * you're wrapping your calls in an AsyncTask.doInBackground()!</strong>
+     * 
+     * <p/>{@code name} defaults to the global PouchDb database name.
+     * <br/>{@code autoCompaction} defaults to false. 
+     *
+     * @see PouchDB#newSynchronousPouchDB(documentClass, runtime, name, autoCompaction)
+     */
+    public static <T extends PouchDocumentInterface> SynchronousPouchDB<T> newSynchronousPouchDB(Class<T> documentClass, CouchDroidRuntime runtime) {
+        return newSynchronousPouchDB(documentClass, runtime, null, false);
+    }
 
+    /**
+     * Creates or opens a new synchronous PouchDB.
+     * 
+     * <p/><strong>Warning: synchronous calls look good in Java, but they will block the current thread! We assume
+     * you're wrapping your calls in an AsyncTask.doInBackground()!</strong>
+     * 
+     * <p/>{@code name} defaults to the global PouchDb database name.
+     * <br/>{@code autoCompaction} defaults to false. 
+     *
+     * @see PouchDB#newSynchronousPouchDB(documentClass, runtime, name, autoCompaction)
+     */
+    public static <T extends PouchDocumentInterface> SynchronousPouchDB<T> newSynchronousPouchDB(Class<T> documentClass, 
+            CouchDroidRuntime runtime,
+            String name) {
+        return newSynchronousPouchDB(documentClass, runtime, name, false);
+    }
+
+    /**
+     * 
+     * Creates or opens a new synchronous PouchDB.
+     * 
+     * <p/><strong>Warning: synchronous calls look good in Java, but they will block the current thread! We assume
+     * you're wrapping your calls in an AsyncTask.doInBackground()!</strong>
+     * 
+     * <p/>{@code name} defaults to the global PouchDb database name.
+     * <br/>{@code autoCompaction} defaults to false. 
+     *
+     * @see PouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
+     */
+    public static <T extends PouchDocumentInterface> SynchronousPouchDB<T> newSynchronousPouchDB(Class<T> documentClass, 
+            CouchDroidRuntime runtime,
+            String name, boolean autoCompaction) {
+        return new SynchronousPouchDB<T>(documentClass, runtime, name, autoCompaction);
+    }
+    
     /**
      * <p>
      * This method creates a database or opens an existing one. If you use a

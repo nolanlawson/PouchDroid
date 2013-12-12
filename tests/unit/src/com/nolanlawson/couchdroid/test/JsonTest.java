@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.example1.test;
+package com.nolanlawson.couchdroid.test;
 
 import java.util.Arrays;
 import java.util.TimeZone;
@@ -8,8 +8,11 @@ import android.annotation.SuppressLint;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.ViewDebug.ExportedProperty;
 
-import com.nolanlawson.couchdroid.example1.MainActivity;
+import com.nolanlawson.couchdroid.appforunittests.MainActivity;
 import com.nolanlawson.couchdroid.pouch.PouchDocumentMapper;
+import com.nolanlawson.couchdroid.test.data.ClassWithBadConstructor;
+import com.nolanlawson.couchdroid.test.data.GameBoy;
+import com.nolanlawson.couchdroid.test.data.Person;
 
 /**
  * Test to make sure that the Date Functions work as expected and return the correct times.

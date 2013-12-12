@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.example1.test;
+package com.nolanlawson.couchdroid.test.data;
 
 import java.util.List;
 
@@ -11,6 +11,17 @@ public class Person extends PouchDocument {
     private int numberOfPetsOwned;
     private List<GameBoy> gameBoys;
     private boolean belieber;
+
+    public Person() {
+    }
+    
+    public Person(String name, long dystopianBarcodeId, int numberOfPetsOwned, List<GameBoy> gameBoys, boolean belieber) {
+        this.name = name;
+        this.dystopianBarcodeId = dystopianBarcodeId;
+        this.numberOfPetsOwned = numberOfPetsOwned;
+        this.gameBoys = gameBoys;
+        this.belieber = belieber;
+    }
     
     public String getName() {
         return name;

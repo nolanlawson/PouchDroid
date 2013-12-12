@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.example1.test;
+package com.nolanlawson.couchdroid.test.data;
 
 public class GameBoy {
 

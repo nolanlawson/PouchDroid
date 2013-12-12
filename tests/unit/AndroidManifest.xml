@@ -8,7 +8,7 @@
 
     <instrumentation
         android:name="android.test.InstrumentationTestRunner"
-        android:targetPackage="com.nolanlawson.couchdroid.example1" />
+        android:targetPackage="com.nolanlawson.couchdroid.appforunittests" />
 
     <application
         android:icon="@drawable/ic_launcher"

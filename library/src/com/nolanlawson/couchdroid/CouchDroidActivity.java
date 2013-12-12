@@ -39,4 +39,8 @@ public abstract class CouchDroidActivity extends Activity {
             couchDroidRuntime.close();
         }
     }
+    
+    public CouchDroidRuntime getCouchDroidRuntime() {
+        return couchDroidRuntime;
+    }
 }
