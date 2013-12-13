@@ -12,6 +12,7 @@ import android.app.Activity;
 public abstract class CouchDroidActivity extends Activity {
     
     private CouchDroidRuntime couchDroidRuntime;
+    private boolean couchDroidReady;
     
     /**
      * Called when the CouchDroidRuntime is loaded, after onResume() in the Activity lifecycle.  Runs on the UI thread.
@@ -27,6 +28,7 @@ public abstract class CouchDroidActivity extends Activity {
         couchDroidRuntime = new CouchDroidRuntime(this, new CouchDroidRuntime.OnReadyListener(){
             @Override
             public void onReady(CouchDroidRuntime runtime) {
+                couchDroidReady = true;
                 onCouchDroidReady(runtime);
             }
         });
@@ -42,5 +44,9 @@ public abstract class CouchDroidActivity extends Activity {
     
     public CouchDroidRuntime getCouchDroidRuntime() {
         return couchDroidRuntime;
+    }
+    
+    public boolean isCouchDroidReady() {
+        return couchDroidReady;
     }
 }

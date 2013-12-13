@@ -3,14 +3,14 @@ package com.nolanlawson.couchdroid.test;
 import java.util.Random;
 
 import junit.framework.Assert;
-
 import android.annotation.SuppressLint;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
 
 import com.nolanlawson.couchdroid.appforunittests.MainActivity;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
+import com.nolanlawson.couchdroid.pouch.PouchException;
 import com.nolanlawson.couchdroid.pouch.SynchronousPouchDB;
-import com.nolanlawson.couchdroid.pouch.SynchronousPouchDB.PouchException;
 import com.nolanlawson.couchdroid.test.data.Person;
 
 @SuppressLint("NewApi")
@@ -23,8 +23,9 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        while (getActivity() == null || getActivity().getCouchDroidRuntime() == null) {
+        while (getActivity() == null || !getActivity().isCouchDroidReady()) {
             Thread.sleep(100);
+            Log.i("Tests", "Waiting for couch droid runtime to not be null");
         }
     }
 
@@ -47,6 +48,17 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
         Person gotPerson = pouchDB.get("fooId");
         assertEquals(person, gotPerson);
         pouchDB.destroy();
+        try {
+            pouchDB.get("fooId");
+            Assert.fail();
+        } catch (Exception expected) {
+            
+        }
+        
+        // ok, re-create it and try to get the person
+        pouchDB = PouchDB.newSynchronousPouchDB(Person.class, 
+                getActivity().getCouchDroidRuntime(), dbName);
+        
         try {
             pouchDB.get("fooId");
             Assert.fail();

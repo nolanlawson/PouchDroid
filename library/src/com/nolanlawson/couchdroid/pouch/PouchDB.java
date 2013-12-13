@@ -23,6 +23,8 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
 
     private int id;
     private CouchDroidRuntime runtime;
+    private String name;
+    private boolean destroyed = false;
 
     private Class<T> documentClass;
     
@@ -30,6 +32,11 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
         this.id = POUCH_IDS.incrementAndGet();
         this.documentClass = documentClass;
         this.runtime = runtime;
+        this.name = name;
+        
+        if (TextUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("name cannot be null/empty");
+        }
 
         runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBs[")
                 .append(id).append("] = new PouchDB(")
@@ -40,19 +47,6 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
     /**
      * Creates or opens a new (asynchronous) PouchDB.
      * 
-     * {@code name} defaults to the global PouchDb database name.
-     * <br/>{@code autoCompaction} defaults to false. 
-     *
-     * @see PouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
-     */
-    public static <T extends PouchDocumentInterface> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime) {
-        return newPouchDB(documentClass, runtime, null, false);
-    }
-    
-    /**
-     * Creates or opens a new (asynchronous) PouchDB.
-     * 
-     * {@code name} defaults to the global PouchDb database name.
      * <br/>{@code autoCompaction} defaults to false. 
      *
      * @see PouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
@@ -62,21 +56,6 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
         return newPouchDB(documentClass, runtime, name, false);
     }
     
-    /**
-     * Creates or opens a new synchronous PouchDB.
-     * 
-     * <p/><strong>Warning: synchronous calls look good in Java, but they will block the current thread! We assume
-     * you're wrapping your calls in an AsyncTask.doInBackground()!</strong>
-     * 
-     * <p/>{@code name} defaults to the global PouchDb database name.
-     * <br/>{@code autoCompaction} defaults to false. 
-     *
-     * @see PouchDB#newSynchronousPouchDB(documentClass, runtime, name, autoCompaction)
-     */
-    public static <T extends PouchDocumentInterface> SynchronousPouchDB<T> newSynchronousPouchDB(Class<T> documentClass, CouchDroidRuntime runtime) {
-        return newSynchronousPouchDB(documentClass, runtime, null, false);
-    }
-
     /**
      * Creates or opens a new synchronous PouchDB.
      * 
@@ -161,10 +140,21 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
     
     @Override
     public void destroy(Map<String, Object> options, StandardCallback callback) {
-        loadAction("destroy", options, callback);
-
-        // won't need this database anymore
-        runtime.loadJavascript(new StringBuilder("delete CouchDroid.pouchDBs[").append(id).append("];"));
+        
+        // need to call it statically, so can't use loadAction()
+        
+        runtime.loadJavascript(new StringBuilder()
+            .append("PouchDB.destroy(")
+            .append(JsonUtil.simpleString(name))
+            .append(",")
+            .append(JsonUtil.simpleMap(options))
+            .append(",")
+            .append(createFunctionForCallback(callback))
+            .append(");")
+            // won't need this database anymore
+            .append("delete CouchDroid.pouchDBs[").append(id).append("];"));
+        
+        destroyed = true;
     }
     
     /**
@@ -428,6 +418,10 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
             String callbackOptionKey) {
         log.d("loadAction(%s, %s, %s, %s, %s", action, arg1, options, callback, callbackOptionKey);
 
+        if (destroyed) {
+            throw new RuntimeException("PouchDB destroyed!  Can't do any further actions.");
+        }
+        
         List<CharSequence> arguments = new LinkedList<CharSequence>();
         if (!TextUtils.isEmpty(arg1)) {
             arguments.add(arg1);

@@ -1,6 +1,5 @@
 package com.nolanlawson.couchdroid.pouch;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -326,19 +325,6 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
 
     public ReplicateInfo replicateFrom(String remoteDB) throws PouchException {
         return replicateFrom(remoteDB, null);
-    }
-
-    public static class PouchException extends IOException {
-
-        private static final long serialVersionUID = -754998157801386220L;
-
-        public PouchException() {
-            super();
-        }
-
-        public PouchException(String detailMessage) {
-            super(detailMessage);
-        }
     }
 
     private static class PouchResponse<T> {

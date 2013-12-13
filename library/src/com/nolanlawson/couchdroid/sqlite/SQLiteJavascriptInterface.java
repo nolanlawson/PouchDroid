@@ -202,17 +202,7 @@ public class SQLiteJavascriptInterface {
                 queryResult.put("rowsAffected", rowsAffected);
             } else {
                 // pragma command or something else
-                String[] params = null;
-
-                if (selectArgs != null) {
-                    params = new String[selectArgs.size()];
-
-                    for (int i = 0, len = selectArgs.size(); i < len; i++) {
-                        Object val = selectArgs.get(i);
-                        params[i] = (val == null) ? "" : String.valueOf(val);
-                    }
-                }
-
+                String[] params = convertParamsToStringArray(selectArgs);
                 Cursor myCursor = db.rawQuery(query, params);
 
                 queryResult = this.getRowsResultFromQuery(myCursor);
@@ -234,6 +224,20 @@ public class SQLiteJavascriptInterface {
             log.e(e, "unexpected");
             sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage())));
         }
+    }
+
+    private String[] convertParamsToStringArray(List<Object> selectArgs) {
+        String[] params = null;
+
+        if (selectArgs != null) {
+            params = new String[selectArgs.size()];
+
+            for (int i = 0, len = selectArgs.size(); i < len; i++) {
+                Object val = selectArgs.get(i);
+                params[i] = (val == null) ? "" : String.valueOf(val);
+            }
+        }
+        return params;
     }
 
     private void bindSelectArgs(SQLiteStatement statement, List<Object> selectArgs) {

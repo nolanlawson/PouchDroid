@@ -1,7 +1,7 @@
 package com.nolanlawson.couchdroid.util;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import android.util.Log;
@@ -12,10 +12,10 @@ import android.util.Log;
  */
 public class UtilLogger {
 
-	public static final boolean DEBUG_MODE = false;
+	public static final boolean DEBUG_MODE = true;
 	
-	public static final Set<String> SILENCE_TAGS = new HashSet<String>(Arrays.asList("SQLiteJavascriptInterface"));
-	//public static final Set<String> SILENCE_TAGS = Collections.emptySet();
+	//public static final Set<String> SILENCE_TAGS = new HashSet<String>(Arrays.asList("SQLiteJavascriptInterface"));
+	public static final Set<String> SILENCE_TAGS = Collections.emptySet();
 	
 	private String tag;
 	
