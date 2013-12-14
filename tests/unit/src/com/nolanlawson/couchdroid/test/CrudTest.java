@@ -60,7 +60,8 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
                 getActivity().getCouchDroidRuntime(), dbName);
         
         try {
-            pouchDB.get("fooId");
+            Person nonexistantPerson = pouchDB.get("fooId");
+            System.out.println(nonexistantPerson);
             Assert.fail();
         } catch (PouchException expected) {
             

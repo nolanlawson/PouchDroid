@@ -92,4 +92,12 @@ public class Person extends PouchDocument {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "Person [name=" + name + ", dystopianBarcodeId=" + dystopianBarcodeId + ", numberOfPetsOwned="
+                + numberOfPetsOwned + ", gameBoys=" + gameBoys + ", belieber=" + belieber + "]";
+    }
+    
+    
 }

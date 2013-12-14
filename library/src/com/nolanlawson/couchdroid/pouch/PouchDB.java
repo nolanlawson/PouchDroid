@@ -142,11 +142,10 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
     public void destroy(Map<String, Object> options, StandardCallback callback) {
         
         // need to call it statically, so can't use loadAction()
-        
+        options = options == null ? new LinkedHashMap<String, Object>() : options;
+        options.put("name", name);
         runtime.loadJavascript(new StringBuilder()
             .append("PouchDB.destroy(")
-            .append(JsonUtil.simpleString(name))
-            .append(",")
             .append(JsonUtil.simpleMap(options))
             .append(",")
             .append(createFunctionForCallback(callback))

@@ -56,4 +56,9 @@ public class GameBoy {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "GameBoy [name=" + name + ", type=" + type + "]";
+    }
 }
