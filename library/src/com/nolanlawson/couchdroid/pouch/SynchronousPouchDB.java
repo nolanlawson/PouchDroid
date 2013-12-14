@@ -46,7 +46,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -80,7 +80,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -114,7 +114,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -148,7 +148,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -182,7 +182,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -216,7 +216,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -250,7 +250,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -284,7 +284,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
@@ -318,7 +318,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
         }
         
         if (response.err != null) {
-            throw new PouchException("PouchDB threw error: " + response.err.toString());
+            throw new PouchException(response.err);
         }
         return response.response;
     }
