@@ -223,6 +223,10 @@ public class PouchDB<T extends PouchDocumentInterface> {
     public AllDocsInfo<T> allDocs() throws PouchException {
         return allDocs(null);
     }
+    
+    public AllDocsInfo<T> allDocs(boolean includeDocs) throws PouchException {
+        return allDocs(Maps.quickMap("include_docs", includeDocs));
+    }
 
     public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
         final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();

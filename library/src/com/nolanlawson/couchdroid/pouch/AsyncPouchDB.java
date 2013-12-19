@@ -48,7 +48,7 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
 
         runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBs[")
                 .append(id).append("] = new PouchDB(")
-                .append(JsonUtil.simpleMap("name", name, "adapter", "websql", "autoCompaction", autoCompaction))
+                .append(JsonUtil.simpleMap("name", name, "autoCompaction", autoCompaction))
                 .append(");"));
     }
     

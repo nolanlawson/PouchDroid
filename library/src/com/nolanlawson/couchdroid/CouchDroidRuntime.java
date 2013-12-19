@@ -109,11 +109,18 @@ public class CouchDroidRuntime {
     }
     
     private void loadInitialJavascript() {
+        
+        // in Android 4.4+, IndexedDB is now available, so we need to remove it from the Pouch adapter list
+        // TODO: compile PouchDB without idb at all
+        String removeIdb = "" +
+        		"var idbIdx = PouchDB.adapters.indexOf('idb'); " +
+                "if (idbIdx !== -1) {PouchDB.adapters.splice(idbIdx, 1);}";
+        
         loadJavascript(TextUtils.join(";", Arrays.asList(
                 ResourceUtil.loadTextFile(activity, USE_MINIFIED_COUCHDROID ? R.raw.couchdroid_min : R.raw.couchdroid),
                 (ResourceUtil.loadTextFile(activity, USE_MINIFIED_POUCH ? R.raw.pouchdb_min : R.raw.pouchdb)),
-                "window.console.log('PouchDB is: ' + typeof PouchDB);",
-                "window.console.log('CouchDroid is: ' + typeof CouchDroid);")));
+                removeIdb
+                )));
     }
     
     /**

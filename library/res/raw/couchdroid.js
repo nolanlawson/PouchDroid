@@ -577,8 +577,24 @@ var CouchDroid;
         self.response = null; // used if binary;
         self.responseText = null; // used if non-binary;
         self.requestHeaders = {};
-
+        self.upload = {};
     }
+
+    NativeXMLHttpRequest.prototype.onNativeProgress = function(isUpload) {
+        // TODO: actually implement the progress event spec: http://www.w3.org/TR/progress-events/
+        // TODO: actually call this method!  For now this method is never called
+        var self = this;
+
+        if (isUpload) {
+            if (self.onprogress && typeof self.onprogress === 'function') {
+                self.onprogress.call(null);
+            }
+        } else { // download
+            if (self.upload.onprogress && typeof self.upload.onprogress === 'function') {
+                self.upload.onprogress.call(null);
+            }
+        }
+    };
 
     NativeXMLHttpRequest.prototype.onNativeCallback = function (err, statusCode, content) {
         var self = this;

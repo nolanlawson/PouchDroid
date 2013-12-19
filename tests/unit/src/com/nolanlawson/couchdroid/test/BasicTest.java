@@ -17,12 +17,12 @@ import com.nolanlawson.couchdroid.test.data.GameBoy;
 import com.nolanlawson.couchdroid.test.data.Person;
 
 @SuppressLint("NewApi")
-public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
+public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
     
     private String dbName;
     private PouchDB<Person> pouchDB;
     
-    public CrudTest() {
+    public BasicTest() {
         super(MainActivity.class);
     }
     
@@ -106,6 +106,16 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
             pouchDB.get("cartman");
             Assert.fail();
         } catch (PouchException expected) {
+        }
+        
+        Person unsavedPerson = new Person("Tweak", 24423890, 0, null, false);
+        unsavedPerson.setPouchId("bogus");
+        unsavedPerson.setPouchRev("123-bogus");
+        try {
+            pouchDB.remove(unsavedPerson);
+            Assert.fail();
+        } catch (PouchException expected) {
+            
         }
     }
     

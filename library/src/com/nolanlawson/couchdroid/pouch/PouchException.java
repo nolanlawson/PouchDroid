@@ -1,10 +1,8 @@
 package com.nolanlawson.couchdroid.pouch;
 
-import java.io.IOException;
-
 import com.nolanlawson.couchdroid.pouch.model.PouchError;
 
-public class PouchException extends IOException {
+public class PouchException extends RuntimeException {
 
     private static final long serialVersionUID = -754998157801386220L;
 
