@@ -64,10 +64,10 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
         assertEquals(pouchDB.get("kenny"), kenny);
         
         try {
-            pouchDB.put(pouchDB.get("kenny"));
+            pouchDB.put(kenny);
             Assert.fail();
         } catch (PouchException expected) {
-            
+            assertEquals(expected.getPouchError().getStatus(), 409); // conflict
         }
     }
     

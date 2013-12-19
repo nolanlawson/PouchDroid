@@ -48,11 +48,11 @@ module.exports = function (grunt) {
                 ]
             },
             pouchdb: {
-                src: '<%= js_lib_path %>/pouchdb.js',
+                src: '<%= js_lib_path %>/pouchdb-nightly.js',
                 dest: '<%= js_build_path %>/pouchdb.js'
             },
             pouchdb_min: {
-                src: '<%= js_lib_path %>/pouchdb_min.js',
+                src: '<%= js_lib_path %>/pouchdb-nightly.min.js',
                 dest: '<%= js_build_path %>/pouchdb_min.js'
             }
         },

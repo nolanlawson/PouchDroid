@@ -140,7 +140,7 @@ module.exports = function (Pouch) {
       if (typeof doc !== 'object') {
         return call(callback, errors.NOT_AN_OBJECT);
       }
-      if (!('_id' in doc)) {
+      if (!utils.isValidId(doc._id)) {
         return call(callback, errors.MISSING_ID);
       }
       return customApi.bulkDocs({docs: [doc]}, opts,
@@ -536,6 +536,29 @@ module.exports = function (Pouch) {
       return customApi._allDocs(opts, callback);
     };
 
+    function processChange(doc, metadata, opts) {
+      var changeList = [{rev: doc._rev}];
+      if (opts.style === 'all_docs') {
+        changeList = merge.collectLeaves(metadata.rev_tree)
+        .map(function (x) { return {rev: x.rev}; });
+      }
+      var change = {
+        id: metadata.id,
+        changes: changeList,
+        doc: doc
+      };
+
+      if (utils.isDeleted(metadata, doc._rev)) {
+        change.deleted = true;
+      }
+      if (opts.conflicts) {
+        change.doc._conflicts = merge.collectConflicts(metadata);
+        if (!change.doc._conflicts.length) {
+          delete change.doc._conflicts;
+        }
+      }
+      return change;
+    }
     api.changes = function (opts) {
       if (!api.taskqueue.ready()) {
         var task = api.taskqueue.addTask('changes', arguments);
@@ -552,6 +575,7 @@ module.exports = function (Pouch) {
         };
       }
       opts = utils.extend(true, {}, opts);
+      opts.processChange = processChange;
 
       if (!opts.since) {
         opts.since = 0;
@@ -1277,7 +1301,7 @@ function HttpPouch(opts, callback) {
     if (typeof doc !== 'object') {
       return utils.call(callback, errors.NOT_AN_OBJECT);
     }
-    if (!('_id' in doc)) {
+    if (!utils.isValidId(doc._id)) {
       return utils.call(callback, errors.MISSING_ID);
     }
 
@@ -2525,24 +2549,10 @@ function IdbPouch(opts, callback) {
         index.get(key).onsuccess = function (docevent) {
           var doc = docevent.target.result;
           delete doc['_doc_id_rev'];
-          var changeList = [{rev: mainRev}];
-          if (opts.style === 'all_docs') {
-            changeList = merge.collectLeaves(metadata.rev_tree)
-              .map(function (x) { return {rev: x.rev}; });
-          }
-          var change = {
-            id: metadata.id,
-            seq: cursor.key,
-            changes: changeList,
-            doc: doc
-          };
 
-          if (utils.isDeleted(metadata, mainRev)) {
-            change.deleted = true;
-          }
-          if (opts.conflicts) {
-            change.doc._conflicts = merge.collectConflicts(metadata);
-          }
+          doc._rev = mainRev;
+          var change = opts.processChange(doc, metadata, opts);
+          change.seq = cursor.key;
 
           // Dedupe the changes feed
           var changeId = change.id, changeIdIndex = resultIndices[changeId];
@@ -3251,23 +3261,9 @@ function webSqlPouch(opts, callback) {
                 last_seq = res.seq;
               }
               var doc = JSON.parse(res.data);
-              var mainRev = doc._rev;
-              var changeList = [{rev: mainRev}];
-              if (opts.style === 'all_docs') {
-                changeList = makeRevs(merge.collectLeaves(metadata.rev_tree));
-              }
-              var change = {
-                id: metadata.id,
-                seq: res.seq,
-                changes: changeList,
-                doc: doc
-              };
-              if (utils.isDeleted(metadata, mainRev)) {
-                change.deleted = true;
-              }
-              if (opts.conflicts) {
-                change.doc._conflicts = merge.collectConflicts(metadata);
-              }
+              var change = opts.processChange(doc, metadata, opts);
+              change.seq = res.seq;
+
               results.push(change);
             }
           }
@@ -3386,9 +3382,11 @@ function PouchDB(name, opts, callback) {
     callback = function () {};
   }
 
-  var backend = PouchDB.parseAdapter(opts.name || name);
-  opts.originalName = name;
-  opts.name = opts.name || backend.name;
+  var originalName = opts.name || name;
+  var backend = PouchDB.parseAdapter(originalName);
+  
+  opts.originalName = originalName;
+  opts.name = backend.name;
   opts.adapter = opts.adapter || backend.adapter;
 
   if (!PouchDB.adapters[opts.adapter]) {
@@ -4792,7 +4790,7 @@ PouchDB.destroy = function (name, opts, callback) {
     callback = function () {};
   }
   var backend = PouchDB.parseAdapter(opts.name || name);
-  var dbName = opts.name || backend.name;
+  var dbName = backend.name;
 
   var cb = function (err, response) {
     if (err) {
@@ -5034,12 +5032,15 @@ exports.uuid = function (options) {
 // Determine id an ID is valid
 //   - invalid IDs begin with an underescore that does not begin '_design' or '_local'
 //   - any other string value is a valid id
-function isValidId(id) {
+exports.isValidId = function (id) {
+  if (!id || (typeof id !== 'string')) {
+    return false;
+  }
   if (/^_/.test(id)) {
     return (/^_(design|local)/).test(id);
   }
   return true;
-}
+};
 
 function isChromeApp() {
   return (typeof chrome !== "undefined" &&
@@ -5183,7 +5184,7 @@ exports.parseDoc = function (doc, newEdits) {
   if (typeof doc._id !== 'string') {
     error = errors.INVALID_ID;
   }
-  else if (!isValidId(doc._id)) {
+  else if (!exports.isValidId(doc._id)) {
     error = errors.RESERVED_ID;
   }
 
