@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.pouch;
+package com.nolanlawson.couchdroid.pouch.model;
 
 /**
  * A standard error given by PouchDB.  Looks like this:

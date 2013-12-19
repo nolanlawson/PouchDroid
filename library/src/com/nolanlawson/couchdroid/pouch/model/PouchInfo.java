@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.pouch;
+package com.nolanlawson.couchdroid.pouch.model;
 
 /**
  * The standard response that Pouch gives back on success.  Looks like this:

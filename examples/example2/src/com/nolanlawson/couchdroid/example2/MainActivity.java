@@ -11,16 +11,17 @@ import android.view.Menu;
 
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
-import com.nolanlawson.couchdroid.pouch.AllDocsInfo;
+import com.nolanlawson.couchdroid.pouch.AsyncPouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
-import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.GetCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.ReplicateCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.StandardCallback;
-import com.nolanlawson.couchdroid.pouch.PouchError;
-import com.nolanlawson.couchdroid.pouch.PouchInfo;
-import com.nolanlawson.couchdroid.pouch.ReplicateInfo;
+import com.nolanlawson.couchdroid.pouch.callback.AllDocsCallback;
+import com.nolanlawson.couchdroid.pouch.callback.BulkCallback;
+import com.nolanlawson.couchdroid.pouch.callback.GetCallback;
+import com.nolanlawson.couchdroid.pouch.callback.ReplicateCallback;
+import com.nolanlawson.couchdroid.pouch.callback.StandardCallback;
+import com.nolanlawson.couchdroid.pouch.model.AllDocsInfo;
+import com.nolanlawson.couchdroid.pouch.model.PouchError;
+import com.nolanlawson.couchdroid.pouch.model.PouchInfo;
+import com.nolanlawson.couchdroid.pouch.model.ReplicateInfo;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class MainActivity extends CouchDroidActivity {
@@ -29,7 +30,7 @@ public class MainActivity extends CouchDroidActivity {
     
     private static final String REMOTE_COUCHDB_URL = "http://admin:password@192.168.0.3:5984/dinosaurs";
     
-    private PouchDB<Dinosaur> dinosaurPouch;
+    private AsyncPouchDB<Dinosaur> dinosaurPouch;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +51,7 @@ public class MainActivity extends CouchDroidActivity {
         log.i("onCouchDroidReady()");
         
         String dbName = "dinosaurs-" + (Integer.toHexString(new Random().nextInt())) + ".db";
-        dinosaurPouch = PouchDB.newPouchDB(Dinosaur.class, runtime, dbName);
+        dinosaurPouch = PouchDB.newAsyncPouchDB(Dinosaur.class, runtime, dbName);
         
         runPuts();
     }

@@ -1,48 +1,31 @@
 package com.nolanlawson.couchdroid.pouch;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
-import org.codehaus.jackson.type.TypeReference;
-
-import android.app.Activity;
-import android.text.TextUtils;
+import android.os.Looper;
 
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
-import com.nolanlawson.couchdroid.util.JsonUtil;
+import com.nolanlawson.couchdroid.pouch.callback.AllDocsCallback;
+import com.nolanlawson.couchdroid.pouch.callback.BulkCallback;
+import com.nolanlawson.couchdroid.pouch.callback.GetCallback;
+import com.nolanlawson.couchdroid.pouch.callback.ReplicateCallback;
+import com.nolanlawson.couchdroid.pouch.callback.StandardCallback;
+import com.nolanlawson.couchdroid.pouch.model.AllDocsInfo;
+import com.nolanlawson.couchdroid.pouch.model.PouchError;
+import com.nolanlawson.couchdroid.pouch.model.PouchInfo;
+import com.nolanlawson.couchdroid.pouch.model.ReplicateInfo;
 import com.nolanlawson.couchdroid.util.Maps;
-import com.nolanlawson.couchdroid.util.UtilLogger;
 
-public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T> {
+public class PouchDB<T extends PouchDocumentInterface> {
 
-    private static UtilLogger log = new UtilLogger(PouchDB.class);
+    private AsyncPouchDB<T> delegate;
 
-    private static final AtomicInteger POUCH_IDS = new AtomicInteger(0);
-
-    private int id;
-    private CouchDroidRuntime runtime;
-    private String name;
-    private boolean destroyed = false;
-
-    private Class<T> documentClass;
-    
-    private PouchDB(Class<T> documentClass, CouchDroidRuntime runtime, String name, boolean autoCompaction) {
-        this.id = POUCH_IDS.incrementAndGet();
-        this.documentClass = documentClass;
-        this.runtime = runtime;
-        this.name = name;
-        
-        if (TextUtils.isEmpty(name)) {
-            throw new IllegalArgumentException("name cannot be null/empty");
-        }
-
-        runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBs[")
-                .append(id).append("] = new PouchDB(")
-                .append(JsonUtil.simpleMap("name", name, "adapter", "websql", "autoCompaction", autoCompaction))
-                .append(");"));
+    /* package */ PouchDB(Class<T> documentClass, CouchDroidRuntime runtime, String name,
+            boolean autoCompaction) {
+        delegate = new AsyncPouchDB<T>(documentClass, runtime, name, autoCompaction);
     }
     
     /**
@@ -50,11 +33,11 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
      * 
      * <br/>{@code autoCompaction} defaults to false. 
      *
-     * @see PouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
+     * @see AsyncPouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
      */
-    public static <T extends PouchDocumentInterface> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime,
+    public static <T extends PouchDocumentInterface> AsyncPouchDB<T> newAsyncPouchDB(Class<T> documentClass, CouchDroidRuntime runtime,
             String name) {
-        return newPouchDB(documentClass, runtime, name, false);
+        return newAsyncPouchDB(documentClass, runtime, name, false);
     }
     
     /**
@@ -66,12 +49,12 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
      * <p/>{@code name} defaults to the global PouchDb database name.
      * <br/>{@code autoCompaction} defaults to false. 
      *
-     * @see PouchDB#newSynchronousPouchDB(documentClass, runtime, name, autoCompaction)
+     * @see AsyncPouchDB#newSynchronousPouchDB(documentClass, runtime, name, autoCompaction)
      */
-    public static <T extends PouchDocumentInterface> SynchronousPouchDB<T> newSynchronousPouchDB(Class<T> documentClass, 
+    public static <T extends PouchDocumentInterface> PouchDB<T> newPouchDB(Class<T> documentClass, 
             CouchDroidRuntime runtime,
             String name) {
-        return newSynchronousPouchDB(documentClass, runtime, name, false);
+        return newPouchDB(documentClass, runtime, name, false);
     }
 
     /**
@@ -84,12 +67,12 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
      * <p/>{@code name} defaults to the global PouchDb database name.
      * <br/>{@code autoCompaction} defaults to false. 
      *
-     * @see PouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
+     * @see AsyncPouchDB#newPouchDB(documentClass, runtime, name, autoCompaction)
      */
-    public static <T extends PouchDocumentInterface> SynchronousPouchDB<T> newSynchronousPouchDB(Class<T> documentClass, 
+    public static <T extends PouchDocumentInterface> PouchDB<T> newPouchDB(Class<T> documentClass, 
             CouchDroidRuntime runtime,
             String name, boolean autoCompaction) {
-        return new SynchronousPouchDB<T>(documentClass, runtime, name, autoCompaction);
+        return new PouchDB<T>(documentClass, runtime, name, autoCompaction);
     }
     
     /**
@@ -134,495 +117,201 @@ public class PouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T
      * 
      * @see <a href='http://pouchdb.com/api.html#create_database'>http://pouchdb.com/api.html#create_database</a>
      */
-    public static <T extends PouchDocumentInterface> PouchDB<T> newPouchDB(Class<T> documentClass, CouchDroidRuntime runtime,
+    public static <T extends PouchDocumentInterface> AsyncPouchDB<T> newAsyncPouchDB(Class<T> documentClass, CouchDroidRuntime runtime,
             String name, boolean autoCompaction) {
-        return new PouchDB<T>(documentClass, runtime, name, autoCompaction);
+        return new AsyncPouchDB<T>(documentClass, runtime, name, autoCompaction);
     }
     
     public String getName() {
-        return name;
+        return delegate.getName();
     }
 
     public boolean isDestroyed() {
-        return destroyed;
+        return delegate.isDestroyed();
     }
 
-    @Override
-    public void destroy(Map<String, Object> options, StandardCallback callback) {
-        
-        // need to call it statically, so can't use loadAction()
-        options = options == null ? new LinkedHashMap<String, Object>() : options;
-        options.put("name", name);
-        runtime.loadJavascript(new StringBuilder()
-            .append("PouchDB.destroy(")
-            .append(JsonUtil.simpleMap(options))
-            .append(",")
-            .append(createFunctionForCallback(callback))
-            .append(");")
-            // won't need this database anymore
-            .append("delete CouchDroid.pouchDBs[").append(id).append("];"));
-        
-        destroyed = true;
-    }
-    
-    /**
-     * @see PouchDB#destroy(options, callback)
-     */
-    public void destroy(StandardCallback callback) {
-        destroy(null, callback);
-    }
-    
-    /**
-     * @see PouchDB#destroy(options, callback)
-     */
-    public void destroy(Map<String, Object> options) {
-        destroy(options, null);
+    public PouchInfo destroy(Map<String, Object> options) throws PouchException {
+        BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.destroy(options, createStandardCallback(lock));
+        return waitAndReturn(lock);
     }
 
-    /**
-     * @see PouchDB#destroy(options, callback)
-     */
-    public void destroy() {
-        destroy(null, null);
-    }    
-
-    public void put(T doc, Map<String, Object> options, StandardCallback callback) {
-        loadAction("put", PouchDocumentMapper.toJson(doc), options, callback);
+    public PouchInfo destroy() throws PouchException {
+        return destroy(null);
     }
 
-    /**
-     * @see PouchDB#put(doc, options, callback)
-     */
-    public void put(T doc, Map<String, Object> options) {
-        put(doc, options, null);
+    public PouchInfo put(T doc, Map<String, Object> options) throws PouchException {
+        BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.put(doc, options, createStandardCallback(lock));
+        return waitAndReturn(lock);
     }
 
-    /**
-     * @see PouchDB#put(doc, options, callback)
-     */
-    public void put(T doc, StandardCallback callback) {
-        put(doc, null, callback);
+    public PouchInfo put(T doc) throws PouchException {
+        return put(doc, null);
     }
 
-    /**
-     * @see PouchDB#put(doc, options, callback)
-     */
-    public void put(T doc) {
-        put(doc, null, null);
+    public PouchInfo post(T doc, Map<String, Object> options) throws PouchException {
+        BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.post(doc, options, createStandardCallback(lock));
+        return waitAndReturn(lock);
     }
 
-    public void post(T doc, Map<String, Object> options, StandardCallback callback) {
-        loadAction("post", PouchDocumentMapper.toJson(doc), options, callback);
+    public PouchInfo post(T doc) throws PouchException {
+        return post(doc, null);
     }
 
-    /**
-     * @see PouchDB#post(doc, options, callback)
-     */
-    public void post(T doc, Map<String, Object> options) {
-        post(doc, options, null);
-    }
+    public T get(String docid, Map<String, Object> options) throws PouchException {
+        final BlockingQueue<PouchResponse<T>> lock = createLock();
 
-    /**
-     * @see PouchDB#post(doc, options, callback)
-     */
-    public void post(T doc, StandardCallback callback) {
-        post(doc, null, callback);
-    }
-
-    /**
-     * @see PouchDB#post(doc, options, callback)
-     */
-    public void post(T doc) {
-        post(doc, null, null);
-    }
-
-    
-    public void get(String docid, Map<String, Object> options, final GetCallback<T> callback) {
-        loadAction("get", JsonUtil.simpleString(docid), options, callback == null ? null : new Callback<T>() {
+        delegate.get(docid, options, new GetCallback<T>() {
 
             @Override
             public void onCallback(PouchError err, T info) {
-                callback.onCallback(err, info);
-            }
 
-            @Override
-            public Class<?> getPrimaryClass() {
-                return documentClass;
-            }
-
-            @Override
-            public Class<?> getGenericClass() {
-                return null;
+                lock.offer(new PouchResponse<T>(err, info));
             }
         });
+        return waitAndReturn(lock);
     }
 
-
-    /**
-     * @see PouchDB#get(docid, options, callback)
-     */
-    public void get(String docid, Map<String, Object> options) {
-        get(docid, options, null);
+    public T get(String docid) throws PouchException {
+        return get(docid, null);
     }
 
-    /**
-     * @see PouchDB#get(docid, options, callback)
-     */
-    public void get(String docid, GetCallback<T> callback) {
-        get(docid, null, callback);
+    public PouchInfo remove(T doc, Map<String, Object> options) throws PouchException {
+        final BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.remove(doc, options, createStandardCallback(lock));
+        return waitAndReturn(lock);
     }
 
-    /**
-     * @see PouchDB#get(docid, options, callback)
-     */
-    public void get(String docid) {
-        get(docid, null, null);
+    public PouchInfo remove(T doc) throws PouchException {
+        return remove(doc, null);
     }
 
+    public List<PouchInfo> bulkDocs(List<T> docs, Map<String, Object> options) throws PouchException {
+        final BlockingQueue<PouchResponse<List<PouchInfo>>> lock = createLock();
 
-    public void remove(T doc, Map<String, Object> options, StandardCallback callback) {
-        loadAction("remove", PouchDocumentMapper.toJson(doc), options, callback);
-    }
-    
-    /**
-     * @see PouchDB#remove(doc, options, callback)
-     */
-    public void remove(T doc, Map<String, Object> options) {
-        remove(doc, options, null);
-    }
+        delegate.bulkDocs(docs, options, new BulkCallback() {
 
-    /**
-     * @see PouchDB#remove(doc, options, callback)
-     */
-    public void remove(T doc, StandardCallback callback) {
-        remove(doc, null, callback);
+            @Override
+            public void onCallback(PouchError err, List<PouchInfo> info) {
+
+                lock.offer(new PouchResponse<List<PouchInfo>>(err, info));
+            }
+        });
+        return waitAndReturn(lock);
     }
 
-    /**
-     * @see PouchDB#remove(doc, options, callback)
-     */
-    public void remove(T doc) {
-        remove(doc, null, null);
+    public List<PouchInfo> bulkDocs(List<T> docs) throws PouchException {
+        return bulkDocs(docs, null);
     }
 
-    public void bulkDocs(List<T> docs, Map<String, Object> options, BulkCallback callback) {
+    public AllDocsInfo<T> allDocs(Map<String, Object> options) throws PouchException {
+        final BlockingQueue<PouchResponse<AllDocsInfo<T>>> lock = createLock();
 
-        String mapAsJson = new StringBuilder("{\"docs\":").append(PouchDocumentMapper.toJson(docs)).append("}")
-                .toString();
-
-        loadAction("bulkDocs", mapAsJson, options, callback);
-    }
-
-
-    /**
-     * @see PouchDB#bulkDocs(docs, options, callback)
-     */
-    public void bulkDocs(List<T> docs, Map<String, Object> options) {
-        bulkDocs(docs, options, null);
-    }
-
-    /**
-     * @see PouchDB#bulkDocs(docs, options, callback)
-     */
-    public void bulkDocs(List<T> docs, BulkCallback callback) {
-        bulkDocs(docs, null, callback);
-    }
-
-
-    /**
-     * @see PouchDB#bulkDocs(docs, options, callback)
-     */
-    public void bulkDocs(List<T> docs) {
-        bulkDocs(docs, null, null);
-    }
-
-    public void allDocs(Map<String, Object> options, final AllDocsCallback<T> callback) {
-        loadAction("allDocs", options, callback == null ? null : new AllDocsCallback<T>() {
+        delegate.allDocs(options, new AllDocsCallback<T>() {
 
             @Override
             public void onCallback(PouchError err, AllDocsInfo<T> info) {
-                callback.onCallback(err, info);
-            }
 
-            @Override
-            public Class<?> getGenericClass() {
-                return documentClass;
+                lock.offer(new PouchResponse<AllDocsInfo<T>>(err, info));
             }
         });
+        return waitAndReturn(lock);
     }
 
-
-    /**
-     * @see PouchDB#allDocs(options, callback)
-     */
-    public void allDocs(AllDocsCallback<T> callback) {
-        allDocs(null, callback);
+    public AllDocsInfo<T> allDocs() throws PouchException {
+        return allDocs(null);
     }
 
-    /**
-     * @see PouchDB#allDocs(options, callback)
-     */
-    public void allDocs(boolean includeDocs, Map<String, Object> otherOptions, final AllDocsCallback<T> callback) {
-        // included as a convenience method, because I'm sure otherwise people
-        // will forge to set include_docs=true
-        Map<String, Object> options = otherOptions != null ? otherOptions : new LinkedHashMap<String, Object>();
-        options.put("include_docs", includeDocs);
-        allDocs(options, callback);
+    public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
+        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
+
+        delegate.replicateTo(remoteDB, options, new ReplicateCallback() {
+
+            @Override
+            public void onCallback(PouchError err, ReplicateInfo info) {
+
+                lock.offer(new PouchResponse<ReplicateInfo>(err, info));
+            }
+        });
+        return waitAndReturn(lock);
     }
 
-    /**
-     * @see PouchDB#allDocs(options, callback)
-     */
-    public void allDocs(boolean includeDocs, AllDocsCallback<T> callback) {
-        allDocs(includeDocs, null, callback);
-    }
-
-
-    public void replicateTo(String remoteDB, Map<String, Object> options, ReplicateCallback complete) {
-        loadAction("replicate.to", JsonUtil.simpleString(remoteDB), options, complete, "complete");
+    public ReplicateInfo replicateTo(String remoteDB) throws PouchException {
+        return replicateTo(remoteDB, null);
     }
     
-    /**
-     * @see PouchDB#replicateTo(remoteDB, options, complete)
-     */
-    public void replicateTo(String remoteDB, boolean continuous, ReplicateCallback complete) {
-        replicateTo(remoteDB, Maps.quickMap("continuous", continuous), complete);
-    }
-    
-    /**
-     * @see PouchDB#replicateTo(remoteDB, options, complete)
-     */
-    public void replicateTo(String remoteDB, boolean continuous) {
-        replicateTo(remoteDB, Maps.quickMap("continuous", continuous), null);
-    }
-    
-    /**
-     * @see PouchDB#replicateTo(remoteDB, options, complete)
-     */
-    public void replicateTo(String remoteDB, ReplicateCallback complete) {
-        replicateTo(remoteDB, null, complete);
-    }
-    
-    /**
-     * @see PouchDB#replicateTo(remoteDB, options, complete)
-     */    
-    public void replicateTo(String remoteDB) {
-        replicateTo(remoteDB, null);
-    }
-    
-    public void replicateFrom(String remoteDB, Map<String, Object> options, ReplicateCallback complete) {
-        loadAction("replicate.from", JsonUtil.simpleString(remoteDB), options, complete, "complete");
-    }
-    
-    /**
-     * @see PouchDB#replicateFrom(remoteDB, options, complete)
-     */
-    public void replicateFrom(String remoteDB, boolean continuous, ReplicateCallback complete) {
-        replicateFrom(remoteDB, Maps.quickMap("continuous", continuous), complete);
-    }
-    
-    /**
-     * @see PouchDB#replicateFrom(remoteDB, options, complete)
-     */
-    public void replicateFrom(String remoteDB, boolean continuous) {
-        replicateFrom(remoteDB, Maps.quickMap("continuous", continuous), null);
+    public ReplicateInfo replicateTo(String remoteDB, boolean continuous) throws PouchException {
+        return replicateTo(remoteDB, Maps.quickMap("continuous", continuous));
     }
 
-    /**
-     * @see PouchDB#replicateFrom(remoteDB, options, complete)
-     */
-    public void replicateFrom(String remoteDB, ReplicateCallback complete) {
-        replicateFrom(remoteDB, null, complete);
+    public ReplicateInfo replicateFrom(String remoteDB, Map<String, Object> options) throws PouchException {
+        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
+
+        delegate.replicateFrom(remoteDB, options, new ReplicateCallback() {
+
+            @Override
+            public void onCallback(PouchError err, ReplicateInfo info) {
+
+                lock.offer(new PouchResponse<ReplicateInfo>(err, info));
+            }
+        });
+        return waitAndReturn(lock);
+    }
+
+    public ReplicateInfo replicateFrom(String remoteDB) throws PouchException {
+        return replicateFrom(remoteDB, null);
     }
     
-    /**
-     * @see PouchDB#replicateFrom(remoteDB, options, complete)
-     */    
-    public void replicateFrom(String remoteDB) {
-        replicateFrom(remoteDB, null);
+    public ReplicateInfo replicateFrom(String remoteDB, boolean continuous) throws PouchException {
+        return replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
     }
+    
+    private StandardCallback createStandardCallback(final BlockingQueue<PouchResponse<PouchInfo>> lock) {
+        return new StandardCallback() {
 
-    private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
-        loadAction(action, null, options, callback, null);
+            @Override
+            public void onCallback(PouchError err, PouchInfo info) {
+                lock.offer(new PouchResponse<PouchInfo>(err, info));
+            }
+        };
     }
-
-    private void loadAction(String action, String arg1, Map<String, Object> options, Callback<?> callback) {
-        loadAction(action, arg1, options, callback, null);
-    }
-
-    private void loadAction(String action, String arg1, Map<String, Object> options, Callback<?> callback,
-            String callbackOptionKey) {
-        log.d("loadAction(%s, %s, %s, %s, %s", action, arg1, options, callback, callbackOptionKey);
-
-        if (destroyed) {
-            throw new RuntimeException("PouchDB destroyed!  Can't do any further actions.");
+    
+    private static <T> BlockingQueue<PouchResponse<T>> createLock() {
+        
+        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+            // on UI thread
+            throw new IllegalStateException("PouchDB cannot be called from the UI thread, because it will block! " +
+            		"Wrap your code in an AsyncTask.doInBackground().");
         }
         
-        List<CharSequence> arguments = new LinkedList<CharSequence>();
-        if (!TextUtils.isEmpty(arg1)) {
-            arguments.add(arg1);
-        }
-        if (callbackOptionKey != null) {
-            // callback is an option, encode it properly in the options map
-            // TODO: this is hacky; do it properly
-            options = options == null ? new LinkedHashMap<String, Object>()
-                    : new LinkedHashMap<String, Object>(options);
-            options.remove(callbackOptionKey);
-            arguments.add(new StringBuilder(JsonUtil.simpleMap(options)).insert(
-                    1,
-                    new StringBuilder()
-                            // insert after open brace
-                            .append(JsonUtil.simpleString(callbackOptionKey)).append(":")
-                            .append(createFunctionForCallback(callback))
-                            .append(options.isEmpty() ? "" : ",")
-                            ));
-
-        } else {
-            // callback is an arg, not an option in the map
-            if (options != null && !options.isEmpty()) {
-                arguments.add(JsonUtil.simpleMap(options));
-            }
-            if (callback != null) {
-                arguments.add(createFunctionForCallback(callback));
-            }
+        return new ArrayBlockingQueue<PouchResponse<T>>(1);
+    }
+    
+    private static <T> T waitAndReturn(BlockingQueue<PouchResponse<T>> lock) throws PouchException {
+        PouchResponse<T> response;
+        try {
+            response = lock.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new PouchException(new PouchError(500, "interrupted", e.getMessage()));
         }
 
-        StringBuilder js = new StringBuilder("CouchDroid.pouchDBs[").append(id).append("].").append(action).append("(")
-                .append(TextUtils.join(",", arguments)).append(");");
-
-        runtime.loadJavascript(js);
+        if (response.err != null) {
+            throw new PouchException(response.err);
+        }
+        return response.response;
     }
 
-    @SuppressWarnings("rawtypes")
-    private CharSequence createFunctionForCallback(final Callback innerCallback) {
+    private static class PouchResponse<T> {
 
-        if (innerCallback == null) {
-            // user doesn't give a shit
-            return "function(){}";
+        PouchResponse(PouchError err, T response) {
+            this.err = err;
+            this.response = response;
         }
 
-        // begin cone of death
-        int callbackId = PouchJavascriptInterface.INSTANCE.addCallback(new Callback<Object>() {
-
-            @Override
-            public void onCallback(final PouchError err, final Object info) {
-                Activity activity = runtime.getActivity();
-                if (activity != null) {
-                    // ensure it runs on the ui thread
-                    activity.runOnUiThread(new Runnable() {
-
-                        @SuppressWarnings("unchecked")
-                        @Override
-                        public void run() {
-                            try {
-                                innerCallback.onCallback(err, info);
-                            } catch (Exception e) {
-                                log.e(e, "User-created callback threw an exception");
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public Object getPrimaryClass() {
-                return innerCallback.getPrimaryClass();
-            }
-
-            @Override
-            public Class<?> getGenericClass() {
-                return innerCallback.getGenericClass();
-            }
-        });
-
-        return new StringBuilder("function(err, info){PouchJavascriptInterface.callback(").append(callbackId).append(
-                ", err ? JSON.stringify(err) : null, info ? JSON.stringify(info) : null);}");
-    }
-
-    /**
-     * A generic callback for interacting with PouchDB.
-     * 
-     * @author nolan
-     * 
-     */
-    public static interface Callback<E> {
-
-        /**
-         * Callback method, which runs on the UI thread.
-         * 
-         * @param err
-         *            if null, there was no error
-         * @param info
-         *            contains additional information given by PouchDB
-         */
-        public void onCallback(PouchError err, E info);
-
-        public Object getPrimaryClass();
-
-        public Class<?> getGenericClass();
-    }
-
-    public static abstract class BulkCallback implements Callback<List<PouchInfo>> {
-        public Object getPrimaryClass() {
-
-            return new TypeReference<List<PouchInfo>>() {
-            };
-        }
-
-        public Class<?> getGenericClass() {
-            return null;
-        }
-    }
-
-    public static abstract class AllDocsCallback<T extends PouchDocumentInterface> implements Callback<AllDocsInfo<T>> {
-
-        @Override
-        public Object getPrimaryClass() {
-            return AllDocsInfo.class;
-        }
-
-        public Class<?> getGenericClass() {
-            return null; // overridden
-        }
-
-    }
-
-    public static abstract class StandardCallback implements Callback<PouchInfo> {
-        public Object getPrimaryClass() {
-
-            return PouchInfo.class;
-        }
-
-        public Class<?> getGenericClass() {
-            return null;
-        }
-    }
-
-    public static abstract class GetCallback<T> implements Callback<T> {
-
-        public GetCallback() {
-        }
-
-        public Object getPrimaryClass() {
-            return null; // overridden
-        }
-
-        public Class<?> getGenericClass() {
-            return null;
-        }
-    }
-
-    public static abstract class ReplicateCallback implements Callback<ReplicateInfo> {
-
-        @Override
-        public Object getPrimaryClass() {
-            return ReplicateInfo.class;
-        }
-
-        @Override
-        public Class<?> getGenericClass() {
-            return null;
-        }
+        private PouchError err;
+        private T response;
     }
 }

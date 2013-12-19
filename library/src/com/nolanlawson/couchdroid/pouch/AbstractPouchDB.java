@@ -3,11 +3,12 @@ package com.nolanlawson.couchdroid.pouch;
 import java.util.List;
 import java.util.Map;
 
-import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.GetCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.ReplicateCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.StandardCallback;
+import com.nolanlawson.couchdroid.pouch.callback.AllDocsCallback;
+import com.nolanlawson.couchdroid.pouch.callback.BulkCallback;
+import com.nolanlawson.couchdroid.pouch.callback.GetCallback;
+import com.nolanlawson.couchdroid.pouch.callback.ReplicateCallback;
+import com.nolanlawson.couchdroid.pouch.callback.StandardCallback;
+
 
 /**
  * Superclass for {@code PouchDB}, purely to avoid having a billion lines of Javadoc mixed in with the source code.

@@ -1,4 +1,4 @@
-package com.nolanlawson.couchdroid.pouch;
+package com.nolanlawson.couchdroid.pouch.model;
 
 import java.util.Date;
 

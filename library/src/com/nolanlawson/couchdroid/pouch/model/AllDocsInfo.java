@@ -1,10 +1,12 @@
-package com.nolanlawson.couchdroid.pouch;
+package com.nolanlawson.couchdroid.pouch.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.nolanlawson.couchdroid.pouch.PouchDocumentInterface;
 
   /**
     * Info object returned from Pouch for an "allDocs" request.  Looks like this:

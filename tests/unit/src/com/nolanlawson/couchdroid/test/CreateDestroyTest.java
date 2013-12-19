@@ -10,7 +10,6 @@ import android.util.Log;
 import com.nolanlawson.couchdroid.appforunittests.MainActivity;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchException;
-import com.nolanlawson.couchdroid.pouch.SynchronousPouchDB;
 import com.nolanlawson.couchdroid.test.data.Person;
 
 @SuppressLint("NewApi")
@@ -39,7 +38,7 @@ public class CreateDestroyTest extends ActivityInstrumentationTestCase2<MainActi
     public void testCreateDestroy() throws PouchException {
         String dbName = "unit-test-" + Integer.toHexString(new Random().nextInt());
         
-        SynchronousPouchDB<Person> pouchDB = PouchDB.newSynchronousPouchDB(Person.class, 
+        PouchDB<Person> pouchDB = PouchDB.newPouchDB(Person.class, 
                 getActivity().getCouchDroidRuntime(), dbName);
         
         Person person = new Person("Mr. Mackey", 0, 0, null, false);
@@ -56,7 +55,7 @@ public class CreateDestroyTest extends ActivityInstrumentationTestCase2<MainActi
         }
         
         // ok, re-create it and try to get the person
-        pouchDB = PouchDB.newSynchronousPouchDB(Person.class, 
+        pouchDB = PouchDB.newPouchDB(Person.class, 
                 getActivity().getCouchDroidRuntime(), dbName);
         
         try {

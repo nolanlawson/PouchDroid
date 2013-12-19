@@ -12,8 +12,7 @@ import android.util.Log;
 import com.nolanlawson.couchdroid.appforunittests.MainActivity;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchException;
-import com.nolanlawson.couchdroid.pouch.PouchInfo;
-import com.nolanlawson.couchdroid.pouch.SynchronousPouchDB;
+import com.nolanlawson.couchdroid.pouch.model.PouchInfo;
 import com.nolanlawson.couchdroid.test.data.GameBoy;
 import com.nolanlawson.couchdroid.test.data.Person;
 
@@ -21,7 +20,7 @@ import com.nolanlawson.couchdroid.test.data.Person;
 public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
     
     private String dbName;
-    private SynchronousPouchDB<Person> pouchDB;
+    private PouchDB<Person> pouchDB;
     
     public CrudTest() {
         super(MainActivity.class);
@@ -35,7 +34,7 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
             Log.i("Tests", "Waiting for couch droid runtime to not be null");
         }
         dbName = "unit-test-" + Integer.toHexString(new Random().nextInt());
-        pouchDB = PouchDB.newSynchronousPouchDB(Person.class, 
+        pouchDB = PouchDB.newPouchDB(Person.class, 
                 getActivity().getCouchDroidRuntime(), dbName);
     }
 
@@ -111,13 +110,13 @@ public class CrudTest extends ActivityInstrumentationTestCase2<MainActivity>{
     }
     
     public void testReplicate() throws Exception {
-        SynchronousPouchDB<Person> pouch1 = null;
-        SynchronousPouchDB<Person> pouch2 = null;
+        PouchDB<Person> pouch1 = null;
+        PouchDB<Person> pouch2 = null;
         
         try {
-            pouch1 = PouchDB.newSynchronousPouchDB(Person.class, 
+            pouch1 = PouchDB.newPouchDB(Person.class, 
                     getActivity().getCouchDroidRuntime(), "pouch1_" + new Random().nextInt());
-            pouch2 = PouchDB.newSynchronousPouchDB(Person.class, 
+            pouch2 = PouchDB.newPouchDB(Person.class, 
                     getActivity().getCouchDroidRuntime(), "pouch2_" + new Random().nextInt());
             
             pouch1.post(new Person("Stan", 18324, 1, Arrays.asList(new GameBoy("foo", "Nintendo DS")), false));

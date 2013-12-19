@@ -11,14 +11,15 @@ import android.view.Menu;
 
 import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
-import com.nolanlawson.couchdroid.pouch.AllDocsInfo;
+import com.nolanlawson.couchdroid.pouch.AsyncPouchDB;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
-import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
-import com.nolanlawson.couchdroid.pouch.PouchDB.ReplicateCallback;
-import com.nolanlawson.couchdroid.pouch.PouchError;
-import com.nolanlawson.couchdroid.pouch.PouchInfo;
-import com.nolanlawson.couchdroid.pouch.ReplicateInfo;
+import com.nolanlawson.couchdroid.pouch.callback.AllDocsCallback;
+import com.nolanlawson.couchdroid.pouch.callback.BulkCallback;
+import com.nolanlawson.couchdroid.pouch.callback.ReplicateCallback;
+import com.nolanlawson.couchdroid.pouch.model.AllDocsInfo;
+import com.nolanlawson.couchdroid.pouch.model.PouchError;
+import com.nolanlawson.couchdroid.pouch.model.PouchInfo;
+import com.nolanlawson.couchdroid.pouch.model.ReplicateInfo;
 import com.nolanlawson.couchdroid.util.Maps;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
@@ -28,7 +29,7 @@ public class MainActivity extends CouchDroidActivity {
     
     private static final String REMOTE_COUCHDB_URL = "http://admin:password@192.168.0.3:5984/robots";
     
-    private PouchDB<Robot> pouch1, pouch2;
+    private AsyncPouchDB<Robot> pouch1, pouch2;
     
     private Handler handler = new Handler();
     
@@ -52,8 +53,8 @@ public class MainActivity extends CouchDroidActivity {
         
         String random = Integer.toHexString(new Random().nextInt());
         
-        pouch1 = PouchDB.newPouchDB(Robot.class, runtime, "robots-" + random + "-1.db");
-        pouch2 = PouchDB.newPouchDB(Robot.class, runtime, "robots-" + random + "-2.db");
+        pouch1 = PouchDB.newAsyncPouchDB(Robot.class, runtime, "robots-" + random + "-1.db");
+        pouch2 = PouchDB.newAsyncPouchDB(Robot.class, runtime, "robots-" + random + "-2.db");
         
         loadIntoPouch1();
     }
