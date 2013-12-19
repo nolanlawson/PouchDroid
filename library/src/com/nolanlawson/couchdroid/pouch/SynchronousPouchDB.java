@@ -11,6 +11,7 @@ import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.GetCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.ReplicateCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.StandardCallback;
+import com.nolanlawson.couchdroid.util.Maps;
 
 public class SynchronousPouchDB<T extends PouchDocumentInterface> {
 
@@ -19,6 +20,14 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     /* package */ SynchronousPouchDB(Class<T> documentClass, CouchDroidRuntime runtime, String name,
             boolean autoCompaction) {
         delegate = PouchDB.newPouchDB(documentClass, runtime, name, autoCompaction);
+    }
+    
+    public String getName() {
+        return delegate.getName();
+    }
+
+    public boolean isDestroyed() {
+        return delegate.isDestroyed();
     }
 
     public PouchInfo destroy(Map<String, Object> options) throws PouchException {
@@ -132,6 +141,10 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     public ReplicateInfo replicateTo(String remoteDB) throws PouchException {
         return replicateTo(remoteDB, null);
     }
+    
+    public ReplicateInfo replicateTo(String remoteDB, boolean continuous) throws PouchException {
+        return replicateTo(remoteDB, Maps.quickMap("continuous", continuous));
+    }
 
     public ReplicateInfo replicateFrom(String remoteDB, Map<String, Object> options) throws PouchException {
         final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
@@ -149,6 +162,10 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
 
     public ReplicateInfo replicateFrom(String remoteDB) throws PouchException {
         return replicateFrom(remoteDB, null);
+    }
+    
+    public ReplicateInfo replicateFrom(String remoteDB, boolean continuous) throws PouchException {
+        return replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
     }
     
     private StandardCallback createStandardCallback(final BlockingQueue<PouchResponse<PouchInfo>> lock) {
