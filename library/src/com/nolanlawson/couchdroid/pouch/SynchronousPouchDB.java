@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
@@ -23,15 +22,8 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public PouchInfo destroy(Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<PouchInfo>> lock = new ArrayBlockingQueue<PouchResponse<PouchInfo>>(1);
-
-        delegate.destroy(options, new StandardCallback() {
-
-            @Override
-            public void onCallback(PouchError err, PouchInfo info) {
-                lock.offer(new PouchResponse<PouchInfo>(err, info));
-            }
-        });
+        BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.destroy(options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
@@ -40,16 +32,8 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public PouchInfo put(T doc, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<PouchInfo>> lock = new ArrayBlockingQueue<PouchResponse<PouchInfo>>(1);
-
-        delegate.put(doc, options, new StandardCallback() {
-
-            @Override
-            public void onCallback(PouchError err, PouchInfo info) {
-
-                lock.offer(new PouchResponse<PouchInfo>(err, info));
-            }
-        });
+        BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.put(doc, options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
@@ -58,16 +42,8 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public PouchInfo post(T doc, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<PouchInfo>> lock = new ArrayBlockingQueue<PouchResponse<PouchInfo>>(1);
-
-        delegate.post(doc, options, new StandardCallback() {
-
-            @Override
-            public void onCallback(PouchError err, PouchInfo info) {
-
-                lock.offer(new PouchResponse<PouchInfo>(err, info));
-            }
-        });
+        BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.post(doc, options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
@@ -76,7 +52,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public T get(String docid, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<T>> lock = new LinkedBlockingQueue<PouchResponse<T>>();
+        final BlockingQueue<PouchResponse<T>> lock = createLock();
 
         delegate.get(docid, options, new GetCallback<T>() {
 
@@ -94,16 +70,8 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public PouchInfo remove(T doc, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<PouchInfo>> lock = new ArrayBlockingQueue<PouchResponse<PouchInfo>>(1);
-
-        delegate.remove(doc, options, new StandardCallback() {
-
-            @Override
-            public void onCallback(PouchError err, PouchInfo info) {
-
-                lock.offer(new PouchResponse<PouchInfo>(err, info));
-            }
-        });
+        final BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.remove(doc, options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
@@ -112,7 +80,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public List<PouchInfo> bulkDocs(List<T> docs, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<List<PouchInfo>>> lock = new LinkedBlockingQueue<PouchResponse<List<PouchInfo>>>();
+        final BlockingQueue<PouchResponse<List<PouchInfo>>> lock = createLock();
 
         delegate.bulkDocs(docs, options, new BulkCallback() {
 
@@ -130,7 +98,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public AllDocsInfo<T> allDocs(Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<AllDocsInfo<T>>> lock = new LinkedBlockingQueue<PouchResponse<AllDocsInfo<T>>>();
+        final BlockingQueue<PouchResponse<AllDocsInfo<T>>> lock = createLock();
 
         delegate.allDocs(options, new AllDocsCallback<T>() {
 
@@ -148,7 +116,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = new LinkedBlockingQueue<PouchResponse<ReplicateInfo>>();
+        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
 
         delegate.replicateTo(remoteDB, options, new ReplicateCallback() {
 
@@ -166,7 +134,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
 
     public ReplicateInfo replicateFrom(String remoteDB, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = new LinkedBlockingQueue<PouchResponse<ReplicateInfo>>();
+        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
 
         delegate.replicateFrom(remoteDB, options, new ReplicateCallback() {
 
@@ -181,6 +149,20 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
 
     public ReplicateInfo replicateFrom(String remoteDB) throws PouchException {
         return replicateFrom(remoteDB, null);
+    }
+    
+    private StandardCallback createStandardCallback(final BlockingQueue<PouchResponse<PouchInfo>> lock) {
+        return new StandardCallback() {
+
+            @Override
+            public void onCallback(PouchError err, PouchInfo info) {
+                lock.offer(new PouchResponse<PouchInfo>(err, info));
+            }
+        };
+    }
+    
+    private static <T> BlockingQueue<PouchResponse<T>> createLock() {
+        return new ArrayBlockingQueue<PouchResponse<T>>(1);
     }
     
     private static <T> T waitAndReturn(BlockingQueue<PouchResponse<T>> lock) throws PouchException {
