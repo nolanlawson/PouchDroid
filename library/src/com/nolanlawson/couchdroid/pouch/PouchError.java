@@ -13,6 +13,16 @@ public class PouchError {
     private int status;
     private String error;
     private String reason;
+    
+    public PouchError() {
+    }
+    
+    public PouchError(int status, String error, String reason) {
+        this.status = status;
+        this.error = error;
+        this.reason = reason;
+    }
+    
     public int getStatus() {
         return status;
     }

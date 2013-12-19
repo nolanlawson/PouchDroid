@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import android.os.Looper;
+
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.pouch.PouchDB.AllDocsCallback;
 import com.nolanlawson.couchdroid.pouch.PouchDB.BulkCallback;
@@ -179,6 +181,13 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
     }
     
     private static <T> BlockingQueue<PouchResponse<T>> createLock() {
+        
+        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+            // on UI thread
+            throw new IllegalStateException("PouchDB cannot be called from the UI thread, because it will block! " +
+            		"Wrap your code in an AsyncTask.doInBackground().");
+        }
+        
         return new ArrayBlockingQueue<PouchResponse<T>>(1);
     }
     
@@ -188,7 +197,7 @@ public class SynchronousPouchDB<T extends PouchDocumentInterface> {
             response = lock.take();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            throw new PouchException("interrupted");
+            throw new PouchException(new PouchError(500, "interrupted", e.getMessage()));
         }
 
         if (response.err != null) {
