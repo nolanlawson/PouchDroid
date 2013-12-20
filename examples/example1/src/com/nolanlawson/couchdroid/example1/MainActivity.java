@@ -18,14 +18,18 @@ import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.example1.pojo.PocketMonster;
 import com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask;
-import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener;
+import com.nolanlawson.couchdroid.migration.MigrationProgressListener;
+import com.nolanlawson.couchdroid.pouch.PouchDB;
 
-public class MainActivity extends CouchDroidActivity implements CouchDroidProgressListener {
+public class MainActivity extends CouchDroidActivity {
     
-    private static final String COUCHDB_URL = "http://admin:password@192.168.0.3:5984/pokemon";
+    private static final String COUCHDB_URL = "http://192.168.0.3:5984/pokemon";
+    
+    private String localPouchName = "pokemon";
     private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
+    
     
     private SQLiteDatabase sqliteDatabase;
     private long startTime;
@@ -74,12 +78,15 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
                 text.setText(Html.fromHtml("Done loading pok&eacute;mon data, beginning Pouch transfer..."));
                 startTime = System.currentTimeMillis();
                 
+                if (RANDOMIZE_DB) {
+                    localPouchName = "pokemon_" + Integer.toHexString(Math.abs(new Random().nextInt()));
+                }
                 
                 new CouchDroidMigrationTask.Builder(runtime, sqliteDatabase)
                     .setUserId("fooUser")
-                    .setCouchdbUrl(COUCHDB_URL)
+                    .setPouchDBName(localPouchName)
                     .addSqliteTable("Monsters", "uniqueId")
-                    .setProgressListener(MainActivity.this)             
+                    .setProgressListener(new MyMigrationProgressListener())             
                     .build()
                     .start();
             }
@@ -99,9 +106,6 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
     private void loadPokemonData() {
         
         String dbName = "pokemon.db";
-        if (RANDOMIZE_DB) {
-            dbName = "pokemon_" + Integer.toHexString(Math.abs(new Random().nextInt())) + ".db";
-        }
         sqliteDatabase = openOrCreateDatabase(dbName, 0, null);
         
         List<PocketMonster> monsters = PocketMonsterHelper.readInPocketMonsters(this);
@@ -146,31 +150,64 @@ public class MainActivity extends CouchDroidActivity implements CouchDroidProgre
             sqliteDatabase.endTransaction();
         }
     }
+    
+    public void replicateToRemote() {
+        
+        new AsyncTask<Void, Void, Void>(){
 
-    @Override
-    public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
-        
-        if (type == ProgressType.Sync) {
-            text.setText(text.getText() + "\nDatabase synced as well!");
-            return;
+            @Override
+            protected Void doInBackground(Void... params) {
+                
+                PouchDB<PocketMonster> pouch = PouchDB.newPouchDB(PocketMonster.class, getCouchDroidRuntime(), 
+                        localPouchName);
+                
+                pouch.replicateTo(COUCHDB_URL);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                super.onPostExecute(result);
+                text.setText(text.getText() + "\nDatabase replicated as well!");
+            }
+        }.execute((Void)null);
+    }    
+
+    private class MyMigrationProgressListener extends MigrationProgressListener {
+
+        @Override
+        public void onMigrationProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+            
+            Log.i("TAG", "progress!");
+            
+            progress.setMax(numRowsTotal);
+            progress.setProgress(numRowsLoaded);
+            StringBuilder textContent = new StringBuilder();
+            textContent.append(numRowsLoaded + "/" + numRowsTotal);
+            if (numRowsTotal == numRowsLoaded) {
+                long totalTimeMs = System.currentTimeMillis() - startTime;
+                
+                double totalTimeS = totalTimeMs / 1000.0;
+                
+                textContent.append("\nCompleted in " + totalTimeS + " seconds");
+                
+                getWindow().getDecorView().getRootView().setBackgroundColor(getResources().getColor(
+                        numRowsLoaded == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
+                progressIndeterminate.setVisibility(View.INVISIBLE);
+            }
+            text.setText(text.getText() + "\n" + textContent);
         }
-        
-        progress.setMax(numRowsTotal);
-        progress.setProgress(numRowsLoaded);
-        StringBuilder textContent = new StringBuilder();
-        textContent.append(numRowsLoaded + "/" + numRowsTotal);
-        if (numRowsTotal == numRowsLoaded) {
-            long totalTimeMs = System.currentTimeMillis() - startTime;
-            
-            double totalTimeS = totalTimeMs / 1000.0;
-            
-            textContent.append("\nCompleted in " + totalTimeS + " seconds");
-            
-            getWindow().getDecorView().getRootView().setBackgroundColor(getResources().getColor(
-                    numRowsLoaded == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
-            progressIndeterminate.setVisibility(View.INVISIBLE);
+
+        @Override
+        public void onMigrationStart() {
+            text.setText("Migration started!");
         }
-        text.setText(textContent);
+
+        @Override
+        public void onMigrationEnd() {
+            text.setText(text.getText() + "\nMigration done!");
+            
+            replicateToRemote();
+        }
     }
-
 }

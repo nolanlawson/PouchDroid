@@ -3,13 +3,13 @@ package com.nolanlawson.couchdroid.migration;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,11 +18,10 @@ import android.os.Build;
 import android.text.TextUtils;
 
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
-import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener.ProgressType;
+import com.nolanlawson.couchdroid.migration.MigrationProgressReporter.ProgressType;
 import com.nolanlawson.couchdroid.util.SqliteUtil;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
-@SuppressLint("SetJavaScriptEnabled")
 public class CouchDroidMigrationTask {
 
     private static UtilLogger log = new UtilLogger(CouchDroidMigrationTask.class);
@@ -35,11 +34,10 @@ public class CouchDroidMigrationTask {
     private ObjectMapper objectMapper = new ObjectMapper();
     private SQLiteDatabase sqliteDatabase;
     private String userId;
-    private String couchdbUrl;
     private String dbName;
-    private CouchDroidProgressListener clientListener;
-    private CouchDroidProgressListener listener;
+    private MigrationProgressListener listener;
     private CouchDroidRuntime runtime;
+    private String pouchDBName;
     
     private CouchDroidMigrationTask(CouchDroidRuntime runtime, SQLiteDatabase sqliteDatabase) {
         this.runtime = runtime;
@@ -49,9 +47,6 @@ public class CouchDroidMigrationTask {
         int idx = sqliteDatabase.getPath().lastIndexOf('/');
         
         this.dbName = sqliteDatabase.getPath().substring(idx + 1);
-        this.listener = wrapClientListener();
-        
-        runtime.addListener(listener);
     }
     
     private void setSqliteTables(List<SqliteTable> sqliteTables) {
@@ -65,9 +60,14 @@ public class CouchDroidMigrationTask {
         }
     }
     
+    private void setProgressListener(MigrationProgressListener clientListener) {
+        this.listener = wrapClientListener(clientListener);
+        runtime.addListener(listener);  
+    }
+    
     public void start() {
         try {
-            initPouchDBHelper();
+            initMigrationHelper();
             migrateSqliteTable(sqliteTableInfos.get(0), 0);
         } catch (Exception e) {
             // shouldn't happen
@@ -76,54 +76,51 @@ public class CouchDroidMigrationTask {
         }
     }
     
-    private CouchDroidProgressListener wrapClientListener() {
+    private MigrationProgressListener wrapClientListener(MigrationProgressListener clientListener) {
         // override the client listener to add out own
         
-        return new CouchDroidProgressListener(){
-
+        return MigrationProgressListener.extend(Collections.singletonList(clientListener), 
+                new MigrationProgressListener() {
+            
             @Override
-            public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
-                log.d("onProgress(%s,  %s, %s, %s", type, tableName, numRowsTotal, numRowsLoaded);
+            public void onMigrationStart() {
+            }
+            
+            @Override
+            public void onMigrationProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+                        
                 try {
-                    if (clientListener != null) {
-                        clientListener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
+                    // find sqliteTable by name
+                    SqliteTableInfo sqliteTableInfo = null;
+                    int idx = -1;
+                    for (int i = 0, len = sqliteTableInfos.size(); i < len; i++) {
+                        SqliteTableInfo candidate = sqliteTableInfos.get(i);
+                        if (candidate.table.getName().equals(tableName)) {
+                            sqliteTableInfo = candidate;
+                            idx = i;
+                            break;
+                        }
                     }
                     
-                    if (type == ProgressType.Copy) {
-                        
-                        // find sqliteTable by name
-                        SqliteTableInfo sqliteTableInfo = null;
-                        int idx = -1;
-                        for (int i = 0, len = sqliteTableInfos.size(); i < len; i++) {
-                            SqliteTableInfo candidate = sqliteTableInfos.get(i);
-                            if (candidate.table.getName().equals(tableName)) {
-                                sqliteTableInfo = candidate;
-                                idx = i;
-                                break;
-                            }
-                        }
-                        
-                        if (sqliteTableInfo == null) {
-                            throw new IllegalStateException("couldn't find sqlite table for name: " + tableName);
-                        }
-                        
-                        if (numRowsLoaded == numRowsTotal) {
-                            // copying complete
-                            if (idx < sqliteTableInfos.size() - 1) {
-                                // copy next table
-                                migrateSqliteTable(
-                                        sqliteTableInfos.get(idx + 1), 
-                                        0);
-                            } else {
-                                // begin replication of all tables
-                                log.i("Trying to sync to CouchDB %s... (If this hangs, CouchDB may be unreachable!)", couchdbUrl);
-                                replicate();
-                            }
+                    if (sqliteTableInfo == null) {
+                        throw new IllegalStateException("couldn't find sqlite table for name: " + tableName);
+                    }
+                    
+                    if (numRowsLoaded == numRowsTotal) {
+                        // copying complete
+                        if (idx < sqliteTableInfos.size() - 1) {
+                            // copy next table
+                            migrateSqliteTable(
+                                    sqliteTableInfos.get(idx + 1), 
+                                    0);
                         } else {
-                            // copy next batch
-                            migrateSqliteTable(sqliteTableInfo, 
-                                    numRowsLoaded);
+                            // simply notify that we're done!
+                            notifyMigrationDone();
                         }
+                    } else {
+                        // copy next batch
+                        migrateSqliteTable(sqliteTableInfo, 
+                                numRowsLoaded);
                     }
                 } catch (Exception e) {
                     // shouldn't happen
@@ -131,14 +128,20 @@ public class CouchDroidMigrationTask {
                     throw new RuntimeException(e);
                 }
             }
-        };
+            
+            @Override
+            public void onMigrationEnd() {
+            }
+        });
     }
     
-    private void replicate() {
+    private void notifyMigrationDone() {
         try {
-            runtime.loadJavascript(new StringBuilder("CouchDroid.pouchDBHelper.syncAll(")
+            // TODO: excessive callbacks here; this could be de-spaghettified
+            runtime.loadJavascript(new StringBuilder()
+            .append("(")
             .append(createFinalReportProgressJs())
-            .append(");"));
+            .append(")();"));
         } catch (IOException e) {
             // should not happen
             log.e(e, "unexpected");
@@ -221,28 +224,16 @@ public class CouchDroidMigrationTask {
         log.d("Loaded %d objects into pouchdb", documents.size());
     }
 
-    private void initPouchDBHelper() throws IOException {
+    private void initMigrationHelper() throws IOException {
         
         Activity activity = runtime.getActivity();
         if (activity == null) {
             return; // app closed
         }
         
-        // ensure that pouchdb talks to the same database every time, i.e. uniquify its name
-        StringBuilder internalPouchdbName = new StringBuilder()
-            .append(activity.getPackageName())
-            .append("_")
-            .append(userId)
-            .append("_")
-            .append(dbName);
-        
         runtime.loadJavascript(new StringBuilder()
-            .append("CouchDroid.pouchDBHelper = new CouchDroid.PouchDBHelper(")
-            .append(objectMapper.writeValueAsString(internalPouchdbName))
-            .append(",")
-            .append(objectMapper.writeValueAsString(couchdbUrl))
-            .append(",")
-            .append(UtilLogger.DEBUG_MODE)
+            .append("CouchDroid.migrationHelper = new CouchDroid.MigrationHelper(")
+            .append(objectMapper.writeValueAsString(pouchDBName))
             .append(");"));
         
     }
@@ -250,8 +241,8 @@ public class CouchDroidMigrationTask {
     private CharSequence createFinalReportProgressJs() throws IOException {
         return new StringBuilder()
             .append("function(){ProgressReporter.reportProgress(")
-            .append(objectMapper.writeValueAsString(ProgressType.Sync.name()))
-            .append(",null, 0, 0);}");
+            .append(objectMapper.writeValueAsString(ProgressType.End.name()))
+            .append(", null, 0, 0);}");
     }
     
     private CharSequence createInitReportProgressJs(SqliteTable sqliteTable, int totalNumRows) throws IOException {
@@ -259,11 +250,7 @@ public class CouchDroidMigrationTask {
         return new StringBuilder()
             .append("ProgressReporter.reportProgress(")
             .append(objectMapper.writeValueAsString(ProgressType.Init.name()))
-            .append(",")
-            .append(objectMapper.writeValueAsString(sqliteTable.getName()))
-            .append(",")
-            .append(totalNumRows)
-            .append(", 0);");
+            .append(", null, 0, 0);}");
         
     }
 
@@ -284,9 +271,9 @@ public class CouchDroidMigrationTask {
     private void loadBatchIntoPouchdb(ObjectNode docsBatch,
             CharSequence reportProgress) throws IOException {
 
-        // call the PouchDBHelper, set the db id, load the documents
+        // call the MigrationHelper, set the db id, load the documents
         StringBuilder js = new StringBuilder()
-                .append("CouchDroid.pouchDBHelper.putAll(")
+                .append("CouchDroid.migrationHelper.putAll(")
                 .append(objectMapper.writeValueAsString(docsBatch))
                 .append(",")
                 .append(reportProgress)
@@ -465,19 +452,17 @@ public class CouchDroidMigrationTask {
             couchdbSync.userId = userId;
             return this;
         }
+        
         /**
-         * Set a CouchDB database url to sync to.  User credentials should be set here as well.
-         * (Hopefully you're using SSH!)
+         * Set the name of the PouchDB you'd like to migrate to.  This could be a local PouchDB if you name 
+         * it e.g. "foo", or this could be a remote PouchDb if you set it to e.g. "http://mysite.com:5984".
          * 
-         * Here's an example URL:
-         * 
-         * "https://myusername:mypassword@localhost:5984/mydb"
-         * 
-         * @param userId
+         * <p/>In other words, this value will be passed to <code>new PouchDB(pouchDBName)</code>.
+         * @param pouchDBName
          * @return
          */
-        public Builder setCouchdbUrl(String couchdbUrl) {
-            couchdbSync.couchdbUrl = couchdbUrl;
+        public Builder setPouchDBName(String pouchDBName) {
+            couchdbSync.pouchDBName = pouchDBName;
             return this;
         }
         
@@ -486,8 +471,8 @@ public class CouchDroidMigrationTask {
          * @param listener
          * @return
          */
-        public Builder setProgressListener(CouchDroidProgressListener listener) {
-            couchdbSync.clientListener = listener;
+        public Builder setProgressListener(MigrationProgressListener listener) {
+            couchdbSync.setProgressListener(listener);
             return this;
         }
         
@@ -497,8 +482,8 @@ public class CouchDroidMigrationTask {
                         "You must supply at least one sqlite table definition using addSqliteTable()");
             } else if (TextUtils.isEmpty(couchdbSync.userId)) {
                 throw new IllegalArgumentException("You must supply a userId using setUserId().");
-            } else if (TextUtils.isEmpty(couchdbSync.couchdbUrl)) {
-                throw new IllegalArgumentException("You must supply a valid couchDB url using setCouchdbUrl()");
+            } else if (TextUtils.isEmpty(couchdbSync.pouchDBName)) {
+                throw new IllegalArgumentException("You must supply a pouchDBName using setPouchDBName().");
             }
             couchdbSync.setSqliteTables(sqliteTables);
             return couchdbSync;

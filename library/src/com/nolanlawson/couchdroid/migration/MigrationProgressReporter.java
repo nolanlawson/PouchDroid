@@ -1,20 +1,18 @@
-package com.nolanlawson.couchdroid;
+package com.nolanlawson.couchdroid.migration;
 
 import android.app.Activity;
 import android.webkit.JavascriptInterface;
 
-import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener;
-import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener.ProgressType;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
-public class ProgressReporter {
+public class MigrationProgressReporter {
     
-    private static UtilLogger log = new UtilLogger(ProgressReporter.class);
+    private static UtilLogger log = new UtilLogger(MigrationProgressReporter.class);
     
     private Activity activity;
-    private CouchDroidProgressListener listener;
+    private MigrationProgressListener listener;
     
-    public ProgressReporter(Activity activity, CouchDroidProgressListener listener) {
+    public MigrationProgressReporter(Activity activity, MigrationProgressListener listener) {
         this.activity = activity;
         this.listener = listener;
     }
@@ -35,8 +33,7 @@ public class ProgressReporter {
                     @Override
                     public void run() {
                         try {
-                            
-                            listener.onProgress(ProgressType.valueOf(type), tableName, numRowsTotal, numRowsLoaded);
+                            callListener(type, tableName, numRowsTotal, numRowsLoaded);
                         } catch (Exception e) {
                             log.e(e, "progress listener threw an exception!");
                         }                        
@@ -46,5 +43,24 @@ public class ProgressReporter {
         } catch (Exception e) {
             log.e(e, "unexpected exception in reportProgress()");
         }
+    }
+    
+    private void callListener(String type, String tableName, int numRowsTotal, int numRowsLoaded) {
+        switch (ProgressType.valueOf(type)) {
+            case Init:
+                listener.onMigrationStart();
+                break;
+            case Copy:
+                listener.onMigrationProgress(tableName, numRowsTotal, numRowsLoaded);
+                break;
+            case End:
+            default:
+                listener.onMigrationEnd();
+                break;
+        }
+    }
+
+    public static enum ProgressType {
+        Init, Copy, End;
     }
 }

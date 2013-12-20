@@ -4,7 +4,7 @@ var CouchDroid;
 (function(){
     'use strict';
     CouchDroid = {
-        DEBUG_MODE       : true,
+        DEBUG_MODE       : false,
         //DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper', 'SQLiteNativeDB'],
         DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper'],
         fakeLocalStorage : {}, // for pouchdb
@@ -16,7 +16,7 @@ var CouchDroid;
 
 
     function debug(str) {
-        CouchDroid.Util.debug('PouchDBHelper', str);
+        CouchDroid.Util.debug('MigrationHelper', str);
     }
 
     function attachRevIdsToDocuments(documents, rows) {
@@ -71,14 +71,13 @@ var CouchDroid;
         return docs;
     }
 
-    function PouchDBHelper(dbId, couchdbUrl) {
+    function MigrationHelper(dbId) {
 
         var self = this;
-        self.couchdbUrl = couchdbUrl;
         self.queue = [];
         self.batchInProgress = false;
 
-        debug('attempting to create new PouchDBHelper with dbId ' + dbId +' and couchdbUrl ' + couchdbUrl);
+        debug('attempting to create new PouchDBHelper with dbId ' + dbId);
         try {
             self.db = new PouchDB(dbId);
         } catch (err) {
@@ -92,32 +91,6 @@ var CouchDroid;
 
     }
 
-    PouchDBHelper.prototype.syncAll = function(onComplete) {
-        var self = this;
-
-        debug('syncAll()');
-
-        function complete(err, response){
-            window.console.log('complete, with err: ' + JSON.stringify(err));
-            window.console.log('complete, with response: ' + JSON.stringify(response));
-            if (onComplete && typeof onComplete === 'function') {
-                onComplete();
-            }
-        }
-
-        function onChange(change) {
-            window.console.log('onChange, with change: ' + JSON.stringify(change));
-        }
-
-        var response = self.db.replicate.to(self.couchdbUrl, {
-            complete : complete,
-            onChange: onChange,
-            continuous : false
-        });
-
-        debug('called replicate, got response: ' + JSON.stringify(response));
-    };
-
     /**
      * Put all documents into the database, overwriting any existing ones with the same IDs.
      *
@@ -125,7 +98,7 @@ var CouchDroid;
      *
      * @param documents
      */
-    PouchDBHelper.prototype.putAll = function (compressedDocs, onProgress) {
+    MigrationHelper.prototype.putAll = function (compressedDocs, onProgress) {
         var self = this;
         debug('putAll()');
 
@@ -137,7 +110,7 @@ var CouchDroid;
 
     };
 
-    PouchDBHelper.prototype.processNextBatch = function() {
+    MigrationHelper.prototype.processNextBatch = function() {
         var self = this;
         debug('processNextBatch()');
 
@@ -157,7 +130,7 @@ var CouchDroid;
 
     };
 
-    PouchDBHelper.prototype.processBatch = function(documents, onDone) {
+    MigrationHelper.prototype.processBatch = function(documents, onDone) {
         var self = this;
         debug('processBatch()');
 
@@ -190,7 +163,7 @@ var CouchDroid;
         self.db.allDocs({include_docs: false, keys : keys}, onBulkGet);
     };
 
-    CouchDroid.PouchDBHelper = PouchDBHelper;
+    CouchDroid.MigrationHelper = MigrationHelper;
 
 })();;/**
  * Pretends to be the WebSQL interface while secretly siphoning requests off to the native Android SQL interface.

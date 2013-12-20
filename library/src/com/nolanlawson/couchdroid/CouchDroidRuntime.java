@@ -17,7 +17,8 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
-import com.nolanlawson.couchdroid.migration.CouchDroidProgressListener;
+import com.nolanlawson.couchdroid.migration.MigrationProgressListener;
+import com.nolanlawson.couchdroid.migration.MigrationProgressReporter;
 import com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface;
 import com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface;
 import com.nolanlawson.couchdroid.util.ResourceUtil;
@@ -39,8 +40,8 @@ public class CouchDroidRuntime {
     private Activity activity;
     private WebView webView;
     private JSInterfaceVerifierCaller jsInterfaceVerifierCaller;
-    private CouchDroidProgressListener progressListener;
-    private List<CouchDroidProgressListener> clientProgressListeners = new ArrayList<CouchDroidProgressListener>();
+    private MigrationProgressListener progressListener;
+    private List<MigrationProgressListener> clientProgressListeners = new ArrayList<MigrationProgressListener>();
     private OnReadyListener onReadyListener;
     
     /**
@@ -91,30 +92,33 @@ public class CouchDroidRuntime {
         return webView;
     }
 
-    private CouchDroidProgressListener createProgressListener() {
+    private MigrationProgressListener createProgressListener() {
         // override the client listener to add our own
         
-        return new CouchDroidProgressListener(){
-
+        return MigrationProgressListener.extend(clientProgressListeners, new MigrationProgressListener() {
+            
             @Override
-            public void onProgress(ProgressType type, String tableName, int numRowsTotal, int numRowsLoaded) {
-                log.i("progress: (%s, %s, %s, %s)", type, tableName, numRowsTotal, numRowsLoaded);
-                for (CouchDroidProgressListener listener : clientProgressListeners) {
-                    if (listener != null) {
-                        listener.onProgress(type, tableName, numRowsTotal, numRowsLoaded);
-                    }
-                }
+            public void onMigrationStart() {
+                log.i("onMigrationStart()");
             }
-        };
+            
+            @Override
+            public void onMigrationProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+                log.i("onMigrationProgress(%s, %s, %s)", tableName, numRowsTotal, numRowsLoaded);
+            }
+            
+            @Override
+            public void onMigrationEnd() {
+                log.i("onMigrationEnd()");
+            }
+        });
     }
     
     private void loadInitialJavascript() {
         
         // in Android 4.4+, IndexedDB is now available, so we need to remove it from the Pouch adapter list
         // TODO: compile PouchDB without idb at all
-        String removeIdb = "" +
-        		"var idbIdx = PouchDB.adapters.indexOf('idb'); " +
-                "if (idbIdx !== -1) {PouchDB.adapters.splice(idbIdx, 1);}";
+        String removeIdb = "delete PouchDB.adapters['idb'];";
         
         loadJavascript(TextUtils.join(";", Arrays.asList(
                 ResourceUtil.loadTextFile(activity, USE_MINIFIED_COUCHDROID ? R.raw.couchdroid_min : R.raw.couchdroid),
@@ -163,9 +167,10 @@ public class CouchDroidRuntime {
         
         webView.setWebChromeClient(new MyWebChromeClient());
         
+        // TODO: combine all these javascript interfaces together, cordova-style
         webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), "SQLiteJavascriptInterface");
         webView.addJavascriptInterface(new XhrJavascriptInterface(this), "XhrJavascriptInterface");
-        webView.addJavascriptInterface(new ProgressReporter(activity, progressListener), "ProgressReporter");
+        webView.addJavascriptInterface(new MigrationProgressReporter(activity, progressListener), "ProgressReporter");
         webView.addJavascriptInterface(PouchJavascriptInterface.INSTANCE, "PouchJavascriptInterface");
         webView.addJavascriptInterface(new JSInterfaceVerifier(), "JSInterfaceVerifier");
         
@@ -274,7 +279,7 @@ public class CouchDroidRuntime {
         public void onReady(CouchDroidRuntime runtime);
     }
 
-    public void addListener(CouchDroidProgressListener listener) {
+    public void addListener(MigrationProgressListener listener) {
         clientProgressListeners.add(listener);
     }
 }
