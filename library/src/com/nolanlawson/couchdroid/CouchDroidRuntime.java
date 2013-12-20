@@ -32,7 +32,7 @@ public class CouchDroidRuntime {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
-    private static final boolean USE_WEINRE = false;
+    private static final boolean USE_WEINRE = true;
     private static final boolean USE_MINIFIED_POUCH = false;
     private static final boolean USE_MINIFIED_COUCHDROID = false;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
@@ -98,18 +98,23 @@ public class CouchDroidRuntime {
         return MigrationProgressListener.extend(clientProgressListeners, new MigrationProgressListener() {
             
             @Override
-            public void onMigrationStart() {
+            public void onStart() {
                 log.i("onMigrationStart()");
             }
             
             @Override
-            public void onMigrationProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+            public void onProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
                 log.i("onMigrationProgress(%s, %s, %s)", tableName, numRowsTotal, numRowsLoaded);
             }
             
             @Override
-            public void onMigrationEnd() {
+            public void onEnd() {
                 log.i("onMigrationEnd()");
+            }
+
+            @Override
+            public void onDocsDeleted(int numDocumentsDeleted) {
+                log.i("onCheckDeletes(%s)", numDocumentsDeleted);
             }
         });
     }
@@ -118,7 +123,7 @@ public class CouchDroidRuntime {
         
         // in Android 4.4+, IndexedDB is now available, so we need to remove it from the Pouch adapter list
         // TODO: compile PouchDB without idb at all
-        String removeIdb = "delete PouchDB.adapters['idb'];";
+        String removeIdb = "delete PouchDB.adapters.idb;";
         
         loadJavascript(TextUtils.join(";", Arrays.asList(
                 ResourceUtil.loadTextFile(activity, USE_MINIFIED_COUCHDROID ? R.raw.couchdroid_min : R.raw.couchdroid),

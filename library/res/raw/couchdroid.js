@@ -76,6 +76,7 @@ var CouchDroid;
         var self = this;
         self.queue = [];
         self.batchInProgress = false;
+        self.knownDocIds = {};
 
         debug('attempting to create new PouchDBHelper with dbId ' + dbId);
         try {
@@ -90,6 +91,52 @@ var CouchDroid;
         }
 
     }
+
+    /**
+     * Register doc ids, so we can know which ones NOT to delete later
+     * @param documents
+     */
+    MigrationHelper.prototype.registerDocIds = function(documents) {
+        var self = this;
+        documents.forEach(function(doc) {
+            self.knownDocIds[doc._id] = true;
+        });
+    };
+
+    /**
+     * Delete all unregistered doc ids, report the number deleted to the callback.
+     */
+    MigrationHelper.prototype.deleteAllExceptKnownDocIds = function(callback) {
+        var self = this;
+
+        var numDeleted = 0;
+
+        function deleteIfUnknown(startkey) {
+            var options = {include_docs : false, limit : 1};
+            if (startkey) {
+                options.startkey = startkey;
+                options.skip = 1;
+            }
+
+            self.db.allDocs(options, function onAllDocs(err, info) {
+                var row = info.rows[0];
+
+                if (!row) {
+                    // base case
+                    return callback && typeof callback === 'function' && callback(numDeleted);
+                } else {
+                    // recursive case
+                    if (!self.knownDocIds[row.id]) { // unknown, so remove
+                        numDeleted++;
+                        self.db.remove({_id : row.id, _rev : row.value.rev});
+                    }
+                    deleteIfUnknown(row.id);
+                }
+            });
+        }
+
+        deleteIfUnknown();
+    };
 
     /**
      * Put all documents into the database, overwriting any existing ones with the same IDs.
@@ -145,6 +192,7 @@ var CouchDroid;
             }
 
             attachRevIdsToDocuments(documents, response.rows);
+            self.registerDocIds(documents);
 
             debug('onBulkGet(): attempting to put ' + documents.length + ' documents into PouchDB...');
 

@@ -83,24 +83,15 @@ public class CouchDroidMigrationTask {
                 new MigrationProgressListener() {
             
             @Override
-            public void onMigrationStart() {
+            public void onStart() {
             }
             
             @Override
-            public void onMigrationProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
+            public void onProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
                         
                 try {
-                    // find sqliteTable by name
-                    SqliteTableInfo sqliteTableInfo = null;
-                    int idx = -1;
-                    for (int i = 0, len = sqliteTableInfos.size(); i < len; i++) {
-                        SqliteTableInfo candidate = sqliteTableInfos.get(i);
-                        if (candidate.table.getName().equals(tableName)) {
-                            sqliteTableInfo = candidate;
-                            idx = i;
-                            break;
-                        }
-                    }
+                    int idx = findSqliteTableIdxByName(tableName);
+                    SqliteTableInfo sqliteTableInfo = sqliteTableInfos.get(idx);
                     
                     if (sqliteTableInfo == null) {
                         throw new IllegalStateException("couldn't find sqlite table for name: " + tableName);
@@ -110,12 +101,10 @@ public class CouchDroidMigrationTask {
                         // copying complete
                         if (idx < sqliteTableInfos.size() - 1) {
                             // copy next table
-                            migrateSqliteTable(
-                                    sqliteTableInfos.get(idx + 1), 
-                                    0);
+                            migrateSqliteTable(sqliteTableInfos.get(idx + 1), 0);
                         } else {
-                            // simply notify that we're done!
-                            notifyMigrationDone();
+                            // begin checking for deleted documents
+                            deleteUnknownDocIds(sqliteTableInfo);
                         }
                     } else {
                         // copy next batch
@@ -128,13 +117,41 @@ public class CouchDroidMigrationTask {
                     throw new RuntimeException(e);
                 }
             }
-            
+           
             @Override
-            public void onMigrationEnd() {
+            public void onDocsDeleted(int numDocumentsDeleted) {
+                // simply notify that we're done!
+                notifyMigrationDone();
+            }
+
+            @Override
+            public void onEnd() {
+                // delete to free up memory
+                runtime.loadJavascript("delete CouchDroid.migrationHelper;");
             }
         });
     }
     
+    private void deleteUnknownDocIds(SqliteTableInfo sqliteTableInfo) throws IOException {
+        
+        runtime.loadJavascript(new StringBuilder()
+                .append("CouchDroid.migrationHelper.deleteAllExceptKnownDocIds(function(numDeleted){")
+                .append("ProgressReporter.reportProgress(")
+                .append(objectMapper.writeValueAsString(ProgressType.CheckDeletes.name()))
+                .append(", null, numDeleted, 0);});"));
+        
+    }
+
+    private int findSqliteTableIdxByName(String tableName) {
+        for (int i = 0, len = sqliteTableInfos.size(); i < len; i++) {
+            SqliteTableInfo candidate = sqliteTableInfos.get(i);
+            if (candidate.table.getName().equals(tableName)) {
+                return i;
+            }
+        }
+        throw new RuntimeException("couldn't find sqlite table by name: " + tableName); // shouldn't happen
+    }
+
     private void notifyMigrationDone() {
         try {
             // TODO: excessive callbacks here; this could be de-spaghettified

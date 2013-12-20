@@ -176,9 +176,7 @@ public class MainActivity extends CouchDroidActivity {
     private class MyMigrationProgressListener extends MigrationProgressListener {
 
         @Override
-        public void onMigrationProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
-            
-            Log.i("TAG", "progress!");
+        public void onProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
             
             progress.setMax(numRowsTotal);
             progress.setProgress(numRowsLoaded);
@@ -199,12 +197,17 @@ public class MainActivity extends CouchDroidActivity {
         }
 
         @Override
-        public void onMigrationStart() {
+        public void onStart() {
             text.setText("Migration started!");
+        }
+        
+        @Override
+        public void onDocsDeleted(int numDocumentsDeleted) {
+            text.setText(text.getText() + "\nDeleted " + numDocumentsDeleted + " docs.");
         }
 
         @Override
-        public void onMigrationEnd() {
+        public void onEnd() {
             text.setText(text.getText() + "\nMigration done!");
             
             replicateToRemote();

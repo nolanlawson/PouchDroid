@@ -48,19 +48,22 @@ public class MigrationProgressReporter {
     private void callListener(String type, String tableName, int numRowsTotal, int numRowsLoaded) {
         switch (ProgressType.valueOf(type)) {
             case Init:
-                listener.onMigrationStart();
+                listener.onStart();
                 break;
             case Copy:
-                listener.onMigrationProgress(tableName, numRowsTotal, numRowsLoaded);
+                listener.onProgress(tableName, numRowsTotal, numRowsLoaded);
+                break;
+            case CheckDeletes:
+                listener.onDocsDeleted(numRowsTotal);
                 break;
             case End:
             default:
-                listener.onMigrationEnd();
+                listener.onEnd();
                 break;
         }
     }
 
     public static enum ProgressType {
-        Init, Copy, End;
+        Init, Copy, End, CheckDeletes;
     }
 }
