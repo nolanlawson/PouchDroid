@@ -229,6 +229,7 @@ public class PouchDB<T extends PouchDocumentInterface> {
     }
 
     public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
+        
         final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
 
         delegate.replicateTo(remoteDB, options, new ReplicateCallback() {
@@ -239,6 +240,10 @@ public class PouchDB<T extends PouchDocumentInterface> {
                 lock.offer(new PouchResponse<ReplicateInfo>(err, info));
             }
         });
+        if (options != null && Boolean.TRUE.equals(options.get("continuous"))) {
+            // no need to lock the thread; this is continuous replication
+            return null;
+        }
         return waitAndReturn(lock);
     }
 
@@ -261,6 +266,10 @@ public class PouchDB<T extends PouchDocumentInterface> {
                 lock.offer(new PouchResponse<ReplicateInfo>(err, info));
             }
         });
+        if (options != null && Boolean.TRUE.equals(options.get("continuous"))) {
+            // no need to lock the thread; this is continuous replication
+            return null;
+        }
         return waitAndReturn(lock);
     }
 
