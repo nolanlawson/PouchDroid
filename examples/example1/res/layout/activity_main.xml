@@ -30,12 +30,18 @@
         android:id="@android:id/progress"/>
     
 
-    <TextView
+    <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@android:id/progress"
         android:layout_centerHorizontal="true"
-        android:id="@android:id/text1"
-        android:textSize="16sp"/>
+        >
+	    <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:id="@android:id/text1"
+	        android:textSize="16sp"/>        
+    </ScrollView>
+
         
 </RelativeLayout>

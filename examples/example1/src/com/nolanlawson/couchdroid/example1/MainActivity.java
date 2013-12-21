@@ -26,7 +26,6 @@ public class MainActivity extends CouchDroidActivity {
     private static final String COUCHDB_URL = "http://192.168.0.3:5984/pokemon";
     
     private String localPouchName = "pokemon";
-    private static final int EXPECTED_COUNT = 743;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
     
@@ -52,10 +51,21 @@ public class MainActivity extends CouchDroidActivity {
     
     @Override
     public void onCouchDroidReady(final CouchDroidRuntime runtime) {
+        doInitialMigration();
 
-        
+    }
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (sqliteDatabase != null) {
+            sqliteDatabase.close();
+        }
+    }
+    
+    private void doInitialMigration() {
         progress.setProgress(0);
-        text.setText(Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
+        text.setText(text.getText() + "\n" + Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
         
         // load pokemon data in the background,
         // then launch the migration task in the foreground
@@ -82,25 +92,20 @@ public class MainActivity extends CouchDroidActivity {
                     localPouchName = "pokemon_" + Integer.toHexString(Math.abs(new Random().nextInt()));
                 }
                 
-                new CouchDroidMigrationTask.Builder(runtime, sqliteDatabase)
-                    .setUserId("fooUser")
-                    .setPouchDBName(localPouchName)
-                    .addSqliteTable("Monsters", "uniqueId")
-                    .setProgressListener(new MyMigrationProgressListener())             
-                    .build()
-                    .start();
+                runMigration();
             }
             
         }.execute((Void)null);
-
     }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (sqliteDatabase != null) {
-            sqliteDatabase.close();
-        }
+    
+    private void runMigration() {
+        new CouchDroidMigrationTask.Builder(getCouchDroidRuntime(), sqliteDatabase)
+            .setUserId("fooUser")
+            .setPouchDBName(localPouchName)
+            .addSqliteTable("Monsters", "uniqueId")
+            .setProgressListener(new MyMigrationProgressListener())             
+            .build()
+            .start();
     }
 
     private void loadPokemonData() {
@@ -115,12 +120,8 @@ public class MainActivity extends CouchDroidActivity {
         }
         
         SQLiteStatement statement = sqliteDatabase.compileStatement(
-                "select count(*) from sqlite_master where type='table' and name='Monsters';");
-        long tableExists = statement.simpleQueryForLong();
-        
-        if (tableExists > 0) {
-            return; // nothing to do
-        }
+                "drop table if exists 'Monsters'");
+        statement.execute();
         
         sqliteDatabase.execSQL("create table Monsters (" +
         		"_id integer primary key autoincrement, " +
@@ -169,9 +170,16 @@ public class MainActivity extends CouchDroidActivity {
             protected void onPostExecute(Void result) {
                 super.onPostExecute(result);
                 text.setText(text.getText() + "\nDatabase replicated as well!");
+                deleteAndContinue();
             }
         }.execute((Void)null);
     }    
+    
+    private void deleteAndContinue() {
+        sqliteDatabase.execSQL("delete from Monsters where nationalDexNumber > 151"); // I hate the later Pokemon
+        runMigration();
+        
+    }
 
     private class MyMigrationProgressListener extends MigrationProgressListener {
 
@@ -189,8 +197,10 @@ public class MainActivity extends CouchDroidActivity {
                 
                 textContent.append("\nCompleted in " + totalTimeS + " seconds");
                 
+                boolean isExpectedCount = (numRowsLoaded == 743 || numRowsLoaded == 151);
+                
                 getWindow().getDecorView().getRootView().setBackgroundColor(getResources().getColor(
-                        numRowsLoaded == EXPECTED_COUNT ? R.color.alert_blue : R.color.alert_red));
+                        isExpectedCount ? R.color.alert_blue : R.color.alert_red));
                 progressIndeterminate.setVisibility(View.INVISIBLE);
             }
             text.setText(text.getText() + "\n" + textContent);
@@ -198,7 +208,7 @@ public class MainActivity extends CouchDroidActivity {
 
         @Override
         public void onStart() {
-            text.setText("Migration started!");
+            text.setText(text.getText() + "\nMigration started!");
         }
         
         @Override

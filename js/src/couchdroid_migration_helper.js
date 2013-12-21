@@ -96,33 +96,35 @@
     MigrationHelper.prototype.deleteAllExceptKnownDocIds = function(callback) {
         var self = this;
 
-        var numDeleted = 0;
+        self.db.allDocs({include_docs : false}, function(err, info){
 
-        function deleteIfUnknown(startkey) {
-            var options = {include_docs : false, limit : 1};
-            if (startkey) {
-                options.startkey = startkey;
-                options.skip = 1;
-            }
+            var docsToRemove = [];
 
-            self.db.allDocs(options, function onAllDocs(err, info) {
-                var row = info.rows[0];
-
-                if (!row) {
-                    // base case
-                    return callback && typeof callback === 'function' && callback(numDeleted);
-                } else {
-                    // recursive case
+            if (info && info.rows) {
+                info.rows.forEach(function(row){
                     if (!self.knownDocIds[row.id]) { // unknown, so remove
-                        numDeleted++;
-                        self.db.remove({_id : row.id, _rev : row.value.rev});
+                        docsToRemove.push({_id : row.id, _rev : row.value.rev});
                     }
-                    deleteIfUnknown(row.id);
-                }
-            });
-        }
+                });
+            }
+            var numDeleted = 0;
+            function deleteAndContinue(idx) {
 
-        deleteIfUnknown();
+                if (idx > docsToRemove.length - 1) {
+                    // base case
+                    callback(numDeleted);
+                } else {
+                    //recursive case
+                    self.db.remove(docsToRemove[idx], function(err, info){
+                        if (info) {
+                            numDeleted++;
+                        }
+                        deleteAndContinue(idx + 1);
+                    });
+                }
+            }
+            deleteAndContinue(0);
+        });
     };
 
     /**
