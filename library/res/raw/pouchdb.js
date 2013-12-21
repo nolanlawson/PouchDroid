@@ -270,7 +270,7 @@ module.exports = function (Pouch) {
 
       ids.map(function (id) {
         customApi._getRevisionTree(id, function (err, rev_tree) {
-          if (err && err.error === 'not_found' && err.reason === 'missing') {
+          if (err && err.name === 'not_found' && err.message === 'missing') {
             missing[id] = {missing: req[id]};
           } else if (err) {
             return call(callback, err);
@@ -395,13 +395,13 @@ module.exports = function (Pouch) {
               var l = leaves[i];
               // looks like it's the only thing couchdb checks
               if (!(typeof(l) === "string" && /^\d+-/.test(l))) {
-                return call(callback, utils.error(errors.BAD_REQUEST,
+                return call(callback, errors.error(errors.BAD_REQUEST,
                   "Invalid rev format"));
               }
             }
             finishOpenRevs();
           } else {
-            return call(callback, utils.error(errors.UNKNOWN_ERROR,
+            return call(callback, errors.error(errors.UNKNOWN_ERROR,
               'function_clause'));
           }
         }
@@ -517,13 +517,13 @@ module.exports = function (Pouch) {
       }
       if ('keys' in opts) {
         if ('startkey' in opts) {
-          call(callback, utils.error(errors.QUERY_PARSE_ERROR,
+          call(callback, errors.error(errors.QUERY_PARSE_ERROR,
             'Query parameter `start_key` is not compatible with multi-get'
           ));
           return;
         }
         if ('endkey' in opts) {
-          call(callback, utils.error(errors.QUERY_PARSE_ERROR,
+          call(callback, errors.error(errors.QUERY_PARSE_ERROR,
             'Query parameter `end_key` is not compatible with multi-get'
           ));
           return;
@@ -630,12 +630,12 @@ module.exports = function (Pouch) {
               } else {
                 var msg = ddoc.views ? 'missing json key: ' + viewName[1] :
                   'missing json key: views';
-                err = err || utils.error(errors.MISSING_DOC, msg);
+                err = err || errors.error(errors.MISSING_DOC, msg);
                 utils.call(opts.complete, err);
               }
             });
           } else {
-            var err = utils.error(errors.BAD_REQUEST,
+            var err = errors.error(errors.BAD_REQUEST,
                                   '`view` filter parameter is not provided.');
             utils.call(opts.complete, err);
           }
@@ -654,7 +654,7 @@ module.exports = function (Pouch) {
             } else {
               var msg = (ddoc && ddoc.filters) ? 'missing json key: ' + filterName[1]
                 : 'missing json key: filters';
-              err = err || utils.error(errors.MISSING_DOC, msg);
+              err = err || errors.error(errors.MISSING_DOC, msg);
               utils.call(opts.complete, err);
             }
           });
@@ -1848,15 +1848,10 @@ module.exports = HttpPouch;
 
 var utils = require('../utils');
 var merge = require('../merge');
-
 var errors = require('../deps/errors');
 function idbError(callback) {
   return function (event) {
-    utils.call(callback, {
-      status: 500,
-      error: event.type,
-      reason: event.target
-    });
+    utils.call(callback, errors.error(errors.IDB_ERROR, event.target, event.type));
   };
 }
 
@@ -2054,7 +2049,7 @@ function IdbPouch(opts, callback) {
         try {
           data = atob(att.data);
         } catch (e) {
-          var err = utils.error(errors.BAD_ARG,
+          var err = errors.error(errors.BAD_ARG,
                                 "Attachments need to be base64 encoded");
           return utils.call(callback, err);
         }
@@ -2269,7 +2264,7 @@ function IdbPouch(opts, callback) {
         return finish();
       }
       if (utils.isDeleted(metadata) && !opts.rev) {
-        err = utils.error(errors.MISSING_DOC, "deleted");
+        err = errors.error(errors.MISSING_DOC, "deleted");
         return finish();
       }
 
@@ -2700,7 +2695,11 @@ function unknownError(callback) {
     });
   };
 }
-
+function idbError(callback) {
+  return function (event) {
+    utils.call(callback, errors.error(errors.WSQ_ERROR, event.target, event.type));
+  };
+}
 function webSqlPouch(opts, callback) {
 
   var api = {};
@@ -2864,7 +2863,7 @@ function webSqlPouch(opts, callback) {
         try {
           att.data = atob(att.data);
         } catch (e) {
-          var err = utils.error(errors.BAD_ARG,
+          var err = errors.error(errors.BAD_ARG,
                                 "Attachments need to be base64 encoded");
           return utils.call(callback, err);
         }
@@ -3106,7 +3105,7 @@ function webSqlPouch(opts, callback) {
       }
       metadata = JSON.parse(results.rows.item(0).json);
       if (utils.isDeleted(metadata) && !opts.rev) {
-        err = utils.error(errors.MISSING_DOC, "deleted");
+        err = errors.error(errors.MISSING_DOC, "deleted");
         return finish();
       }
 
@@ -3141,22 +3140,26 @@ function webSqlPouch(opts, callback) {
       BY_SEQ_STORE + ' JOIN ' + DOC_STORE + ' ON ' + BY_SEQ_STORE + '.seq = ' +
       DOC_STORE + '.winningseq';
 
+    var sqlArgs = [];
     if ('keys' in opts) {
-      sql += ' WHERE ' + DOC_STORE + '.id IN (' + opts.keys.map(function (key) {
-        return quote(key);
+      sql += ' WHERE ' + DOC_STORE + '.id IN (' + opts.keys.map(function () {
+        return '?';
       }).join(',') + ')';
+      sqlArgs = sqlArgs.concat(opts.keys);
     } else {
       if (start) {
-        sql += ' WHERE ' + DOC_STORE + '.id >= "' + start + '"';
+        sql += ' WHERE ' + DOC_STORE + '.id >= ?';
+        sqlArgs.push(start);
       }
       if (end) {
-        sql += (start ? ' AND ' : ' WHERE ') + DOC_STORE + '.id <= "' + end + '"';
+        sql += (start ? ' AND ' : ' WHERE ') + DOC_STORE + '.id <= ?';
+        sqlArgs.push(end);
       }
       sql += ' ORDER BY ' + DOC_STORE + '.id ' + (descending ? 'DESC' : 'ASC');
     }
 
     db.transaction(function (tx) {
-      tx.executeSql(sql, [], function (tx, result) {
+      tx.executeSql(sql, sqlArgs, function (tx, result) {
         for (var i = 0, l = result.rows.length; i < l; i++) {
           var doc = result.rows.item(i);
           var metadata = JSON.parse(doc.metadata);
@@ -3443,7 +3446,7 @@ module.exports = PouchDB;
 var request = require('request');
 var extend = require('./extend.js');
 var createBlob = require('./blob.js');
-
+var errors = require('./errors');
 function ajax(options, callback) {
 
   if (typeof options === "function") {
@@ -3469,10 +3472,10 @@ function ajax(options, callback) {
   options = extend(true, defaultOptions, options);
 
 
-  function onSuccess(obj, resp, cb){
+  function onSuccess(obj, resp, cb) {
     if (!options.binary && !options.json && options.processData &&
         typeof obj !== 'string') {
-      obj = JSON.stringify(obj);
+        obj = JSON.stringify(obj);
     } else if (!options.binary && options.json && typeof obj === 'string') {
       try {
         obj = JSON.parse(obj);
@@ -3482,17 +3485,41 @@ function ajax(options, callback) {
         return;
       }
     }
+    if (Array.isArray(obj)) {
+      obj = obj.map(function(v) {
+        var obj;
+        if (v.ok) {
+          return v;
+        } else if (v.error&&v.error==='conflict') {
+          obj = errors.REV_CONFLICT;
+          obj.id = v.id;
+          return obj;
+        } else if (v.missing) {
+          obj = errors.MISSING_DOC;
+          obj.missing = v.missing;
+          return obj;
+        }
+      });
+    }
     call(cb, null, obj, resp);
   };
 
   function onError(err, cb){
-    var errParsed;
-    var errObj = {status: err.status};
+    var errParsed, errObj, errType, key;
     try {
       errParsed = JSON.parse(err.responseText);
       //would prefer not to have a try/catch clause
-      errObj = extend(true, {}, errObj, errParsed);
-    } catch(e) {}
+      for(key in errors){
+        if(errors[key].name === errParsed.error){
+          errType = errors[key];
+          break;
+        }
+      }
+      errType = errType || errors.UNKNOWN_ERROR;
+      errObj = errors.error(errType, errParsed.reason);
+    } catch(e) {
+      errObj = errors.UNKNOWN_ERROR;
+    }
     call(cb, errObj);
   };
 
@@ -3518,9 +3545,9 @@ function ajax(options, callback) {
 
     function createCookie(name,value,days) {
       if (days) {
-	var date = new Date();
-	date.setTime(date.getTime()+(days*24*60*60*1000));
-	var expires = "; expires="+date.toGMTString();
+        var date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        var expires = "; expires="+date.toGMTString();
       } else {
         var expires = "";
       }
@@ -3600,7 +3627,7 @@ function ajax(options, callback) {
         err.status = response ? response.statusCode : 400;
         return call(onError, err, callback);
       }
-
+      var error;
       var content_type = response.headers['content-type'];
       var data = (body || '');
 
@@ -3620,8 +3647,17 @@ function ajax(options, callback) {
         if (options.binary) {
           data = JSON.parse(data.toString());
         }
-        data.status = response.statusCode;
-        call(callback, data);
+        if (data.reason === 'missing') {
+          error = errors.MISSING_DOC;
+        } else if (data.reason === 'no_db_file') {
+          error = errors.error(errors.DB_MISSING, data.reason);
+        } else if (data.error === 'conflict'){
+          error = errors.REV_CONFLICT;
+        } else {
+          error = errors.error(errors.UNKNOWN_ERROR, data.reason, data.error);
+        }
+        error.status = response.statusCode;
+        call(callback, error);
       }
     });
   }
@@ -3629,7 +3665,7 @@ function ajax(options, callback) {
 
 module.exports = ajax;
 
-},{"./blob.js":7,"./extend.js":9,"request":18}],7:[function(require,module,exports){
+},{"./blob.js":7,"./errors":8,"./extend.js":9,"request":18}],7:[function(require,module,exports){
 //Abstracts constructing a Blob object, so it also works in older
 //browsers that don't support the native Blob constructor. (i.e.
 //old QtWebKit versions, at least).
@@ -3656,82 +3692,116 @@ module.exports = createBlob;
 
 
 },{}],8:[function(require,module,exports){
-module.exports = {
-  MISSING_BULK_DOCS: {
-    status: 400,
-    error: 'bad_request',
-    reason: "Missing JSON list of 'docs'"
-  },
-  MISSING_DOC: {
-    status: 404,
-    error: 'not_found',
-    reason: 'missing'
-  },
-  REV_CONFLICT: {
-    status: 409,
-    error: 'conflict',
-    reason: 'Document update conflict'
-  },
-  INVALID_ID: {
-    status: 400,
-    error: 'invalid_id',
-    reason: '_id field must contain a string'
-  },
-  MISSING_ID: {
-    status: 412,
-    error: 'missing_id',
-    reason: '_id is required for puts'
-  },
-  RESERVED_ID: {
-    status: 400,
-    error: 'bad_request',
-    reason: 'Only reserved document ids may start with underscore.'
-  },
-  NOT_OPEN: {
-    status: 412,
-    error: 'precondition_failed',
-    reason: 'Database not open so cannot close'
-  },
-  UNKNOWN_ERROR: {
-    status: 500,
-    error: 'unknown_error',
-    reason: 'Database encountered an unknown error'
-  },
-  BAD_ARG: {
-    status: 500,
-    error: 'badarg',
-    reason: 'Some query argument is invalid'
-  },
-  INVALID_REQUEST: {
-    status: 400,
-    error: 'invalid_request',
-    reason: 'Request was invalid'
-  },
-  QUERY_PARSE_ERROR: {
-    status: 400,
-    error: 'query_parse_error',
-    reason: 'Some query parameter is invalid'
-  },
-  DOC_VALIDATION: {
-    status: 500,
-    error: 'doc_validation',
-    reason: 'Bad special document member'
-  },
-  BAD_REQUEST: {
-    status: 400,
-    error: 'bad_request',
-    reason: 'Something wrong with the request'
-  },
-  NOT_AN_OBJECT: {
-    status: 400,
-    error: 'bad_request',
-    reason: 'Document must be a JSON object'
-  },
-  DB_MISSING: {
-    status: 404,
-    error: 'not_found',
-    reason: 'Database not found'
+"use strict";
+
+function PouchError(opts) {
+  this.status = opts.status;
+  this.name = opts.error;
+  this.message = opts.reason;
+  this.error = true;
+}
+PouchError.prototype = new Error();
+
+
+exports.MISSING_BULK_DOCS = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: "Missing JSON list of 'docs'"
+});
+exports.MISSING_DOC = new PouchError({ 
+  status: 404,
+  error: 'not_found',
+  reason: 'missing'
+});
+exports.REV_CONFLICT = new PouchError({
+  status: 409,
+  error: 'conflict',
+  reason: 'Document update conflict'
+});
+exports.INVALID_ID = new PouchError({
+  status: 400,
+  error: 'invalid_id',
+  reason: '_id field must contain a string'
+});
+exports.MISSING_ID = new PouchError({
+  status: 412,
+  error: 'missing_id',
+  reason: '_id is required for puts'
+});
+exports.RESERVED_ID = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Only reserved document ids may start with underscore.'
+});
+exports.NOT_OPEN = new PouchError({
+  status: 412,
+  error: 'precondition_failed',
+  reason: 'Database not open so cannot close'
+});
+exports.UNKNOWN_ERROR = new PouchError({
+  status: 500,
+  error: 'unknown_error',
+  reason: 'Database encountered an unknown error'
+});
+exports.BAD_ARG = new PouchError({
+  status: 500,
+  error: 'badarg',
+  reason: 'Some query argument is invalid'
+});
+exports.INVALID_REQUEST = new PouchError({
+  status: 400,
+  error: 'invalid_request',
+  reason: 'Request was invalid'
+});
+exports.QUERY_PARSE_ERROR = new PouchError({
+  status: 400,
+  error: 'query_parse_error',
+  reason: 'Some query parameter is invalid'
+});
+exports.DOC_VALIDATION = new PouchError({
+  status: 500,
+  error: 'doc_validation',
+  reason: 'Bad special document member'
+});
+exports.BAD_REQUEST = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Something wrong with the request'
+});
+exports.NOT_AN_OBJECT = new PouchError({
+  status: 400,
+  error: 'bad_request',
+  reason: 'Document must be a JSON object'
+});
+exports.DB_MISSING = new PouchError({
+  status: 404,
+  error: 'not_found',
+  reason: 'Database not found'
+});
+exports.IDB_ERROR = new PouchError({
+  status: 500,
+  error: 'indexed_db_went_bad',
+  reason: 'unknown'
+});
+exports.WSQ_ERROR = new PouchError({
+  status: 500,
+  error: 'web_sql_went_bad',
+  reason: 'unknown'
+});
+exports.LDB_ERROR = new PouchError({
+  status: 500,
+  error: 'levelDB_went_went_bad',
+  reason: 'unknown'
+});
+exports.error = function (error, reason, name) {
+  function CustomPouchError(msg) {
+    this.message = reason;
+    if (name) {
+      this.name = name;
+    }
   }
+  CustomPouchError.prototype = error;
+  return new CustomPouchError(reason);
 };
 },{}],9:[function(require,module,exports){
 // Extends method
@@ -4994,9 +5064,6 @@ exports.Crypto = require('./deps/md5.js');
 var buffer = require('./deps/buffer');
 var errors = require('./deps/errors');
 
-exports.error = function (error, reason) {
-  return exports.extend({}, error, {reason: reason});
-};
 // List of top level reserved words for doc
 var reservedWords = [
   '_id',
