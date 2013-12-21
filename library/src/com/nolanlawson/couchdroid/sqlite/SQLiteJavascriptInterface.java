@@ -51,6 +51,7 @@ public class SQLiteJavascriptInterface {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PriorityQueue<WebSqlTask> queue = new PriorityQueue<WebSqlTask>();
     private final SparseArray<Set<Integer>> transactionIdsToCallbackIds = new SparseArray<Set<Integer>>();
+    private final SqliteStatementCache cache = new SqliteStatementCache();
 
     private Integer currentTransactionId = null;
 
@@ -178,7 +179,7 @@ public class SQLiteJavascriptInterface {
             // /* OPTIONAL changes for new Android SDK from HERE:
             if (android.os.Build.VERSION.SDK_INT >= 11
                     && (queryLower.startsWith("update") || queryLower.startsWith("delete"))) {
-                SQLiteStatement myStatement = db.compileStatement(query);
+                SQLiteStatement myStatement = compileStatementOrGetFromCache(db, query);
 
                 bindSelectArgs(myStatement, selectArgs);
 
@@ -189,7 +190,7 @@ public class SQLiteJavascriptInterface {
 
                 // to HERE. */
             } else if (queryLower.startsWith("insert") && selectArgs != null) {
-                SQLiteStatement myStatement = db.compileStatement(query);
+                SQLiteStatement myStatement = compileStatementOrGetFromCache(db, query);
 
                 bindSelectArgs(myStatement, selectArgs);
 
@@ -224,6 +225,19 @@ public class SQLiteJavascriptInterface {
             log.e(e, "unexpected");
             sendCallback(new JavascriptCallback(queryErrorId, createSqlError(e.getMessage())));
         }
+    }
+
+    private SQLiteStatement compileStatementOrGetFromCache(SQLiteDatabase db, String query) {
+        
+        SQLiteStatement result = cache.get(db.getPath(), query);
+        
+        if (result == null) {
+            result = db.compileStatement(query);
+            cache.put(db.getPath(), query, result);
+        } else {
+            log.d("Able to use cached sqlite statement for \"%s\"", query);
+        }
+        return result;
     }
 
     private String[] convertParamsToStringArray(List<Object> selectArgs) {
