@@ -76,8 +76,15 @@ public class AllDocsInfo<T extends PouchDocumentInterface> {
         private T doc;
         private String id;
         private String key;
+        private String error;
         private RowValue value;
         
+        public String getError() {
+            return error;
+        }
+        public void setError(String error) {
+            this.error = error;
+        }
         public T getDoc() {
             return doc;
         }
@@ -104,7 +111,7 @@ public class AllDocsInfo<T extends PouchDocumentInterface> {
         }
         @Override
         public String toString() {
-            return "Row [doc=" + doc + ", id=" + id + ", key=" + key + ", value=" + value + "]";
+            return "Row [doc=" + doc + ", id=" + id + ", key=" + key + ", error=" + error + ", value=" + value + "]";
         }
     }
     

@@ -1,8 +1,6 @@
 package com.nolanlawson.couchdroid;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 import android.annotation.SuppressLint;
@@ -17,8 +15,6 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
-import com.nolanlawson.couchdroid.migration.MigrationProgressListener;
-import com.nolanlawson.couchdroid.migration.MigrationProgressReporter;
 import com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface;
 import com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface;
 import com.nolanlawson.couchdroid.util.ResourceUtil;
@@ -33,15 +29,13 @@ public class CouchDroidRuntime {
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
     private static final boolean USE_WEINRE = true;
-    private static final boolean USE_MINIFIED_POUCH = false;
-    private static final boolean USE_MINIFIED_COUCHDROID = false;
+    private static final boolean USE_MINIFIED_POUCH = true;
+    private static final boolean USE_MINIFIED_COUCHDROID = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     private Activity activity;
     private WebView webView;
     private JSInterfaceVerifierCaller jsInterfaceVerifierCaller;
-    private MigrationProgressListener progressListener;
-    private List<MigrationProgressListener> clientProgressListeners = new ArrayList<MigrationProgressListener>();
     private OnReadyListener onReadyListener;
     
     /**
@@ -74,7 +68,6 @@ public class CouchDroidRuntime {
     public CouchDroidRuntime(Activity activity, OnReadyListener onReadyListener) {
         this.activity = activity;
         this.onReadyListener = onReadyListener;
-        this.progressListener = createProgressListener();
         
         initWebView();
         
@@ -92,33 +85,6 @@ public class CouchDroidRuntime {
         return webView;
     }
 
-    private MigrationProgressListener createProgressListener() {
-        // override the client listener to add our own
-        
-        return MigrationProgressListener.extend(clientProgressListeners, new MigrationProgressListener() {
-            
-            @Override
-            public void onStart() {
-                log.i("onMigrationStart()");
-            }
-            
-            @Override
-            public void onProgress(String tableName, int numRowsTotal, int numRowsLoaded) {
-                log.i("onMigrationProgress(%s, %s, %s)", tableName, numRowsTotal, numRowsLoaded);
-            }
-            
-            @Override
-            public void onEnd() {
-                log.i("onMigrationEnd()");
-            }
-
-            @Override
-            public void onDocsDeleted(int numDocumentsDeleted) {
-                log.i("onCheckDeletes(%s)", numDocumentsDeleted);
-            }
-        });
-    }
-    
     private void loadInitialJavascript() {
         
         // in Android 4.4+, IndexedDB is now available, so we need to remove it from the Pouch adapter list
@@ -175,7 +141,6 @@ public class CouchDroidRuntime {
         // TODO: combine all these javascript interfaces together, cordova-style
         webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), "SQLiteJavascriptInterface");
         webView.addJavascriptInterface(new XhrJavascriptInterface(this), "XhrJavascriptInterface");
-        webView.addJavascriptInterface(new MigrationProgressReporter(activity, progressListener), "ProgressReporter");
         webView.addJavascriptInterface(PouchJavascriptInterface.INSTANCE, "PouchJavascriptInterface");
         webView.addJavascriptInterface(new JSInterfaceVerifier(), "JSInterfaceVerifier");
         
@@ -264,7 +229,6 @@ public class CouchDroidRuntime {
                 
                 loadJavascript("if (!!window.SQLiteJavascriptInterface " +
                 		"&& !!window.XhrJavascriptInterface " +
-                		"&& !!window.ProgressReporter " +
                 		"&& !!window.PouchJavascriptInterface " +
                 		"&& !!window.JSInterfaceVerifier){JSInterfaceVerifier.callback();}");
                 
@@ -282,13 +246,5 @@ public class CouchDroidRuntime {
     
     public static interface OnReadyListener {
         public void onReady(CouchDroidRuntime runtime);
-    }
-
-    public void addListener(MigrationProgressListener listener) {
-        clientProgressListeners.add(listener);
-    }
-
-    public void removeListener(MigrationProgressListener migrationProgressListener) {
-        clientProgressListeners.remove(migrationProgressListener);
     }
 }

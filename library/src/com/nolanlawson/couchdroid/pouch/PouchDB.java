@@ -227,6 +227,10 @@ public class PouchDB<T extends PouchDocumentInterface> {
     public AllDocsInfo<T> allDocs(boolean includeDocs) throws PouchException {
         return allDocs(Maps.quickMap("include_docs", includeDocs));
     }
+    
+    public AllDocsInfo<T> allDocs(boolean includeDocs, List<String> keys) throws PouchException {
+        return allDocs(Maps.quickMap("include_docs", includeDocs, "keys", keys));
+    }
 
     public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
         

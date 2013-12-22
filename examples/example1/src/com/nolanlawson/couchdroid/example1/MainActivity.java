@@ -25,7 +25,7 @@ public class MainActivity extends CouchDroidActivity {
     
     private static final String COUCHDB_URL = "http://192.168.0.3:5984/pokemon";
     
-    private String localPouchName = "pokemon";
+    private String localPouchName;
     private static final boolean RANDOMIZE_DB = true;
     private static final boolean LOAD_ONLY_ONE_MONSTER = false;
     
@@ -46,8 +46,13 @@ public class MainActivity extends CouchDroidActivity {
         progressIndeterminate = (ProgressBar) findViewById(R.id.progress_indeterminate);
         
         progressIndeterminate.setVisibility(View.VISIBLE);
+        
+        localPouchName = "pokemon";
+        
+        if (RANDOMIZE_DB) {
+            localPouchName += Integer.toHexString(Math.abs(new Random().nextInt()));
+        } 
     }
-
     
     @Override
     public void onCouchDroidReady(final CouchDroidRuntime runtime) {
@@ -87,10 +92,6 @@ public class MainActivity extends CouchDroidActivity {
                 
                 text.setText(Html.fromHtml("Done loading pok&eacute;mon data, beginning Pouch transfer..."));
                 startTime = System.currentTimeMillis();
-                
-                if (RANDOMIZE_DB) {
-                    localPouchName = "pokemon_" + Integer.toHexString(Math.abs(new Random().nextInt()));
-                }
                 
                 runMigration();
             }
