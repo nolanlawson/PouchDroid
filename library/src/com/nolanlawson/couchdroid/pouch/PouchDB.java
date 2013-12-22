@@ -11,11 +11,11 @@ import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.pouch.callback.AllDocsCallback;
 import com.nolanlawson.couchdroid.pouch.callback.BulkCallback;
 import com.nolanlawson.couchdroid.pouch.callback.GetCallback;
+import com.nolanlawson.couchdroid.pouch.callback.ReplicateCallback;
 import com.nolanlawson.couchdroid.pouch.callback.StandardCallback;
 import com.nolanlawson.couchdroid.pouch.model.AllDocsInfo;
 import com.nolanlawson.couchdroid.pouch.model.PouchError;
 import com.nolanlawson.couchdroid.pouch.model.PouchInfo;
-import com.nolanlawson.couchdroid.pouch.model.ReplicateInfo;
 import com.nolanlawson.couchdroid.util.Maps;
 
 public class PouchDB<T extends PouchDocumentInterface> {
@@ -121,44 +121,71 @@ public class PouchDB<T extends PouchDocumentInterface> {
         return new AsyncPouchDB<T>(documentClass, runtime, name, autoCompaction);
     }
     
+    /**
+     * @see AsyncPouchDB#getName()
+     */
     public String getName() {
         return delegate.getName();
     }
-
+    
+    /**
+     * @see AsyncPouchDB#isDestroyed()
+     */
     public boolean isDestroyed() {
         return delegate.isDestroyed();
     }
 
+    /**
+     * @see AsyncPouchDB#destroy(options, callback)
+     */
     public PouchInfo destroy(Map<String, Object> options) throws PouchException {
         BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
         delegate.destroy(options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#destroy(options, callback)
+     */
     public PouchInfo destroy() throws PouchException {
         return destroy(null);
     }
 
+    /**
+     * @see AsyncPouchDB#put(doc, options, callback)
+     */
     public PouchInfo put(T doc, Map<String, Object> options) throws PouchException {
         BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
         delegate.put(doc, options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#put(doc, options, callback)
+     */
     public PouchInfo put(T doc) throws PouchException {
         return put(doc, null);
     }
 
+    /**
+     * @see AsyncPouchDB#post(doc, options, callback)
+     */
     public PouchInfo post(T doc, Map<String, Object> options) throws PouchException {
         BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
         delegate.post(doc, options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#post(doc, options, callback)
+     */
     public PouchInfo post(T doc) throws PouchException {
         return post(doc, null);
     }
 
+    /**
+     * @see AsyncPouchDB#get(docid, options, callback)
+     */
     public T get(String docid, Map<String, Object> options) throws PouchException {
         final BlockingQueue<PouchResponse<T>> lock = createLock();
 
@@ -173,20 +200,32 @@ public class PouchDB<T extends PouchDocumentInterface> {
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#get(docid, options, callback)
+     */
     public T get(String docid) throws PouchException {
         return get(docid, null);
     }
 
+    /**
+     * @see AsyncPouchDB#remove(doc, options, callback)
+     */
     public PouchInfo remove(T doc, Map<String, Object> options) throws PouchException {
         final BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
         delegate.remove(doc, options, createStandardCallback(lock));
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#remove(doc, options, callback)
+     */
     public PouchInfo remove(T doc) throws PouchException {
         return remove(doc, null);
     }
 
+    /**
+     * @see AsyncPouchDB#bulkDocs(docs, options, callback)
+     */
     public List<PouchInfo> bulkDocs(List<T> docs, Map<String, Object> options) throws PouchException {
         final BlockingQueue<PouchResponse<List<PouchInfo>>> lock = createLock();
 
@@ -201,10 +240,16 @@ public class PouchDB<T extends PouchDocumentInterface> {
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#bulkDocs(docs, options, callback)
+     */
     public List<PouchInfo> bulkDocs(List<T> docs) throws PouchException {
         return bulkDocs(docs, null);
     }
 
+    /**
+     * @see AsyncPouchDB#allDocs(includeDocs, options)
+     */
     public AllDocsInfo<T> allDocs(Map<String, Object> options) throws PouchException {
         final BlockingQueue<PouchResponse<AllDocsInfo<T>>> lock = createLock();
 
@@ -219,48 +264,124 @@ public class PouchDB<T extends PouchDocumentInterface> {
         return waitAndReturn(lock);
     }
 
+    /**
+     * @see AsyncPouchDB#allDocs(includeDocs, options)
+     */
     public AllDocsInfo<T> allDocs() throws PouchException {
         return allDocs(null);
     }
     
+    /**
+     * @see AsyncPouchDB#allDocs(includeDocs, options)
+     */
     public AllDocsInfo<T> allDocs(boolean includeDocs) throws PouchException {
         return allDocs(Maps.quickMap("include_docs", includeDocs));
     }
     
+    /**
+     * @see AsyncPouchDB#allDocs(includeDocs, options)
+     */
     public AllDocsInfo<T> allDocs(boolean includeDocs, List<String> keys) throws PouchException {
         return allDocs(Maps.quickMap("include_docs", includeDocs, "keys", keys));
     }
-
-    public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
-        delegate.replicateTo(remoteDB, options, null);
+    
+    /**
+     * 
+     * Replicates to the remote database.
+     * 
+     * <p/>Note that this call returns when the request is <em>sent</em>.  The request
+     * may or may not be fulfilled by the remote CouchDB; use the Async api's "complete" listener to verify
+     * replication.
+     * 
+     * @see AsyncPouchDB#replicateTo(remoteDB, options, complete)
+     */    
+    public void replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
+        delegate.replicateTo(remoteDB, options, (ReplicateCallback)null);
         // replication cannot block, because we can't be 100% sure that "complete" will be called back
         // (even if it's not continuous)
         // TODO: this is unexpected
-        return null;
-    }
-
-    public ReplicateInfo replicateTo(String remoteDB) throws PouchException {
-        return replicateTo(remoteDB, null);
     }
     
-    public ReplicateInfo replicateTo(String remoteDB, boolean continuous) throws PouchException {
-        return replicateTo(remoteDB, Maps.quickMap("continuous", continuous));
+    /**
+     * 
+     * Replicates to the remote database.
+     * 
+     * <p/>Note that this call returns when the request is <em>sent</em>.  The request
+     * may or may not be fulfilled by the remote CouchDB; use the Async api's "complete" listener to verify
+     * replication.
+     * 
+     * @see AsyncPouchDB#replicateTo(remoteDB, options, complete)
+     */    
+    public void replicateTo(String remoteDB) throws PouchException {
+        replicateTo(remoteDB, null);
+    }
+    
+    /**
+     * 
+     * Replicates to the remote database.
+     * 
+     * <p/>Note that this call returns when the request is <em>sent</em>.  The request
+     * may or may not be fulfilled by the remote CouchDB; use the Async api's "complete" listener to verify
+     * replication.
+     * 
+     * @see AsyncPouchDB#replicateTo(remoteDB, options, complete)
+     */    
+    public void replicateTo(String remoteDB, boolean continuous) throws PouchException {
+        replicateTo(remoteDB, Maps.quickMap("continuous", continuous));
     }
 
-    public ReplicateInfo replicateFrom(String remoteDB, Map<String, Object> options) throws PouchException {
-        delegate.replicateFrom(remoteDB, options, null);
+    /**
+     * 
+     * Replicates from the remote database.
+     * 
+     * <p/>Note that this call returns when the request is <em>sent</em>.  The request
+     * may or may not be fulfilled by the remote CouchDB; use the Async api's "complete" listener to verify
+     * replication.
+     * 
+     * @see AsyncPouchDB#replicateFrom(remoteDB, options, complete)
+     */
+    
+    public void replicateFrom(String remoteDB, Map<String, Object> options) throws PouchException {
+        delegate.replicateFrom(remoteDB, options, (ReplicateCallback)null);
         // replication cannot block, because we can't be 100% sure that "complete" will be called back
         // (even if it's not continuous)
         // TODO: this is unexpected
-        return null;
-    }
-
-    public ReplicateInfo replicateFrom(String remoteDB) throws PouchException {
-        return replicateFrom(remoteDB, null);
     }
     
-    public ReplicateInfo replicateFrom(String remoteDB, boolean continuous) throws PouchException {
-        return replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
+    /**
+     * 
+     * Replicates from the remote database.
+     * 
+     * <p/>Note that this call returns when the request is <em>sent</em>.  The request
+     * may or may not be fulfilled by the remote CouchDB; use the Async api's "complete" listener to verify
+     * replication.
+     * 
+     * @see AsyncPouchDB#replicateFrom(remoteDB, options, complete)
+     */
+    public void replicateFrom(String remoteDB) throws PouchException {
+        replicateFrom(remoteDB, null);
+    }
+    
+    /**
+     * 
+     * Replicates from the remote database.
+     * 
+     * <p/>Note that this call returns when the request is <em>sent</em>.  The request
+     * may or may not be fulfilled by the remote CouchDB; use the Async api's "complete" listener to verify
+     * replication.
+     * 
+     * @see AsyncPouchDB#replicateFrom(remoteDB, options, complete)
+     */
+    public void replicateFrom(String remoteDB, boolean continuous) throws PouchException {
+        replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
+    }
+    
+    /**
+     * Returns the underlying AsyncPouchDB, in case you want to do some asynchronous calls as well.
+     * @return
+     */
+    public AsyncPouchDB<T> getAsyncPouchDB() {
+        return delegate;
     }
     
     private StandardCallback createStandardCallback(final BlockingQueue<PouchResponse<PouchInfo>> lock) {

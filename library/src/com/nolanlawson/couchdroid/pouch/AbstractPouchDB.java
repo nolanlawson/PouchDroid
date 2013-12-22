@@ -11,9 +11,9 @@ import com.nolanlawson.couchdroid.pouch.callback.StandardCallback;
 
 
 /**
- * Superclass for {@code PouchDB}, purely to avoid having a billion lines of Javadoc mixed in with the source code.
+ * Superclass for {@code AsyncPouchDB}, purely to avoid having a billion lines of Javadoc mixed in with the source code.
  * 
- * <p/>Also, it's Java.  We'll eventually have an {@code AbstractPouchDBFactoryBeanMethodImpl}.
+ * <p/>Also, it's Java.  We'll eventually have an {@code AbstractPouchDBFactoryBeanFactoryImpl}.
  * 
  * @author nolan
  *

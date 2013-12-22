@@ -52,10 +52,18 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
                 .append(");"));
     }
     
+    /**
+     * Returns the name of the database that was provided in the constructor call.
+     * @return
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns true if this database was destroyed, i.e. the database was deleted.
+     * @return
+     */
     public boolean isDestroyed() {
         return destroyed;
     }
