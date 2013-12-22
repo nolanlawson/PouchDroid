@@ -12,7 +12,7 @@ import android.util.Log;
  */
 public class UtilLogger {
 
-	public static final boolean DEBUG_MODE = true;
+	public static final boolean DEBUG_MODE = false;
 	
 	//public static final Set<String> SILENCE_TAGS = new HashSet<String>(Arrays.asList("SQLiteJavascriptInterface"));
 	public static final Set<String> SILENCE_TAGS = Collections.emptySet();

@@ -128,6 +128,7 @@ public class CouchDroidMigrationTask {
             public void onEnd() {
                 // delete to free up memory
                 runtime.loadJavascript("delete CouchDroid.migrationHelper;");
+                runtime.removeListener(this);
             }
         });
     }

@@ -287,4 +287,8 @@ public class CouchDroidRuntime {
     public void addListener(MigrationProgressListener listener) {
         clientProgressListeners.add(listener);
     }
+
+    public void removeListener(MigrationProgressListener migrationProgressListener) {
+        clientProgressListeners.remove(migrationProgressListener);
+    }
 }

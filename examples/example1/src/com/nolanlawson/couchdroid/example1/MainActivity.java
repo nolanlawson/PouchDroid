@@ -170,7 +170,13 @@ public class MainActivity extends CouchDroidActivity {
             protected void onPostExecute(Void result) {
                 super.onPostExecute(result);
                 text.setText(text.getText() + "\nDatabase replicated as well!");
-                deleteAndContinue();
+                
+                String sql = "select count(*) from Monsters where nationalDexNumber > 151";
+                long count = sqliteDatabase.compileStatement(sql).simpleQueryForLong();
+                
+                if (count > 0) { //haven't deleted pokemon yet
+                    deleteAndContinue();
+                }
             }
         }.execute((Void)null);
     }    
