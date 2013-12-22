@@ -2,7 +2,6 @@ package com.nolanlawson.couchdroid.example3;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import android.os.Bundle;
@@ -20,14 +19,13 @@ import com.nolanlawson.couchdroid.pouch.model.AllDocsInfo;
 import com.nolanlawson.couchdroid.pouch.model.PouchError;
 import com.nolanlawson.couchdroid.pouch.model.PouchInfo;
 import com.nolanlawson.couchdroid.pouch.model.ReplicateInfo;
-import com.nolanlawson.couchdroid.util.Maps;
 import com.nolanlawson.couchdroid.util.UtilLogger;
 
 public class MainActivity extends CouchDroidActivity {
 
     private static UtilLogger log = new UtilLogger(MainActivity.class);
     
-    private static final String REMOTE_COUCHDB_URL = "http://admin:password@192.168.0.3:5984/robots";
+    private static final String REMOTE_COUCHDB_URL = "http://192.168.0.3:5984/robots";
     
     private AsyncPouchDB<Robot> pouch1, pouch2;
     
@@ -130,12 +128,10 @@ public class MainActivity extends CouchDroidActivity {
             }
         };
         
-        Map<String, Object> options = Maps.quickMap("continuous", true);
-        
-        pouch1.replicateFrom(REMOTE_COUCHDB_URL, options, onReplicateFrom);
-        pouch1.replicateTo(REMOTE_COUCHDB_URL, options, onReplicateTo);
-        pouch2.replicateFrom(REMOTE_COUCHDB_URL, options, onReplicateFrom);
-        pouch2.replicateTo(REMOTE_COUCHDB_URL, options, onReplicateTo);
+        pouch1.replicateFrom(REMOTE_COUCHDB_URL, true, onReplicateFrom);
+        pouch1.replicateTo(REMOTE_COUCHDB_URL, true, onReplicateTo);
+        pouch2.replicateFrom(REMOTE_COUCHDB_URL, true, onReplicateFrom);
+        pouch2.replicateTo(REMOTE_COUCHDB_URL, true, onReplicateTo);
         
         final int DELAY = 10000;
         
@@ -157,7 +153,7 @@ public class MainActivity extends CouchDroidActivity {
             
             @Override
             public void onCallback(PouchError err, AllDocsInfo<Robot> info) {
-                log.i("pouch1 contains %s", info.getDocuments());
+                log.i("pouch1 contains %s docs: %s", info.getDocuments().size(), info.getDocuments());
                 
             }
         });
@@ -167,7 +163,7 @@ public class MainActivity extends CouchDroidActivity {
             
             @Override
             public void onCallback(PouchError err, AllDocsInfo<Robot> info) {
-                log.i("pouch2 contains %s", info.getDocuments());
+                log.i("pouch2 contains %s docs: %s", info.getDocuments().size(), info.getDocuments());
                 
             }
         });
