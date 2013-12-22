@@ -11,7 +11,6 @@ import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.pouch.callback.AllDocsCallback;
 import com.nolanlawson.couchdroid.pouch.callback.BulkCallback;
 import com.nolanlawson.couchdroid.pouch.callback.GetCallback;
-import com.nolanlawson.couchdroid.pouch.callback.ReplicateCallback;
 import com.nolanlawson.couchdroid.pouch.callback.StandardCallback;
 import com.nolanlawson.couchdroid.pouch.model.AllDocsInfo;
 import com.nolanlawson.couchdroid.pouch.model.PouchError;
@@ -233,22 +232,11 @@ public class PouchDB<T extends PouchDocumentInterface> {
     }
 
     public ReplicateInfo replicateTo(String remoteDB, Map<String, Object> options) throws PouchException {
-        
-        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
-
-        delegate.replicateTo(remoteDB, options, new ReplicateCallback() {
-
-            @Override
-            public void onCallback(PouchError err, ReplicateInfo info) {
-
-                lock.offer(new PouchResponse<ReplicateInfo>(err, info));
-            }
-        });
-        if (options != null && Boolean.TRUE.equals(options.get("continuous"))) {
-            // no need to lock the thread; this is continuous replication
-            return null;
-        }
-        return waitAndReturn(lock);
+        delegate.replicateTo(remoteDB, options, null);
+        // replication cannot block, because we can't be 100% sure that "complete" will be called back
+        // (even if it's not continuous)
+        // TODO: this is unexpected
+        return null;
     }
 
     public ReplicateInfo replicateTo(String remoteDB) throws PouchException {
@@ -260,21 +248,11 @@ public class PouchDB<T extends PouchDocumentInterface> {
     }
 
     public ReplicateInfo replicateFrom(String remoteDB, Map<String, Object> options) throws PouchException {
-        final BlockingQueue<PouchResponse<ReplicateInfo>> lock = createLock();
-
-        delegate.replicateFrom(remoteDB, options, new ReplicateCallback() {
-
-            @Override
-            public void onCallback(PouchError err, ReplicateInfo info) {
-
-                lock.offer(new PouchResponse<ReplicateInfo>(err, info));
-            }
-        });
-        if (options != null && Boolean.TRUE.equals(options.get("continuous"))) {
-            // no need to lock the thread; this is continuous replication
-            return null;
-        }
-        return waitAndReturn(lock);
+        delegate.replicateFrom(remoteDB, options, null);
+        // replication cannot block, because we can't be 100% sure that "complete" will be called back
+        // (even if it's not continuous)
+        // TODO: this is unexpected
+        return null;
     }
 
     public ReplicateInfo replicateFrom(String remoteDB) throws PouchException {

@@ -28,7 +28,7 @@ public class CouchDroidRuntime {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
-    private static final boolean USE_WEINRE = true;
+    private static final boolean USE_WEINRE = false;
     private static final boolean USE_MINIFIED_POUCH = true;
     private static final boolean USE_MINIFIED_COUCHDROID = true;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
@@ -131,7 +131,6 @@ public class CouchDroidRuntime {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDatabaseEnabled(false); // we're overriding websql
         webView.getSettings().setDomStorageEnabled(USE_WEINRE); // pouch needs to call localStorage.  we fake it.
-        
         if (Build.VERSION.SDK_INT >= 11) {
             webView.getSettings().setAllowContentAccess(false); // don't need it
         }

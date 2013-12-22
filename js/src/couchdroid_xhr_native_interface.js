@@ -52,6 +52,18 @@
         }
     };
 
+    NativeXMLHttpRequest.prototype.callOnReadyStateChange = function() {
+        var self = this;
+
+        debug('calling onreadystatechange...');
+        try {
+            self.onreadystatechange();
+        } catch (err2) {
+            window.console.log('onreadystatechange threw error: ' + JSON.stringify(err2));
+        }
+        debug('called onreadystatechange.');
+    };
+
     NativeXMLHttpRequest.prototype.onNativeCallback = function (err, statusCode, content) {
         var self = this;
         debug('onNativeCallback(' + statusCode +', ' + content +')');
@@ -59,23 +71,16 @@
         if (err) {
             // TODO: do something?
             window.console.log(JSON.stringify(err));
-        } else {
-            self.status = statusCode;
-            self.readyState = STATES.DONE;
-
-            self.responseText = content;
-
-            debug('calling onreadystatechange...');
-            try {
-                self.onreadystatechange();
-            } catch (err2) {
-                window.console.log('onreadystatechange threw error: ' + JSON.stringify(err2));
-            }
-            debug('called onreadystatechange.');
         }
 
+        self.readyState = STATES.DONE;
+        self.status = statusCode;
+        self.responseText = content;
+
+        self.callOnReadyStateChange();
+
         // we don't need the xhr callback anymore; we can delete it
-        delete CouchDroid.NativeXMLHttpRequests[self.id];
+        //delete CouchDroid.NativeXMLHttpRequests[self.id];
     };
 
     NativeXMLHttpRequest.prototype.open = function (method, url) {
@@ -92,7 +97,8 @@
         var self = this;
 
         debug('abort()');
-        self.state = STATES.DONE;
+
+        // notify Java
         var selfStringified = JSON.stringify(self);
         try {
             XhrJavascriptInterface.abort(selfStringified);

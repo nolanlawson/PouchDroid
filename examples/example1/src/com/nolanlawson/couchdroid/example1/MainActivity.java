@@ -20,6 +20,7 @@ import com.nolanlawson.couchdroid.example1.pojo.PocketMonster;
 import com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask;
 import com.nolanlawson.couchdroid.migration.MigrationProgressListener;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
+import com.nolanlawson.couchdroid.pouch.PouchException;
 
 public class MainActivity extends CouchDroidActivity {
     
@@ -44,7 +45,10 @@ public class MainActivity extends CouchDroidActivity {
         text = (TextView) findViewById(android.R.id.text1);
         progress = (ProgressBar) findViewById(android.R.id.progress);
         progressIndeterminate = (ProgressBar) findViewById(R.id.progress_indeterminate);
-        
+    }
+    
+    @Override
+    public void onCouchDroidReady(final CouchDroidRuntime runtime) {
         progressIndeterminate.setVisibility(View.VISIBLE);
         
         localPouchName = "pokemon";
@@ -52,12 +56,7 @@ public class MainActivity extends CouchDroidActivity {
         if (RANDOMIZE_DB) {
             localPouchName += Integer.toHexString(Math.abs(new Random().nextInt()));
         } 
-    }
-    
-    @Override
-    public void onCouchDroidReady(final CouchDroidRuntime runtime) {
         doInitialMigration();
-
     }
     
     @Override
@@ -66,6 +65,11 @@ public class MainActivity extends CouchDroidActivity {
         if (sqliteDatabase != null) {
             sqliteDatabase.close();
         }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
     
     private void doInitialMigration() {
@@ -162,8 +166,12 @@ public class MainActivity extends CouchDroidActivity {
                 
                 PouchDB<PocketMonster> pouch = PouchDB.newPouchDB(PocketMonster.class, getCouchDroidRuntime(), 
                         localPouchName);
-                
-                pouch.replicateTo(COUCHDB_URL);
+                try {
+                    pouch.replicateTo(COUCHDB_URL);
+                } catch (PouchException e) {
+                    e.printStackTrace();
+                    // remote couch not accessible; just ignore
+                }
                 return null;
             }
 
@@ -176,14 +184,20 @@ public class MainActivity extends CouchDroidActivity {
                 long count = sqliteDatabase.compileStatement(sql).simpleQueryForLong();
                 
                 if (count > 0) { //haven't deleted pokemon yet
-                    deleteAndContinue();
+                    modifyDbAndContinue();
                 }
             }
         }.execute((Void)null);
     }    
     
-    private void deleteAndContinue() {
-        sqliteDatabase.execSQL("delete from Monsters where nationalDexNumber > 151"); // I hate the later Pokemon
+    private void modifyDbAndContinue() {
+        
+        // I hate the later Pokemon
+        sqliteDatabase.execSQL("delete from Monsters where nationalDexNumber > 151");
+        
+        // use the Japanese name for Jigglypuff
+        sqliteDatabase.execSQL("update Monsters set name = 'Purin' where nationalDexNumber = 39");
+        
         runMigration();
         
     }

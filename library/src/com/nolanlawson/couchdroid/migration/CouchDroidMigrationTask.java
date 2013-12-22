@@ -24,7 +24,7 @@ public class CouchDroidMigrationTask {
 
     private static UtilLogger log = new UtilLogger(CouchDroidMigrationTask.class);
 
-    private static final int BATCH_SIZE_HIMEM = 50;
+    private static final int BATCH_SIZE_HIMEM = 25;
     private static final int BATCH_SIZE_LOMEM = 5;
     private static final int SDK_INT_CUTOFF = 11; // assume devices < sdk 11 are low-memory (TODO: better method?)
     

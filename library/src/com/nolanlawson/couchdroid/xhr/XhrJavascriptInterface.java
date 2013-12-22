@@ -33,6 +33,7 @@ import android.annotation.SuppressLint;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.webkit.JavascriptInterface;
 
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
@@ -61,6 +62,7 @@ public class XhrJavascriptInterface {
     }
 
     private Set<Integer> aborted = new HashSet<Integer>();
+    private SparseArray<HttpUriRequest> requests = new SparseArray<HttpUriRequest>();
     
     @JavascriptInterface
     public void abort(String xhrJsonObj) {
@@ -68,8 +70,13 @@ public class XhrJavascriptInterface {
         try{
             
             JsonNode xhrAsJsonNode = objectMapper.readTree(xhrJsonObj);
-            // TODO: memory leak
-            aborted.add(xhrAsJsonNode.get("id").asInt());
+            int xhrId = xhrAsJsonNode.get("id").asInt();
+            HttpUriRequest request = requests.get(xhrId);
+            if (request != null) {
+                request.abort();
+            } else { // try to abort later
+                aborted.add(xhrId); // TODO: possible memory leak
+            }
         } catch (IOException e) {
             // shouldn't happen
             log.e(e, "unexpected");
@@ -117,6 +124,7 @@ public class XhrJavascriptInterface {
 
         if (aborted.contains(xhrId)) {
             log.i("aborted %d", xhrId);
+            callback(xhrId, "aborted", 0, null);
             return;
         }
         
@@ -141,6 +149,7 @@ public class XhrJavascriptInterface {
         final HttpClient client = new DefaultHttpClient();
         client.getParams().setParameter("http.socket.timeout", timeout);
         final HttpUriRequest request = createRequest(method, url);
+        requests.put(xhrId, request);
         
         for (Entry<String, String> entry : requestHeaders.entrySet()) {
             request.setHeader(entry.getKey(), entry.getValue());
@@ -173,23 +182,24 @@ public class XhrJavascriptInterface {
             protected void onPostExecute(SimpleHttpResponse response) {
                 super.onPostExecute(response);
                 
-                if (response == null) {
-                    log.e("http response is null.  Did you remember to add " +
-                    		"<uses-permission android:name=\"android.permission.INTERNET\"/> " +
-                    		"to your AndroidManifest.xml?");
-                    return;
-                }
-                
                 try {
+                    if (response == null) {
+                        log.e("http response is null.  Did you remember to add " +
+                        		"<uses-permission android:name=\"android.permission.INTERNET\"/> " +
+                        		"to your AndroidManifest.xml?  Is the target URL available?");
+                        callback(xhrId, "aborted or URL not accessible", 0, null);
+                        return;
+                    }
                     
                     if (aborted.contains(xhrId)) {
                         log.i("aborted %d", xhrId);
+                        callback(xhrId, "aborted", 0, null);
                         return;
                     }
                     callback(xhrId, null, response.statusCode, response.body);
                     
                 } catch (Exception e) {
-                    log.e(e, "exception within onPostExecute");
+                    log.e(e, "exception within onPostExecute"); // shouldn't happen
                 }
             }
             
@@ -206,11 +216,15 @@ public class XhrJavascriptInterface {
     private void callback(int xhrId, String error, int statusCode, String content) throws IOException {
         log.d("callback()");
         
+        // cleanup
+        aborted.remove(xhrId);
+        requests.remove(xhrId);
+        
         final String js  = new StringBuilder()
             .append("CouchDroid.NativeXMLHttpRequests[")
             .append(xhrId)
             .append("].onNativeCallback(")
-            .append(error)
+            .append(TextUtils.isEmpty(error) ? "null" : objectMapper.writeValueAsString(error))
             .append(",")
             .append(statusCode)
             .append(",")
