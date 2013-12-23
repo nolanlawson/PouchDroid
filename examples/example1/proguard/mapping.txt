@@ -2599,32 +2599,32 @@ android.support.v4.widget.ViewDragHelper$Callback -> android.support.v4.widget.v
     boolean tryCaptureView$5359dc96(android.view.View) -> a
     int clampViewPositionHorizontal$17e143b0(android.view.View,int) -> b
     int clampViewPositionVertical$17e143b0(android.view.View) -> d
-com.nolanlawson.couchdroid.CouchDroidActivity -> com.nolanlawson.couchdroid.CouchDroidActivity:
-    com.nolanlawson.couchdroid.CouchDroidRuntime couchDroidRuntime -> couchDroidRuntime
-    void onCouchDroidReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onCouchDroidReady
+com.pouchdb.pouchdroid.PouchDroidActivity -> com.pouchdb.pouchdroid.PouchDroidActivity:
+    com.pouchdb.pouchdroid.PouchDroidRuntime couchDroidRuntime -> couchDroidRuntime
+    void onPouchDroidReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onPouchDroidReady
     void onResume() -> onResume
     void onPause() -> onPause
-com.nolanlawson.couchdroid.CouchDroidActivity$1 -> com.nolanlawson.couchdroid.CouchDroidActivity$1:
-    com.nolanlawson.couchdroid.CouchDroidActivity this$0 -> this$0
-    void onReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onReady
-com.nolanlawson.couchdroid.CouchDroidFragment -> com.nolanlawson.couchdroid.CouchDroidFragment:
-    com.nolanlawson.couchdroid.CouchDroidRuntime couchDroidRuntime -> couchDroidRuntime
-    void onCouchDroidReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onCouchDroidReady
+com.pouchdb.pouchdroid.PouchDroidActivity$1 -> com.pouchdb.pouchdroid.PouchDroidActivity$1:
+    com.pouchdb.pouchdroid.PouchDroidActivity this$0 -> this$0
+    void onReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onReady
+com.pouchdb.pouchdroid.PouchDroidFragment -> com.pouchdb.pouchdroid.PouchDroidFragment:
+    com.pouchdb.pouchdroid.PouchDroidRuntime couchDroidRuntime -> couchDroidRuntime
+    void onPouchDroidReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onPouchDroidReady
     void onResume() -> onResume
     void onPause() -> onPause
-com.nolanlawson.couchdroid.CouchDroidFragment$1 -> com.nolanlawson.couchdroid.CouchDroidFragment$1:
-    com.nolanlawson.couchdroid.CouchDroidFragment this$0 -> this$0
-    void onReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onReady
-com.nolanlawson.couchdroid.CouchDroidListActivity -> com.nolanlawson.couchdroid.CouchDroidListActivity:
-    com.nolanlawson.couchdroid.CouchDroidRuntime couchDroidRuntime -> couchDroidRuntime
-    void onCouchDroidReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onCouchDroidReady
+com.pouchdb.pouchdroid.PouchDroidFragment$1 -> com.pouchdb.pouchdroid.PouchDroidFragment$1:
+    com.pouchdb.pouchdroid.PouchDroidFragment this$0 -> this$0
+    void onReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onReady
+com.pouchdb.pouchdroid.PouchDroidListActivity -> com.pouchdb.pouchdroid.PouchDroidListActivity:
+    com.pouchdb.pouchdroid.PouchDroidRuntime couchDroidRuntime -> couchDroidRuntime
+    void onPouchDroidReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onPouchDroidReady
     void onResume() -> onResume
     void onPause() -> onPause
-com.nolanlawson.couchdroid.CouchDroidListActivity$1 -> com.nolanlawson.couchdroid.CouchDroidListActivity$1:
-    com.nolanlawson.couchdroid.CouchDroidListActivity this$0 -> this$0
-    void onReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onReady
-com.nolanlawson.couchdroid.CouchDroidRuntime -> com.nolanlawson.couchdroid.CouchDroidRuntime:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.PouchDroidListActivity$1 -> com.pouchdb.pouchdroid.PouchDroidListActivity$1:
+    com.pouchdb.pouchdroid.PouchDroidListActivity this$0 -> this$0
+    void onReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onReady
+com.pouchdb.pouchdroid.PouchDroidRuntime -> com.pouchdb.pouchdroid.PouchDroidRuntime:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     int JSINTERFACE_VERIFIER_CALLER_INTERVAL -> JSINTERFACE_VERIFIER_CALLER_INTERVAL
     boolean USE_WEINRE -> USE_WEINRE
     boolean USE_MINIFIED_POUCH -> USE_MINIFIED_POUCH
@@ -2632,74 +2632,74 @@ com.nolanlawson.couchdroid.CouchDroidRuntime -> com.nolanlawson.couchdroid.Couch
     java.lang.String WEINRE_URL -> WEINRE_URL
     android.app.Activity activity -> activity
     android.webkit.WebView webView -> webView
-    com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifierCaller jsInterfaceVerifierCaller -> jsInterfaceVerifierCaller
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener progressListener -> progressListener
+    com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifierCaller jsInterfaceVerifierCaller -> jsInterfaceVerifierCaller
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener progressListener -> progressListener
     java.util.List clientProgressListeners -> clientProgressListeners
-    com.nolanlawson.couchdroid.CouchDroidRuntime$OnReadyListener onReadyListener -> onReadyListener
+    com.pouchdb.pouchdroid.PouchDroidRuntime$OnReadyListener onReadyListener -> onReadyListener
     android.app.Activity getActivity() -> getActivity
     android.webkit.WebView getWebView() -> getWebView
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener createProgressListener() -> createProgressListener
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener createProgressListener() -> createProgressListener
     void loadInitialJavascript() -> loadInitialJavascript
     void loadJavascript(java.lang.CharSequence) -> loadJavascript
     void initWebView() -> initWebView
     void close() -> close
-    void addListener(com.nolanlawson.couchdroid.migration.CouchDroidProgressListener) -> addListener
-    com.nolanlawson.couchdroid.util.UtilLogger access$0() -> access$0
-    com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifierCaller access$1(com.nolanlawson.couchdroid.CouchDroidRuntime) -> access$1
-    void access$2(com.nolanlawson.couchdroid.CouchDroidRuntime) -> access$2
-    com.nolanlawson.couchdroid.CouchDroidRuntime$OnReadyListener access$3(com.nolanlawson.couchdroid.CouchDroidRuntime) -> access$3
-    android.app.Activity access$4(com.nolanlawson.couchdroid.CouchDroidRuntime) -> access$4
-    java.util.List access$5(com.nolanlawson.couchdroid.CouchDroidRuntime) -> access$5
-    android.webkit.WebView access$6(com.nolanlawson.couchdroid.CouchDroidRuntime) -> access$6
-com.nolanlawson.couchdroid.CouchDroidRuntime$1 -> com.nolanlawson.couchdroid.CouchDroidRuntime$1:
-    com.nolanlawson.couchdroid.CouchDroidRuntime this$0 -> this$0
-    void onProgress(com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
-com.nolanlawson.couchdroid.CouchDroidRuntime$2 -> com.nolanlawson.couchdroid.CouchDroidRuntime$2:
-    com.nolanlawson.couchdroid.CouchDroidRuntime this$0 -> this$0
+    void addListener(com.pouchdb.pouchdroid.migration.PouchDroidProgressListener) -> addListener
+    com.pouchdb.pouchdroid.util.UtilLogger access$0() -> access$0
+    com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifierCaller access$1(com.pouchdb.pouchdroid.PouchDroidRuntime) -> access$1
+    void access$2(com.pouchdb.pouchdroid.PouchDroidRuntime) -> access$2
+    com.pouchdb.pouchdroid.PouchDroidRuntime$OnReadyListener access$3(com.pouchdb.pouchdroid.PouchDroidRuntime) -> access$3
+    android.app.Activity access$4(com.pouchdb.pouchdroid.PouchDroidRuntime) -> access$4
+    java.util.List access$5(com.pouchdb.pouchdroid.PouchDroidRuntime) -> access$5
+    android.webkit.WebView access$6(com.pouchdb.pouchdroid.PouchDroidRuntime) -> access$6
+com.pouchdb.pouchdroid.PouchDroidRuntime$1 -> com.pouchdb.pouchdroid.PouchDroidRuntime$1:
+    com.pouchdb.pouchdroid.PouchDroidRuntime this$0 -> this$0
+    void onProgress(com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
+com.pouchdb.pouchdroid.PouchDroidRuntime$2 -> com.pouchdb.pouchdroid.PouchDroidRuntime$2:
+    com.pouchdb.pouchdroid.PouchDroidRuntime this$0 -> this$0
     java.lang.CharSequence val$javascript -> val$javascript
     void run() -> run
-com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifier -> com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifier:
-    com.nolanlawson.couchdroid.CouchDroidRuntime this$0 -> this$0
+com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifier -> com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifier:
+    com.pouchdb.pouchdroid.PouchDroidRuntime this$0 -> this$0
     void callback() -> callback
-    com.nolanlawson.couchdroid.CouchDroidRuntime access$1(com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifier) -> access$1
-com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifier$1 -> com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifier$1:
-    com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifier this$1 -> this$1
+    com.pouchdb.pouchdroid.PouchDroidRuntime access$1(com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifier) -> access$1
+com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifier$1 -> com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifier$1:
+    com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifier this$1 -> this$1
     void run() -> run
-com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifierCaller -> com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifierCaller:
+com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifierCaller -> com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifierCaller:
     boolean cancelled -> cancelled
-    com.nolanlawson.couchdroid.CouchDroidRuntime this$0 -> this$0
+    com.pouchdb.pouchdroid.PouchDroidRuntime this$0 -> this$0
     java.lang.Void doInBackground(java.lang.Void[]) -> doInBackground
     java.lang.Object doInBackground(java.lang.Object[]) -> doInBackground
-    boolean access$1(com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifierCaller) -> access$1
-    void access$2(com.nolanlawson.couchdroid.CouchDroidRuntime$JSInterfaceVerifierCaller,boolean) -> access$2
-com.nolanlawson.couchdroid.CouchDroidRuntime$MyWebChromeClient -> com.nolanlawson.couchdroid.CouchDroidRuntime$MyWebChromeClient:
-    com.nolanlawson.couchdroid.CouchDroidRuntime this$0 -> this$0
+    boolean access$1(com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifierCaller) -> access$1
+    void access$2(com.pouchdb.pouchdroid.PouchDroidRuntime$JSInterfaceVerifierCaller,boolean) -> access$2
+com.pouchdb.pouchdroid.PouchDroidRuntime$MyWebChromeClient -> com.pouchdb.pouchdroid.PouchDroidRuntime$MyWebChromeClient:
+    com.pouchdb.pouchdroid.PouchDroidRuntime this$0 -> this$0
     void onConsoleMessage(java.lang.String,int,java.lang.String) -> onConsoleMessage
-com.nolanlawson.couchdroid.CouchDroidRuntime$OnReadyListener -> com.nolanlawson.couchdroid.CouchDroidRuntime$OnReadyListener:
-    void onReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onReady
-com.nolanlawson.couchdroid.ProgressReporter -> com.nolanlawson.couchdroid.ProgressReporter:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.PouchDroidRuntime$OnReadyListener -> com.pouchdb.pouchdroid.PouchDroidRuntime$OnReadyListener:
+    void onReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onReady
+com.pouchdb.pouchdroid.ProgressReporter -> com.pouchdb.pouchdroid.ProgressReporter:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     android.app.Activity activity -> activity
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener listener -> listener
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener listener -> listener
     void reportProgress(java.lang.String,java.lang.String,int,int) -> reportProgress
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener access$0(com.nolanlawson.couchdroid.ProgressReporter) -> access$0
-    com.nolanlawson.couchdroid.util.UtilLogger access$1() -> access$1
-com.nolanlawson.couchdroid.ProgressReporter$1 -> com.nolanlawson.couchdroid.ProgressReporter$1:
-    com.nolanlawson.couchdroid.ProgressReporter this$0 -> this$0
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener access$0(com.pouchdb.pouchdroid.ProgressReporter) -> access$0
+    com.pouchdb.pouchdroid.util.UtilLogger access$1() -> access$1
+com.pouchdb.pouchdroid.ProgressReporter$1 -> com.pouchdb.pouchdroid.ProgressReporter$1:
+    com.pouchdb.pouchdroid.ProgressReporter this$0 -> this$0
     java.lang.String val$type -> val$type
     java.lang.String val$tableName -> val$tableName
     int val$numRowsTotal -> val$numRowsTotal
     int val$numRowsLoaded -> val$numRowsLoaded
     void run() -> run
-com.nolanlawson.couchdroid.R -> com.nolanlawson.couchdroid.R:
-com.nolanlawson.couchdroid.R$raw -> com.nolanlawson.couchdroid.R$raw:
-    int couchdroid -> couchdroid
-    int couchdroid_min -> couchdroid_min
+com.pouchdb.pouchdroid.R -> com.pouchdb.pouchdroid.R:
+com.pouchdb.pouchdroid.R$raw -> com.pouchdb.pouchdroid.R$raw:
+    int pouchdroid -> pouchdroid
+    int pouchdroid_min -> pouchdroid_min
     int pouchdb -> pouchdb
     int pouchdb_min -> pouchdb_min
-com.nolanlawson.couchdroid.example1.BuildConfig -> com.nolanlawson.couchdroid.example1.BuildConfig:
+com.pouchdb.pouchdroid.example1.BuildConfig -> com.pouchdb.pouchdroid.example1.BuildConfig:
     boolean DEBUG -> DEBUG
-com.nolanlawson.couchdroid.example1.MainActivity -> com.nolanlawson.couchdroid.example1.MainActivity:
+com.pouchdb.pouchdroid.example1.MainActivity -> com.pouchdb.pouchdroid.example1.MainActivity:
     java.lang.String COUCHDB_URL -> COUCHDB_URL
     int EXPECTED_COUNT -> EXPECTED_COUNT
     boolean RANDOMIZE_DB -> RANDOMIZE_DB
@@ -2710,54 +2710,54 @@ com.nolanlawson.couchdroid.example1.MainActivity -> com.nolanlawson.couchdroid.e
     android.widget.ProgressBar progress -> progress
     android.widget.ProgressBar progressIndeterminate -> progressIndeterminate
     void onCreate(android.os.Bundle) -> onCreate
-    void onCouchDroidReady(com.nolanlawson.couchdroid.CouchDroidRuntime) -> onCouchDroidReady
+    void onPouchDroidReady(com.pouchdb.pouchdroid.PouchDroidRuntime) -> onPouchDroidReady
     void onPause() -> onPause
     void loadPokemonData() -> loadPokemonData
-    void onProgress(com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
-    void access$0(com.nolanlawson.couchdroid.example1.MainActivity) -> access$0
-    android.widget.TextView access$1(com.nolanlawson.couchdroid.example1.MainActivity) -> access$1
-    void access$2(com.nolanlawson.couchdroid.example1.MainActivity,long) -> access$2
-    android.database.sqlite.SQLiteDatabase access$3(com.nolanlawson.couchdroid.example1.MainActivity) -> access$3
-com.nolanlawson.couchdroid.example1.MainActivity$1 -> com.nolanlawson.couchdroid.example1.MainActivity$1:
-    com.nolanlawson.couchdroid.example1.MainActivity this$0 -> this$0
-    com.nolanlawson.couchdroid.CouchDroidRuntime val$runtime -> val$runtime
+    void onProgress(com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
+    void access$0(com.pouchdb.pouchdroid.example1.MainActivity) -> access$0
+    android.widget.TextView access$1(com.pouchdb.pouchdroid.example1.MainActivity) -> access$1
+    void access$2(com.pouchdb.pouchdroid.example1.MainActivity,long) -> access$2
+    android.database.sqlite.SQLiteDatabase access$3(com.pouchdb.pouchdroid.example1.MainActivity) -> access$3
+com.pouchdb.pouchdroid.example1.MainActivity$1 -> com.pouchdb.pouchdroid.example1.MainActivity$1:
+    com.pouchdb.pouchdroid.example1.MainActivity this$0 -> this$0
+    com.pouchdb.pouchdroid.PouchDroidRuntime val$runtime -> val$runtime
     java.lang.Void doInBackground(java.lang.Void[]) -> doInBackground
     void onPostExecute(java.lang.Void) -> onPostExecute
     void onPostExecute(java.lang.Object) -> onPostExecute
     java.lang.Object doInBackground(java.lang.Object[]) -> doInBackground
-com.nolanlawson.couchdroid.example1.PocketMonsterHelper -> com.nolanlawson.couchdroid.example1.PocketMonsterHelper:
+com.pouchdb.pouchdroid.example1.PocketMonsterHelper -> com.pouchdb.pouchdroid.example1.PocketMonsterHelper:
     java.util.List readInPocketMonsters(android.content.Context) -> readInPocketMonsters
-com.nolanlawson.couchdroid.example1.R -> com.nolanlawson.couchdroid.example1.R:
-com.nolanlawson.couchdroid.example1.R$attr -> com.nolanlawson.couchdroid.example1.R$attr:
-com.nolanlawson.couchdroid.example1.R$color -> com.nolanlawson.couchdroid.example1.R$color:
+com.pouchdb.pouchdroid.example1.R -> com.pouchdb.pouchdroid.example1.R:
+com.pouchdb.pouchdroid.example1.R$attr -> com.pouchdb.pouchdroid.example1.R$attr:
+com.pouchdb.pouchdroid.example1.R$color -> com.pouchdb.pouchdroid.example1.R$color:
     int alert_blue -> alert_blue
     int alert_red -> alert_red
-com.nolanlawson.couchdroid.example1.R$dimen -> com.nolanlawson.couchdroid.example1.R$dimen:
+com.pouchdb.pouchdroid.example1.R$dimen -> com.pouchdb.pouchdroid.example1.R$dimen:
     int activity_horizontal_margin -> activity_horizontal_margin
     int activity_vertical_margin -> activity_vertical_margin
-com.nolanlawson.couchdroid.example1.R$drawable -> com.nolanlawson.couchdroid.example1.R$drawable:
+com.pouchdb.pouchdroid.example1.R$drawable -> com.pouchdb.pouchdroid.example1.R$drawable:
     int ic_launcher -> ic_launcher
-com.nolanlawson.couchdroid.example1.R$id -> com.nolanlawson.couchdroid.example1.R$id:
+com.pouchdb.pouchdroid.example1.R$id -> com.pouchdb.pouchdroid.example1.R$id:
     int action_foo -> action_foo
     int progress_indeterminate -> progress_indeterminate
-com.nolanlawson.couchdroid.example1.R$layout -> com.nolanlawson.couchdroid.example1.R$layout:
+com.pouchdb.pouchdroid.example1.R$layout -> com.pouchdb.pouchdroid.example1.R$layout:
     int activity_main -> activity_main
-com.nolanlawson.couchdroid.example1.R$menu -> com.nolanlawson.couchdroid.example1.R$menu:
+com.pouchdb.pouchdroid.example1.R$menu -> com.pouchdb.pouchdroid.example1.R$menu:
     int main -> main
-com.nolanlawson.couchdroid.example1.R$raw -> com.nolanlawson.couchdroid.example1.R$raw:
-    int couchdroid -> couchdroid
-    int couchdroid_min -> couchdroid_min
+com.pouchdb.pouchdroid.example1.R$raw -> com.pouchdb.pouchdroid.example1.R$raw:
+    int pouchdroid -> pouchdroid
+    int pouchdroid_min -> pouchdroid_min
     int pokemon -> pokemon
     int pouchdb -> pouchdb
     int pouchdb_min -> pouchdb_min
-com.nolanlawson.couchdroid.example1.R$string -> com.nolanlawson.couchdroid.example1.R$string:
+com.pouchdb.pouchdroid.example1.R$string -> com.pouchdb.pouchdroid.example1.R$string:
     int action_settings -> action_settings
     int app_name -> app_name
     int hello_world -> hello_world
-com.nolanlawson.couchdroid.example1.R$style -> com.nolanlawson.couchdroid.example1.R$style:
+com.pouchdb.pouchdroid.example1.R$style -> com.pouchdb.pouchdroid.example1.R$style:
     int AppBaseTheme -> AppBaseTheme
     int AppTheme -> AppTheme
-com.nolanlawson.couchdroid.example1.pojo.PocketMonster -> com.nolanlawson.couchdroid.example1.pojo.PocketMonster:
+com.pouchdb.pouchdroid.example1.pojo.PocketMonster -> com.pouchdb.pouchdroid.example1.pojo.PocketMonster:
     java.lang.String uniqueId -> uniqueId
     int nationalDexNumber -> nationalDexNumber
     java.lang.String type1 -> type1
@@ -2776,8 +2776,8 @@ com.nolanlawson.couchdroid.example1.pojo.PocketMonster -> com.nolanlawson.couchd
     java.lang.String getPouchId() -> getPouchId
     void setPouchId(java.lang.String) -> setPouchId
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask -> com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask -> com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     int BATCH_SIZE_HIMEM -> BATCH_SIZE_HIMEM
     int BATCH_SIZE_LOMEM -> BATCH_SIZE_LOMEM
     int SDK_INT_CUTOFF -> SDK_INT_CUTOFF
@@ -2787,76 +2787,76 @@ com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask -> com.nolanlawson.
     java.lang.String userId -> userId
     java.lang.String couchdbUrl -> couchdbUrl
     java.lang.String dbName -> dbName
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener clientListener -> clientListener
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener listener -> listener
-    com.nolanlawson.couchdroid.CouchDroidRuntime runtime -> runtime
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener clientListener -> clientListener
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener listener -> listener
+    com.pouchdb.pouchdroid.PouchDroidRuntime runtime -> runtime
     void setSqliteTables(java.util.List) -> setSqliteTables
     void start() -> start
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener wrapClientListener() -> wrapClientListener
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener wrapClientListener() -> wrapClientListener
     void replicate() -> replicate
-    void migrateSqliteTable(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$SqliteTableInfo,int) -> migrateSqliteTable
-    void loadBatchFromTable(com.nolanlawson.couchdroid.migration.SqliteTable,java.util.List,int,int) -> loadBatchFromTable
+    void migrateSqliteTable(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$SqliteTableInfo,int) -> migrateSqliteTable
+    void loadBatchFromTable(com.pouchdb.pouchdroid.migration.SqliteTable,java.util.List,int,int) -> loadBatchFromTable
     void initPouchDBHelper() -> initPouchDBHelper
     java.lang.CharSequence createFinalReportProgressJs() -> createFinalReportProgressJs
-    java.lang.CharSequence createInitReportProgressJs(com.nolanlawson.couchdroid.migration.SqliteTable,int) -> createInitReportProgressJs
-    java.lang.CharSequence createReportProgressJs(com.nolanlawson.couchdroid.migration.SqliteTable,int,int) -> createReportProgressJs
+    java.lang.CharSequence createInitReportProgressJs(com.pouchdb.pouchdroid.migration.SqliteTable,int) -> createInitReportProgressJs
+    java.lang.CharSequence createReportProgressJs(com.pouchdb.pouchdroid.migration.SqliteTable,int,int) -> createReportProgressJs
     void loadBatchIntoPouchdb(org.codehaus.jackson.node.ObjectNode,java.lang.CharSequence) -> loadBatchIntoPouchdb
-    void convertBatchToJsonList(org.codehaus.jackson.node.ArrayNode,org.codehaus.jackson.node.ArrayNode,int,java.util.List,com.nolanlawson.couchdroid.migration.SqliteTable) -> convertBatchToJsonList
+    void convertBatchToJsonList(org.codehaus.jackson.node.ArrayNode,org.codehaus.jackson.node.ArrayNode,int,java.util.List,com.pouchdb.pouchdroid.migration.SqliteTable) -> convertBatchToJsonList
     int getBatchSize() -> getBatchSize
-    int countNumRows(com.nolanlawson.couchdroid.migration.SqliteTable) -> countNumRows
+    int countNumRows(com.pouchdb.pouchdroid.migration.SqliteTable) -> countNumRows
     java.util.List getColumnsForTable(java.lang.String) -> getColumnsForTable
-    void access$1(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,java.lang.String) -> access$1
-    void access$2(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,java.lang.String) -> access$2
-    void access$3(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,com.nolanlawson.couchdroid.migration.CouchDroidProgressListener) -> access$3
-    java.lang.String access$4(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask) -> access$4
-    java.lang.String access$5(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask) -> access$5
-    void access$6(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,java.util.List) -> access$6
-    com.nolanlawson.couchdroid.util.UtilLogger access$7() -> access$7
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener access$8(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask) -> access$8
-    java.util.List access$9(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask) -> access$9
-    void access$10(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$SqliteTableInfo,int) -> access$10
-    void access$11(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask) -> access$11
-    com.nolanlawson.couchdroid.CouchDroidRuntime access$12(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask) -> access$12
-    java.lang.CharSequence access$13(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,com.nolanlawson.couchdroid.migration.SqliteTable,int) -> access$13
-    void access$14(com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask,com.nolanlawson.couchdroid.migration.SqliteTable,java.util.List,int,int) -> access$14
-com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$1 -> com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$1:
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask this$0 -> this$0
-    void onProgress(com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
-com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$2 -> com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$2:
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask this$0 -> this$0
+    void access$1(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,java.lang.String) -> access$1
+    void access$2(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,java.lang.String) -> access$2
+    void access$3(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,com.pouchdb.pouchdroid.migration.PouchDroidProgressListener) -> access$3
+    java.lang.String access$4(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask) -> access$4
+    java.lang.String access$5(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask) -> access$5
+    void access$6(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,java.util.List) -> access$6
+    com.pouchdb.pouchdroid.util.UtilLogger access$7() -> access$7
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener access$8(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask) -> access$8
+    java.util.List access$9(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask) -> access$9
+    void access$10(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$SqliteTableInfo,int) -> access$10
+    void access$11(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask) -> access$11
+    com.pouchdb.pouchdroid.PouchDroidRuntime access$12(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask) -> access$12
+    java.lang.CharSequence access$13(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,com.pouchdb.pouchdroid.migration.SqliteTable,int) -> access$13
+    void access$14(com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask,com.pouchdb.pouchdroid.migration.SqliteTable,java.util.List,int,int) -> access$14
+com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$1 -> com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$1:
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask this$0 -> this$0
+    void onProgress(com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
+com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$2 -> com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$2:
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask this$0 -> this$0
     int val$offset -> val$offset
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$SqliteTableInfo val$sqliteTableInfo -> val$sqliteTableInfo
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$SqliteTableInfo val$sqliteTableInfo -> val$sqliteTableInfo
     java.lang.Void doInBackground(java.lang.Void[]) -> doInBackground
     java.lang.Object doInBackground(java.lang.Object[]) -> doInBackground
-com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$Builder -> com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$Builder:
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask couchdbSync -> couchdbSync
+com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$Builder -> com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$Builder:
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask couchdbSync -> couchdbSync
     java.util.List sqliteTables -> sqliteTables
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$Builder addSqliteTable(java.lang.String,java.lang.String[]) -> addSqliteTable
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$Builder setUserId(java.lang.String) -> setUserId
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$Builder setCouchdbUrl(java.lang.String) -> setCouchdbUrl
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$Builder setProgressListener(com.nolanlawson.couchdroid.migration.CouchDroidProgressListener) -> setProgressListener
-    com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask build() -> build
-com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$SqliteTableInfo -> com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask$SqliteTableInfo:
-    com.nolanlawson.couchdroid.migration.SqliteTable table -> table
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$Builder addSqliteTable(java.lang.String,java.lang.String[]) -> addSqliteTable
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$Builder setUserId(java.lang.String) -> setUserId
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$Builder setCouchdbUrl(java.lang.String) -> setCouchdbUrl
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$Builder setProgressListener(com.pouchdb.pouchdroid.migration.PouchDroidProgressListener) -> setProgressListener
+    com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask build() -> build
+com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$SqliteTableInfo -> com.pouchdb.pouchdroid.migration.PouchDroidMigrationTask$SqliteTableInfo:
+    com.pouchdb.pouchdroid.migration.SqliteTable table -> table
     java.util.List columns -> columns
     int totalRowCount -> totalRowCount
-com.nolanlawson.couchdroid.migration.CouchDroidProgressListener -> com.nolanlawson.couchdroid.migration.CouchDroidProgressListener:
-    void onProgress(com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
-com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType -> com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType:
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType Init -> Init
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType Copy -> Copy
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType Sync -> Sync
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType[] ENUM$VALUES -> ENUM$VALUES
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType[] values() -> values
-    com.nolanlawson.couchdroid.migration.CouchDroidProgressListener$ProgressType valueOf(java.lang.String) -> valueOf
-com.nolanlawson.couchdroid.migration.SqliteColumn -> com.nolanlawson.couchdroid.migration.SqliteColumn:
+com.pouchdb.pouchdroid.migration.PouchDroidProgressListener -> com.pouchdb.pouchdroid.migration.PouchDroidProgressListener:
+    void onProgress(com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType,java.lang.String,int,int) -> onProgress
+com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType -> com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType:
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType Init -> Init
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType Copy -> Copy
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType Sync -> Sync
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType[] ENUM$VALUES -> ENUM$VALUES
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType[] values() -> values
+    com.pouchdb.pouchdroid.migration.PouchDroidProgressListener$ProgressType valueOf(java.lang.String) -> valueOf
+com.pouchdb.pouchdroid.migration.SqliteColumn -> com.pouchdb.pouchdroid.migration.SqliteColumn:
     java.lang.String name -> name
     int type -> type
     java.lang.String getName() -> getName
     void setName(java.lang.String) -> setName
     int getType() -> getType
     void setType(int) -> setType
-com.nolanlawson.couchdroid.migration.SqliteTable -> com.nolanlawson.couchdroid.migration.SqliteTable:
+com.pouchdb.pouchdroid.migration.SqliteTable -> com.pouchdb.pouchdroid.migration.SqliteTable:
     java.lang.String name -> name
     java.util.List idColumns -> idColumns
     java.lang.String getName() -> getName
@@ -2864,17 +2864,17 @@ com.nolanlawson.couchdroid.migration.SqliteTable -> com.nolanlawson.couchdroid.m
     java.util.List getIdColumns() -> getIdColumns
     void setIdColumns(java.util.List) -> setIdColumns
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.pouch.AbstractPouchDB -> com.nolanlawson.couchdroid.pouch.AbstractPouchDB:
-    void destroy(java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> destroy
-    void put(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> put
-    void post(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> post
-    void get(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$GetCallback) -> get
-    void remove(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> remove
-    void bulkDocs(java.util.List,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback) -> bulkDocs
-    void allDocs(java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
-    void replicateTo(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback) -> replicateTo
-    void replicateFrom(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback) -> replicateFrom
-com.nolanlawson.couchdroid.pouch.AllDocsInfo -> com.nolanlawson.couchdroid.pouch.AllDocsInfo:
+com.pouchdb.pouchdroid.pouch.AbstractPouchDB -> com.pouchdb.pouchdroid.pouch.AbstractPouchDB:
+    void destroy(java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> destroy
+    void put(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> put
+    void post(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> post
+    void get(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$GetCallback) -> get
+    void remove(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> remove
+    void bulkDocs(java.util.List,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback) -> bulkDocs
+    void allDocs(java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
+    void replicateTo(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback) -> replicateTo
+    void replicateFrom(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback) -> replicateFrom
+com.pouchdb.pouchdroid.pouch.AllDocsInfo -> com.pouchdb.pouchdroid.pouch.AllDocsInfo:
     int totalRows -> totalRows
     int offset -> offset
     java.util.List rows -> rows
@@ -2886,146 +2886,146 @@ com.nolanlawson.couchdroid.pouch.AllDocsInfo -> com.nolanlawson.couchdroid.pouch
     void setRows(java.util.List) -> setRows
     java.util.List getDocuments() -> getDocuments
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.pouch.AllDocsInfo$Row -> com.nolanlawson.couchdroid.pouch.AllDocsInfo$Row:
-    com.nolanlawson.couchdroid.pouch.PouchDocumentInterface doc -> doc
+com.pouchdb.pouchdroid.pouch.AllDocsInfo$Row -> com.pouchdb.pouchdroid.pouch.AllDocsInfo$Row:
+    com.pouchdb.pouchdroid.pouch.PouchDocumentInterface doc -> doc
     java.lang.String id -> id
     java.lang.String key -> key
-    com.nolanlawson.couchdroid.pouch.AllDocsInfo$RowValue value -> value
-    com.nolanlawson.couchdroid.pouch.PouchDocumentInterface getDoc() -> getDoc
-    void setDoc(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface) -> setDoc
+    com.pouchdb.pouchdroid.pouch.AllDocsInfo$RowValue value -> value
+    com.pouchdb.pouchdroid.pouch.PouchDocumentInterface getDoc() -> getDoc
+    void setDoc(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface) -> setDoc
     java.lang.String getId() -> getId
     void setId(java.lang.String) -> setId
     java.lang.String getKey() -> getKey
     void setKey(java.lang.String) -> setKey
-    com.nolanlawson.couchdroid.pouch.AllDocsInfo$RowValue getValue() -> getValue
-    void setValue(com.nolanlawson.couchdroid.pouch.AllDocsInfo$RowValue) -> setValue
+    com.pouchdb.pouchdroid.pouch.AllDocsInfo$RowValue getValue() -> getValue
+    void setValue(com.pouchdb.pouchdroid.pouch.AllDocsInfo$RowValue) -> setValue
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.pouch.AllDocsInfo$RowValue -> com.nolanlawson.couchdroid.pouch.AllDocsInfo$RowValue:
+com.pouchdb.pouchdroid.pouch.AllDocsInfo$RowValue -> com.pouchdb.pouchdroid.pouch.AllDocsInfo$RowValue:
     java.lang.String rev -> rev
     java.lang.String getRev() -> getRev
     void setRev(java.lang.String) -> setRev
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.pouch.PouchDB -> com.nolanlawson.couchdroid.pouch.PouchDB:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.pouch.PouchDB -> com.pouchdb.pouchdroid.pouch.PouchDB:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     java.util.concurrent.atomic.AtomicInteger POUCH_IDS -> POUCH_IDS
     int id -> id
-    com.nolanlawson.couchdroid.CouchDroidRuntime runtime -> runtime
+    com.pouchdb.pouchdroid.PouchDroidRuntime runtime -> runtime
     java.lang.Class documentClass -> documentClass
-    com.nolanlawson.couchdroid.pouch.PouchDB newPouchDB(java.lang.Class,com.nolanlawson.couchdroid.CouchDroidRuntime) -> newPouchDB
-    com.nolanlawson.couchdroid.pouch.PouchDB newPouchDB(java.lang.Class,com.nolanlawson.couchdroid.CouchDroidRuntime,java.lang.String) -> newPouchDB
-    com.nolanlawson.couchdroid.pouch.PouchDB newPouchDB(java.lang.Class,com.nolanlawson.couchdroid.CouchDroidRuntime,java.lang.String,boolean) -> newPouchDB
-    void destroy(java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> destroy
-    void destroy(com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> destroy
+    com.pouchdb.pouchdroid.pouch.PouchDB newPouchDB(java.lang.Class,com.pouchdb.pouchdroid.PouchDroidRuntime) -> newPouchDB
+    com.pouchdb.pouchdroid.pouch.PouchDB newPouchDB(java.lang.Class,com.pouchdb.pouchdroid.PouchDroidRuntime,java.lang.String) -> newPouchDB
+    com.pouchdb.pouchdroid.pouch.PouchDB newPouchDB(java.lang.Class,com.pouchdb.pouchdroid.PouchDroidRuntime,java.lang.String,boolean) -> newPouchDB
+    void destroy(java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> destroy
+    void destroy(com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> destroy
     void destroy(java.util.Map) -> destroy
     void destroy() -> destroy
-    void put(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> put
-    void put(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map) -> put
-    void put(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> put
-    void put(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface) -> put
-    void post(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> post
-    void post(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map) -> post
-    void post(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> post
-    void post(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface) -> post
-    void get(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$GetCallback) -> get
+    void put(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> put
+    void put(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map) -> put
+    void put(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> put
+    void put(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface) -> put
+    void post(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> post
+    void post(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map) -> post
+    void post(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> post
+    void post(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface) -> post
+    void get(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$GetCallback) -> get
     void get(java.lang.String,java.util.Map) -> get
-    void get(java.lang.String,com.nolanlawson.couchdroid.pouch.PouchDB$GetCallback) -> get
+    void get(java.lang.String,com.pouchdb.pouchdroid.pouch.PouchDB$GetCallback) -> get
     void get(java.lang.String) -> get
-    void remove(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> remove
-    void remove(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,java.util.Map) -> remove
-    void remove(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface,com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback) -> remove
-    void remove(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface) -> remove
-    void bulkDocs(java.util.List,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback) -> bulkDocs
+    void remove(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> remove
+    void remove(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,java.util.Map) -> remove
+    void remove(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface,com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback) -> remove
+    void remove(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface) -> remove
+    void bulkDocs(java.util.List,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback) -> bulkDocs
     void bulkDocs(java.util.List,java.util.Map) -> bulkDocs
-    void bulkDocs(java.util.List,com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback) -> bulkDocs
+    void bulkDocs(java.util.List,com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback) -> bulkDocs
     void bulkDocs(java.util.List) -> bulkDocs
-    void allDocs(java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
-    void allDocs(com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
-    void allDocs(boolean,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
-    void allDocs(boolean,com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
-    void replicateTo(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback) -> replicateTo
-    void replicateTo(java.lang.String,com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback) -> replicateTo
+    void allDocs(java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
+    void allDocs(com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
+    void allDocs(boolean,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
+    void allDocs(boolean,com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback) -> allDocs
+    void replicateTo(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback) -> replicateTo
+    void replicateTo(java.lang.String,com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback) -> replicateTo
     void replicateTo(java.lang.String) -> replicateTo
-    void replicateFrom(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback) -> replicateFrom
-    void replicateFrom(java.lang.String,com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback) -> replicateFrom
+    void replicateFrom(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback) -> replicateFrom
+    void replicateFrom(java.lang.String,com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback) -> replicateFrom
     void replicateFrom(java.lang.String) -> replicateFrom
-    void loadAction(java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$Callback) -> loadAction
-    void loadAction(java.lang.String,java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$Callback) -> loadAction
-    void loadAction(java.lang.String,java.lang.String,java.util.Map,com.nolanlawson.couchdroid.pouch.PouchDB$Callback,java.lang.String) -> loadAction
-    java.lang.CharSequence createFunctionForCallback(com.nolanlawson.couchdroid.pouch.PouchDB$Callback) -> createFunctionForCallback
-    java.lang.Class access$0(com.nolanlawson.couchdroid.pouch.PouchDB) -> access$0
-    com.nolanlawson.couchdroid.CouchDroidRuntime access$1(com.nolanlawson.couchdroid.pouch.PouchDB) -> access$1
-    com.nolanlawson.couchdroid.util.UtilLogger access$2() -> access$2
-com.nolanlawson.couchdroid.pouch.PouchDB$1 -> com.nolanlawson.couchdroid.pouch.PouchDB$1:
-    com.nolanlawson.couchdroid.pouch.PouchDB this$0 -> this$0
-    com.nolanlawson.couchdroid.pouch.PouchDB$GetCallback val$callback -> val$callback
-    void onCallback(com.nolanlawson.couchdroid.pouch.PouchError,com.nolanlawson.couchdroid.pouch.PouchDocumentInterface) -> onCallback
+    void loadAction(java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$Callback) -> loadAction
+    void loadAction(java.lang.String,java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$Callback) -> loadAction
+    void loadAction(java.lang.String,java.lang.String,java.util.Map,com.pouchdb.pouchdroid.pouch.PouchDB$Callback,java.lang.String) -> loadAction
+    java.lang.CharSequence createFunctionForCallback(com.pouchdb.pouchdroid.pouch.PouchDB$Callback) -> createFunctionForCallback
+    java.lang.Class access$0(com.pouchdb.pouchdroid.pouch.PouchDB) -> access$0
+    com.pouchdb.pouchdroid.PouchDroidRuntime access$1(com.pouchdb.pouchdroid.pouch.PouchDB) -> access$1
+    com.pouchdb.pouchdroid.util.UtilLogger access$2() -> access$2
+com.pouchdb.pouchdroid.pouch.PouchDB$1 -> com.pouchdb.pouchdroid.pouch.PouchDB$1:
+    com.pouchdb.pouchdroid.pouch.PouchDB this$0 -> this$0
+    com.pouchdb.pouchdroid.pouch.PouchDB$GetCallback val$callback -> val$callback
+    void onCallback(com.pouchdb.pouchdroid.pouch.PouchError,com.pouchdb.pouchdroid.pouch.PouchDocumentInterface) -> onCallback
     java.lang.Class getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-    void onCallback(com.nolanlawson.couchdroid.pouch.PouchError,java.lang.Object) -> onCallback
+    void onCallback(com.pouchdb.pouchdroid.pouch.PouchError,java.lang.Object) -> onCallback
     java.lang.Object getPrimaryClass() -> getPrimaryClass
-com.nolanlawson.couchdroid.pouch.PouchDB$2 -> com.nolanlawson.couchdroid.pouch.PouchDB$2:
-    com.nolanlawson.couchdroid.pouch.PouchDB this$0 -> this$0
-    com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback val$callback -> val$callback
-    void onCallback(com.nolanlawson.couchdroid.pouch.PouchError,com.nolanlawson.couchdroid.pouch.AllDocsInfo) -> onCallback
+com.pouchdb.pouchdroid.pouch.PouchDB$2 -> com.pouchdb.pouchdroid.pouch.PouchDB$2:
+    com.pouchdb.pouchdroid.pouch.PouchDB this$0 -> this$0
+    com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback val$callback -> val$callback
+    void onCallback(com.pouchdb.pouchdroid.pouch.PouchError,com.pouchdb.pouchdroid.pouch.AllDocsInfo) -> onCallback
     java.lang.Class getGenericClass() -> getGenericClass
-    void onCallback(com.nolanlawson.couchdroid.pouch.PouchError,java.lang.Object) -> onCallback
-com.nolanlawson.couchdroid.pouch.PouchDB$3 -> com.nolanlawson.couchdroid.pouch.PouchDB$3:
-    com.nolanlawson.couchdroid.pouch.PouchDB this$0 -> this$0
-    com.nolanlawson.couchdroid.pouch.PouchDB$Callback val$innerCallback -> val$innerCallback
-    void onCallback(com.nolanlawson.couchdroid.pouch.PouchError,java.lang.Object) -> onCallback
+    void onCallback(com.pouchdb.pouchdroid.pouch.PouchError,java.lang.Object) -> onCallback
+com.pouchdb.pouchdroid.pouch.PouchDB$3 -> com.pouchdb.pouchdroid.pouch.PouchDB$3:
+    com.pouchdb.pouchdroid.pouch.PouchDB this$0 -> this$0
+    com.pouchdb.pouchdroid.pouch.PouchDB$Callback val$innerCallback -> val$innerCallback
+    void onCallback(com.pouchdb.pouchdroid.pouch.PouchError,java.lang.Object) -> onCallback
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDB$3$1 -> com.nolanlawson.couchdroid.pouch.PouchDB$3$1:
-    com.nolanlawson.couchdroid.pouch.PouchDB$3 this$1 -> this$1
-    com.nolanlawson.couchdroid.pouch.PouchDB$Callback val$innerCallback -> val$innerCallback
-    com.nolanlawson.couchdroid.pouch.PouchError val$err -> val$err
+com.pouchdb.pouchdroid.pouch.PouchDB$3$1 -> com.pouchdb.pouchdroid.pouch.PouchDB$3$1:
+    com.pouchdb.pouchdroid.pouch.PouchDB$3 this$1 -> this$1
+    com.pouchdb.pouchdroid.pouch.PouchDB$Callback val$innerCallback -> val$innerCallback
+    com.pouchdb.pouchdroid.pouch.PouchError val$err -> val$err
     java.lang.Object val$info -> val$info
     void run() -> run
-com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback -> com.nolanlawson.couchdroid.pouch.PouchDB$AllDocsCallback:
+com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback -> com.pouchdb.pouchdroid.pouch.PouchDB$AllDocsCallback:
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback -> com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback:
+com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback -> com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback:
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback$1 -> com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback$1:
-    com.nolanlawson.couchdroid.pouch.PouchDB$BulkCallback this$1 -> this$1
-com.nolanlawson.couchdroid.pouch.PouchDB$Callback -> com.nolanlawson.couchdroid.pouch.PouchDB$Callback:
-    void onCallback(com.nolanlawson.couchdroid.pouch.PouchError,java.lang.Object) -> onCallback
+com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback$1 -> com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback$1:
+    com.pouchdb.pouchdroid.pouch.PouchDB$BulkCallback this$1 -> this$1
+com.pouchdb.pouchdroid.pouch.PouchDB$Callback -> com.pouchdb.pouchdroid.pouch.PouchDB$Callback:
+    void onCallback(com.pouchdb.pouchdroid.pouch.PouchError,java.lang.Object) -> onCallback
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDB$GetCallback -> com.nolanlawson.couchdroid.pouch.PouchDB$GetCallback:
+com.pouchdb.pouchdroid.pouch.PouchDB$GetCallback -> com.pouchdb.pouchdroid.pouch.PouchDB$GetCallback:
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback -> com.nolanlawson.couchdroid.pouch.PouchDB$ReplicateCallback:
+com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback -> com.pouchdb.pouchdroid.pouch.PouchDB$ReplicateCallback:
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback -> com.nolanlawson.couchdroid.pouch.PouchDB$StandardCallback:
+com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback -> com.pouchdb.pouchdroid.pouch.PouchDB$StandardCallback:
     java.lang.Object getPrimaryClass() -> getPrimaryClass
     java.lang.Class getGenericClass() -> getGenericClass
-com.nolanlawson.couchdroid.pouch.PouchDateDeserializer -> com.nolanlawson.couchdroid.pouch.PouchDateDeserializer:
+com.pouchdb.pouchdroid.pouch.PouchDateDeserializer -> com.pouchdb.pouchdroid.pouch.PouchDateDeserializer:
     java.lang.ThreadLocal DATE_FORMAT -> DATE_FORMAT
     java.util.Date deserialize(org.codehaus.jackson.JsonParser,org.codehaus.jackson.map.DeserializationContext) -> deserialize
     java.lang.Object deserialize(org.codehaus.jackson.JsonParser,org.codehaus.jackson.map.DeserializationContext) -> deserialize
-com.nolanlawson.couchdroid.pouch.PouchDateDeserializer$1 -> com.nolanlawson.couchdroid.pouch.PouchDateDeserializer$1:
+com.pouchdb.pouchdroid.pouch.PouchDateDeserializer$1 -> com.pouchdb.pouchdroid.pouch.PouchDateDeserializer$1:
     java.text.SimpleDateFormat initialValue() -> initialValue
     java.lang.Object initialValue() -> initialValue
-com.nolanlawson.couchdroid.pouch.PouchDocument -> com.nolanlawson.couchdroid.pouch.PouchDocument:
+com.pouchdb.pouchdroid.pouch.PouchDocument -> com.pouchdb.pouchdroid.pouch.PouchDocument:
     java.lang.String pouchId -> pouchId
     java.lang.String pouchRev -> pouchRev
     java.lang.String getPouchId() -> getPouchId
     void setPouchId(java.lang.String) -> setPouchId
     java.lang.String getPouchRev() -> getPouchRev
     void setPouchRev(java.lang.String) -> setPouchRev
-com.nolanlawson.couchdroid.pouch.PouchDocumentInterface -> com.nolanlawson.couchdroid.pouch.PouchDocumentInterface:
+com.pouchdb.pouchdroid.pouch.PouchDocumentInterface -> com.pouchdb.pouchdroid.pouch.PouchDocumentInterface:
     java.lang.String getPouchId() -> getPouchId
     void setPouchId(java.lang.String) -> setPouchId
     java.lang.String getPouchRev() -> getPouchRev
     void setPouchRev(java.lang.String) -> setPouchRev
-com.nolanlawson.couchdroid.pouch.PouchDocumentMapper -> com.nolanlawson.couchdroid.pouch.PouchDocumentMapper:
-    com.nolanlawson.couchdroid.pouch.PouchDocumentInterface fromJson(java.lang.String,java.lang.Class) -> fromJson
-    java.lang.String toJson(com.nolanlawson.couchdroid.pouch.PouchDocumentInterface) -> toJson
+com.pouchdb.pouchdroid.pouch.PouchDocumentMapper -> com.pouchdb.pouchdroid.pouch.PouchDocumentMapper:
+    com.pouchdb.pouchdroid.pouch.PouchDocumentInterface fromJson(java.lang.String,java.lang.Class) -> fromJson
+    java.lang.String toJson(com.pouchdb.pouchdroid.pouch.PouchDocumentInterface) -> toJson
     java.lang.String toJson(java.util.List) -> toJson
-com.nolanlawson.couchdroid.pouch.PouchError -> com.nolanlawson.couchdroid.pouch.PouchError:
+com.pouchdb.pouchdroid.pouch.PouchError -> com.pouchdb.pouchdroid.pouch.PouchError:
     int status -> status
     java.lang.String error -> error
     java.lang.String reason -> reason
@@ -3038,7 +3038,7 @@ com.nolanlawson.couchdroid.pouch.PouchError -> com.nolanlawson.couchdroid.pouch.
     int hashCode() -> hashCode
     boolean equals(java.lang.Object) -> equals
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.pouch.PouchInfo -> com.nolanlawson.couchdroid.pouch.PouchInfo:
+com.pouchdb.pouchdroid.pouch.PouchInfo -> com.pouchdb.pouchdroid.pouch.PouchInfo:
     boolean ok -> ok
     java.lang.String id -> id
     java.lang.String rev -> rev
@@ -3051,9 +3051,9 @@ com.nolanlawson.couchdroid.pouch.PouchInfo -> com.nolanlawson.couchdroid.pouch.P
     int hashCode() -> hashCode
     boolean equals(java.lang.Object) -> equals
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface -> com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface:
-    com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface INSTANCE -> INSTANCE
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.pouch.PouchJavascriptInterface -> com.pouchdb.pouchdroid.pouch.PouchJavascriptInterface:
+    com.pouchdb.pouchdroid.pouch.PouchJavascriptInterface INSTANCE -> INSTANCE
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     java.util.concurrent.atomic.AtomicInteger callbackIds -> callbackIds
     android.util.SparseArray callbacks -> callbacks
     org.codehaus.jackson.map.ObjectMapper objectMapper -> objectMapper
@@ -3061,8 +3061,8 @@ com.nolanlawson.couchdroid.pouch.PouchJavascriptInterface -> com.nolanlawson.cou
     void callback(int,java.lang.String) -> callback
     void callback(int,java.lang.String,java.lang.String) -> callback
     void callbackAndPossiblyThrow(int,java.lang.String,java.lang.String) -> callbackAndPossiblyThrow
-    int addCallback(com.nolanlawson.couchdroid.pouch.PouchDB$Callback) -> addCallback
-com.nolanlawson.couchdroid.pouch.ReplicateInfo -> com.nolanlawson.couchdroid.pouch.ReplicateInfo:
+    int addCallback(com.pouchdb.pouchdroid.pouch.PouchDB$Callback) -> addCallback
+com.pouchdb.pouchdroid.pouch.ReplicateInfo -> com.pouchdb.pouchdroid.pouch.ReplicateInfo:
     boolean ok -> ok
     int docsRead -> docsRead
     int docsWritten -> docsWritten
@@ -3079,14 +3079,14 @@ com.nolanlawson.couchdroid.pouch.ReplicateInfo -> com.nolanlawson.couchdroid.pou
     java.util.Date getEndTime() -> getEndTime
     void setEndTime(java.util.Date) -> setEndTime
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper -> com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper:
+com.pouchdb.pouchdroid.sqlite.BasicSQLiteOpenHelper -> com.pouchdb.pouchdroid.sqlite.BasicSQLiteOpenHelper:
     android.database.sqlite.SQLiteDatabase db -> db
     void onCreate(android.database.sqlite.SQLiteDatabase) -> onCreate
     void onUpgrade(android.database.sqlite.SQLiteDatabase,int,int) -> onUpgrade
-    void post(com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper$SQLiteTask) -> post
-com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper$SQLiteTask -> com.nolanlawson.couchdroid.sqlite.BasicSQLiteOpenHelper$SQLiteTask:
+    void post(com.pouchdb.pouchdroid.sqlite.BasicSQLiteOpenHelper$SQLiteTask) -> post
+com.pouchdb.pouchdroid.sqlite.BasicSQLiteOpenHelper$SQLiteTask -> com.pouchdb.pouchdroid.sqlite.BasicSQLiteOpenHelper$SQLiteTask:
     void run(android.database.sqlite.SQLiteDatabase) -> run
-com.nolanlawson.couchdroid.sqlite.JavascriptCallback -> com.nolanlawson.couchdroid.sqlite.JavascriptCallback:
+com.pouchdb.pouchdroid.sqlite.JavascriptCallback -> com.pouchdb.pouchdroid.sqlite.JavascriptCallback:
     int callbackId -> callbackId
     java.lang.Object arg1 -> arg1
     java.lang.CharSequence extraJavascript -> extraJavascript
@@ -3095,73 +3095,73 @@ com.nolanlawson.couchdroid.sqlite.JavascriptCallback -> com.nolanlawson.couchdro
     java.lang.Object getArg1() -> getArg1
     void setArg1(java.lang.Object) -> setArg1
     java.lang.String toString() -> toString
-com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface -> com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
-    com.nolanlawson.couchdroid.CouchDroidRuntime runtime -> runtime
+com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface -> com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
+    com.pouchdb.pouchdroid.PouchDroidRuntime runtime -> runtime
     java.util.Map dbs -> dbs
     org.codehaus.jackson.map.ObjectMapper objectMapper -> objectMapper
     java.util.PriorityQueue queue -> queue
     android.util.SparseArray transactionIdsToCallbackIds -> transactionIdsToCallbackIds
     java.lang.Integer currentTransactionId -> currentTransactionId
-    void sendCallback(com.nolanlawson.couchdroid.sqlite.JavascriptCallback) -> sendCallback
+    void sendCallback(com.pouchdb.pouchdroid.sqlite.JavascriptCallback) -> sendCallback
     java.util.List getDbNames() -> getDbNames
     void open(java.lang.String,int) -> open
     void startTransaction(int,java.lang.String,int,int) -> startTransaction
     void endTransaction(int,java.lang.String,int,int,boolean) -> endTransaction
     void executeSql(int,int,java.lang.String,java.lang.String,java.lang.String,int,int) -> executeSql
-    void execute(android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> execute
+    void execute(android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> execute
     void bindSelectArgs(android.database.sqlite.SQLiteStatement,java.util.List) -> bindSelectArgs
     org.codehaus.jackson.node.ObjectNode createSqlError(java.lang.String) -> createSqlError
     java.util.List getSelectArgs(java.lang.String) -> getSelectArgs
     org.codehaus.jackson.node.ObjectNode getRowsResultFromQuery(android.database.Cursor) -> getRowsResultFromQuery
     void putValueBasedOnType(android.database.Cursor,org.codehaus.jackson.node.ObjectNode,java.lang.String,int) -> putValueBasedOnType
     void processQueue() -> processQueue
-    void perform(com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> perform
-    void endTransaction(android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> endTransaction
-    void executeQuery(android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> executeQuery
-    void beginTransaction(android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> beginTransaction
+    void perform(com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> perform
+    void endTransaction(android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> endTransaction
+    void executeQuery(android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> executeQuery
+    void beginTransaction(android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> beginTransaction
     void registerCallbackIds(int,int,int) -> registerCallbackIds
-    java.lang.CharSequence createClearCallbacksJson(com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> createClearCallbacksJson
-    void access$0(com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface,android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> access$0
-    void access$1(com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface,android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> access$1
-    void access$2(com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface,android.database.sqlite.SQLiteDatabase,com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> access$2
-com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface$1 -> com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface$1:
-    com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface this$0 -> this$0
-com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface$2 -> com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface$2:
-    com.nolanlawson.couchdroid.sqlite.SQLiteJavascriptInterface this$0 -> this$0
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask val$task -> val$task
-    int[] $SWITCH_TABLE$com$nolanlawson$couchdroid$sqlite$WebSqlTask$Type -> $SWITCH_TABLE$com$nolanlawson$couchdroid$sqlite$WebSqlTask$Type
+    java.lang.CharSequence createClearCallbacksJson(com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> createClearCallbacksJson
+    void access$0(com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface,android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> access$0
+    void access$1(com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface,android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> access$1
+    void access$2(com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface,android.database.sqlite.SQLiteDatabase,com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> access$2
+com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface$1 -> com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface$1:
+    com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface this$0 -> this$0
+com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface$2 -> com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface$2:
+    com.pouchdb.pouchdroid.sqlite.SQLiteJavascriptInterface this$0 -> this$0
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask val$task -> val$task
+    int[] $SWITCH_TABLE$com$nolanlawson$pouchdroid$sqlite$WebSqlTask$Type -> $SWITCH_TABLE$com$nolanlawson$pouchdroid$sqlite$WebSqlTask$Type
     void run(android.database.sqlite.SQLiteDatabase) -> run
-    int[] $SWITCH_TABLE$com$nolanlawson$couchdroid$sqlite$WebSqlTask$Type() -> $SWITCH_TABLE$com$nolanlawson$couchdroid$sqlite$WebSqlTask$Type
-com.nolanlawson.couchdroid.sqlite.WebSqlTask -> com.nolanlawson.couchdroid.sqlite.WebSqlTask:
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type type -> type
+    int[] $SWITCH_TABLE$com$nolanlawson$pouchdroid$sqlite$WebSqlTask$Type() -> $SWITCH_TABLE$com$nolanlawson$pouchdroid$sqlite$WebSqlTask$Type
+com.pouchdb.pouchdroid.sqlite.WebSqlTask -> com.pouchdb.pouchdroid.sqlite.WebSqlTask:
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type type -> type
     int transactionId -> transactionId
     int queryId -> queryId
     java.lang.String dbName -> dbName
     int successId -> successId
     int errorId -> errorId
     java.util.List arguments -> arguments
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type getType() -> getType
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type getType() -> getType
     int getTransactionId() -> getTransactionId
     int getQueryId() -> getQueryId
     java.lang.String getDbName() -> getDbName
     int getSuccessId() -> getSuccessId
     int getErrorId() -> getErrorId
     java.util.List getArguments() -> getArguments
-    int compareTo(com.nolanlawson.couchdroid.sqlite.WebSqlTask) -> compareTo
+    int compareTo(com.pouchdb.pouchdroid.sqlite.WebSqlTask) -> compareTo
     java.lang.String toString() -> toString
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask forBeginTransaction(int,java.lang.String,int,int) -> forBeginTransaction
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask forEndTransaction(int,java.lang.String,int,int,boolean) -> forEndTransaction
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask forExecuteSql(int,int,java.lang.String,java.lang.String,java.lang.String,int,int) -> forExecuteSql
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask forBeginTransaction(int,java.lang.String,int,int) -> forBeginTransaction
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask forEndTransaction(int,java.lang.String,int,int,boolean) -> forEndTransaction
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask forExecuteSql(int,int,java.lang.String,java.lang.String,java.lang.String,int,int) -> forExecuteSql
     int compareTo(java.lang.Object) -> compareTo
-com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type -> com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type:
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type EndTransaction -> EndTransaction
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type ExecSql -> ExecSql
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type BeginTransaction -> BeginTransaction
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type[] ENUM$VALUES -> ENUM$VALUES
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type[] values() -> values
-    com.nolanlawson.couchdroid.sqlite.WebSqlTask$Type valueOf(java.lang.String) -> valueOf
-com.nolanlawson.couchdroid.util.Base64Compat -> com.nolanlawson.couchdroid.util.Base64Compat:
+com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type -> com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type:
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type EndTransaction -> EndTransaction
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type ExecSql -> ExecSql
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type BeginTransaction -> BeginTransaction
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type[] ENUM$VALUES -> ENUM$VALUES
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type[] values() -> values
+    com.pouchdb.pouchdroid.sqlite.WebSqlTask$Type valueOf(java.lang.String) -> valueOf
+com.pouchdb.pouchdroid.util.Base64Compat -> com.pouchdb.pouchdroid.util.Base64Compat:
     int DEFAULT -> DEFAULT
     int NO_PADDING -> NO_PADDING
     int NO_WRAP -> NO_WRAP
@@ -3176,12 +3176,12 @@ com.nolanlawson.couchdroid.util.Base64Compat -> com.nolanlawson.couchdroid.util.
     java.lang.String encodeToString(byte[],int,int,int) -> encodeToString
     byte[] encode(byte[],int) -> encode
     byte[] encode(byte[],int,int,int) -> encode
-com.nolanlawson.couchdroid.util.Base64Compat$Coder -> com.nolanlawson.couchdroid.util.Base64Compat$Coder:
+com.pouchdb.pouchdroid.util.Base64Compat$Coder -> com.pouchdb.pouchdroid.util.Base64Compat$Coder:
     byte[] output -> output
     int op -> op
     boolean process(byte[],int,int,boolean) -> process
     int maxOutputSize(int) -> maxOutputSize
-com.nolanlawson.couchdroid.util.Base64Compat$Decoder -> com.nolanlawson.couchdroid.util.Base64Compat$Decoder:
+com.pouchdb.pouchdroid.util.Base64Compat$Decoder -> com.pouchdb.pouchdroid.util.Base64Compat$Decoder:
     int[] DECODE -> DECODE
     int[] DECODE_WEBSAFE -> DECODE_WEBSAFE
     int SKIP -> SKIP
@@ -3191,7 +3191,7 @@ com.nolanlawson.couchdroid.util.Base64Compat$Decoder -> com.nolanlawson.couchdro
     int[] alphabet -> alphabet
     int maxOutputSize(int) -> maxOutputSize
     boolean process(byte[],int,int,boolean) -> process
-com.nolanlawson.couchdroid.util.Base64Compat$Encoder -> com.nolanlawson.couchdroid.util.Base64Compat$Encoder:
+com.pouchdb.pouchdroid.util.Base64Compat$Encoder -> com.pouchdb.pouchdroid.util.Base64Compat$Encoder:
     int LINE_GROUPS -> LINE_GROUPS
     byte[] ENCODE -> ENCODE
     byte[] ENCODE_WEBSAFE -> ENCODE_WEBSAFE
@@ -3205,7 +3205,7 @@ com.nolanlawson.couchdroid.util.Base64Compat$Encoder -> com.nolanlawson.couchdro
     boolean $assertionsDisabled -> $assertionsDisabled
     int maxOutputSize(int) -> maxOutputSize
     boolean process(byte[],int,int,boolean) -> process
-com.nolanlawson.couchdroid.util.JsonUtil -> com.nolanlawson.couchdroid.util.JsonUtil:
+com.pouchdb.pouchdroid.util.JsonUtil -> com.pouchdb.pouchdroid.util.JsonUtil:
     org.codehaus.jackson.map.ObjectMapper objectMapper -> objectMapper
     java.lang.String simpleMap(java.lang.String,java.lang.Object) -> simpleMap
     java.lang.String simpleMap(java.lang.String,java.lang.Object,java.lang.String,java.lang.Object) -> simpleMap
@@ -3213,14 +3213,14 @@ com.nolanlawson.couchdroid.util.JsonUtil -> com.nolanlawson.couchdroid.util.Json
     java.lang.String simpleMap(java.util.Map) -> simpleMap
     java.lang.String simpleString(java.lang.String) -> simpleString
     java.lang.String simplePojo(java.lang.Object) -> simplePojo
-com.nolanlawson.couchdroid.util.Maps -> com.nolanlawson.couchdroid.util.Maps:
+com.pouchdb.pouchdroid.util.Maps -> com.pouchdb.pouchdroid.util.Maps:
     java.util.Map quickMap(java.lang.String,java.lang.Object) -> quickMap
     java.util.Map quickMap(java.lang.String,java.lang.Object,java.lang.String,java.lang.Object) -> quickMap
     java.util.Map quickMap(java.lang.String,java.lang.Object,java.lang.String,java.lang.Object,java.lang.String,java.lang.Object) -> quickMap
-com.nolanlawson.couchdroid.util.ResourceUtil -> com.nolanlawson.couchdroid.util.ResourceUtil:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.util.ResourceUtil -> com.pouchdb.pouchdroid.util.ResourceUtil:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     java.lang.String loadTextFile(android.content.Context,int) -> loadTextFile
-com.nolanlawson.couchdroid.util.SqliteUtil -> com.nolanlawson.couchdroid.util.SqliteUtil:
+com.pouchdb.pouchdroid.util.SqliteUtil -> com.pouchdb.pouchdroid.util.SqliteUtil:
     int FIELD_TYPE_NULL -> FIELD_TYPE_NULL
     int FIELD_TYPE_INTEGER -> FIELD_TYPE_INTEGER
     int FIELD_TYPE_FLOAT -> FIELD_TYPE_FLOAT
@@ -3229,7 +3229,7 @@ com.nolanlawson.couchdroid.util.SqliteUtil -> com.nolanlawson.couchdroid.util.Sq
     java.util.regex.Pattern SHORT_NAME_PATTERN -> SHORT_NAME_PATTERN
     java.util.Map LOOKUP -> LOOKUP
     int getTypeForTypeName(java.lang.String) -> getTypeForTypeName
-com.nolanlawson.couchdroid.util.UtilLogger -> com.nolanlawson.couchdroid.util.UtilLogger:
+com.pouchdb.pouchdroid.util.UtilLogger -> com.pouchdb.pouchdroid.util.UtilLogger:
     boolean DEBUG_MODE -> DEBUG_MODE
     java.util.Set SILENCE_TAGS -> SILENCE_TAGS
     java.lang.String tag -> tag
@@ -3244,10 +3244,10 @@ com.nolanlawson.couchdroid.util.UtilLogger -> com.nolanlawson.couchdroid.util.Ut
     void d(java.lang.String,java.lang.Object[]) -> d
     void d(java.lang.Exception,java.lang.String,java.lang.Object[]) -> d
     void formatArgs(java.lang.Object[]) -> formatArgs
-com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface -> com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface:
-    com.nolanlawson.couchdroid.util.UtilLogger log -> log
+com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface -> com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface:
+    com.pouchdb.pouchdroid.util.UtilLogger log -> log
     org.codehaus.jackson.map.ObjectMapper objectMapper -> objectMapper
-    com.nolanlawson.couchdroid.CouchDroidRuntime runtime -> runtime
+    com.pouchdb.pouchdroid.PouchDroidRuntime runtime -> runtime
     java.util.Set aborted -> aborted
     void abort(java.lang.String) -> abort
     void send(java.lang.String) -> send
@@ -3256,22 +3256,22 @@ com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface -> com.nolanlawson.couchdr
     void callback(int,java.lang.String,int,java.lang.String) -> callback
     java.lang.String readInput(java.io.InputStream) -> readInput
     org.apache.http.client.methods.HttpUriRequest createRequest(java.lang.String,java.lang.String) -> createRequest
-    com.nolanlawson.couchdroid.util.UtilLogger access$0() -> access$0
+    com.pouchdb.pouchdroid.util.UtilLogger access$0() -> access$0
     java.lang.String access$1(java.io.InputStream) -> access$1
-    java.util.Set access$2(com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface) -> access$2
-    void access$3(com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface,int,java.lang.String,int,java.lang.String) -> access$3
-com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$1 -> com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$1:
-    com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface this$0 -> this$0
-com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$2 -> com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$2:
-    com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface this$0 -> this$0
+    java.util.Set access$2(com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface) -> access$2
+    void access$3(com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface,int,java.lang.String,int,java.lang.String) -> access$3
+com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$1 -> com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$1:
+    com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface this$0 -> this$0
+com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$2 -> com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$2:
+    com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface this$0 -> this$0
     int val$xhrId -> val$xhrId
     org.apache.http.client.HttpClient val$client -> val$client
     org.apache.http.client.methods.HttpUriRequest val$request -> val$request
-    com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse doInBackground(java.lang.Void[]) -> doInBackground
-    void onPostExecute(com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse) -> onPostExecute
+    com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse doInBackground(java.lang.Void[]) -> doInBackground
+    void onPostExecute(com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse) -> onPostExecute
     void onPostExecute(java.lang.Object) -> onPostExecute
     java.lang.Object doInBackground(java.lang.Object[]) -> doInBackground
-com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse -> com.nolanlawson.couchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse:
+com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse -> com.pouchdb.pouchdroid.xhr.XhrJavascriptInterface$SimpleHttpResponse:
     java.lang.String body -> body
     int statusCode -> statusCode
 org.codehaus.jackson.Base64Variant -> org.codehaus.jackson.Base64Variant:

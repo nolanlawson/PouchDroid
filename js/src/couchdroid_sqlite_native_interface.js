@@ -7,7 +7,7 @@
     'use strict';
 
     function debug(str) {
-        CouchDroid.Util.debug('SQLiteNativeDB', str);
+        PouchDroid.Util.debug('SQLiteNativeDB', str);
     }
 
     var transactionIds = 0;
@@ -80,7 +80,7 @@
     SqliteTransaction.prototype.debugQueryStatus = function() {
         var self = this;
 
-        if (CouchDroid.DEBUG_MODE) {
+        if (PouchDroid.DEBUG_MODE) {
             debug('transactionId ' + self.transactionId + ': (queriesIn: ' + self.queriesIn.length + ', queriesStarted: ' + self.queriesStarted.length +
                 ', queriesDone: ' + self.queriesDone.length + ')');
         }
@@ -333,5 +333,5 @@
         return nativeDB;
     };
 
-    CouchDroid.SQLiteNativeDB = SQLiteNativeDB;
+    PouchDroid.SQLiteNativeDB = SQLiteNativeDB;
 })();

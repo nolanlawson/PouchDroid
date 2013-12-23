@@ -1,5 +1,5 @@
 {
-  "name": "couchdroid",
+  "name": "pouchdroid",
   "version": "0.9.0",
   "devDependencies": {
     "grunt": "~0.4.2",

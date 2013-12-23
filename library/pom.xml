@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>couchdbsyncscrollview</artifactId>
-  <name>couchdbsyncscrollview</name>
+  <artifactId>pouchdroidscrollview</artifactId>
+  <name>pouchdroidscrollview</name>
   <packaging>apklib</packaging>
   <parent>
-    <groupId>com.nolanlawson.couchdbsync</groupId>
+    <groupId>com.pouchdb.pouchdroid</groupId>
     <artifactId>parent</artifactId>
     <version>1.0.0</version>
     <relativePath>../pom.xml</relativePath>
@@ -57,8 +57,8 @@
         </executions>
         <configuration>
           <ignoreMissingFile>false</ignoreMissingFile>
-          <file>target/generated-sources/r/com/nolanlawson/couchdbsync/R.java</file>
-          <outputFile>target/generated-sources/r/com/nolanlawson/couchdbsync/R.java</outputFile>
+          <file>target/generated-sources/r/com/nolanlawson/pouchdroid/R.java</file>
+          <outputFile>target/generated-sources/r/com/nolanlawson/pouchdroid/R.java</outputFile>
           <regex>false</regex>
           <token>static final int</token>
           <value>static int</value>
@@ -118,14 +118,14 @@
   </build>
   <distributionManagement>
     <repository>
-      <id>couchdbsync-s3-releases</id>
+      <id>pouchdroid-s3-releases</id>
       <name>AWS Release Repository</name>
-      <url>s3://nolanlawson/dist/com.nolanlawson.couchdbsync/release</url>
+      <url>s3://nolanlawson/dist/com.pouchdb.pouchdroid/release</url>
     </repository>
     <snapshotRepository>
-      <id>couchdbsync-s3-snapshots</id>
+      <id>pouchdroid-s3-snapshots</id>
       <name>AWS Snapshot Repository</name>
-      <url>s3://nolanlawson/dist/com.nolanlawson.couchdbsync/snapshot</url>
+      <url>s3://nolanlawson/dist/com.pouchdb.pouchdroid/snapshot</url>
     </snapshotRepository>
   </distributionManagement>
 </project>

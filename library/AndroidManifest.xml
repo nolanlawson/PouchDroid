@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.nolanlawson.couchdroid"
+    package="com.pouchdb.pouchdroid"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -9,7 +9,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="CouchDroid" >
+        android:label="PouchDroid" >
     </application>
 
 </manifest>

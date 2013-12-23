@@ -1,10 +1,10 @@
 (function(){
     'use strict';
 
-    CouchDroid.Util = {
+    PouchDroid.Util = {
         debug : function(className, str) {
-            if (CouchDroid.DEBUG_MODE && str) {
-                var validClass = (!CouchDroid.DEBUG_CLASSES || CouchDroid.DEBUG_CLASSES.indexOf(className) !== -1);
+            if (PouchDroid.DEBUG_MODE && str) {
+                var validClass = (!PouchDroid.DEBUG_CLASSES || PouchDroid.DEBUG_CLASSES.indexOf(className) !== -1);
                 if (!validClass) {
                     return;
                 }

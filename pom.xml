@@ -9,7 +9,7 @@
 		<version>7</version>
 	</parent>
 
-	<groupId>com.nolanlawson.couchdbsync</groupId>
+	<groupId>com.pouchdb.pouchdroid</groupId>
 	<artifactId>parent</artifactId>
 	<packaging>pom</packaging>
 	<version>1.0.0</version>

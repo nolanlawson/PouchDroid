@@ -35,15 +35,15 @@ module.exports = function (grunt) {
                 replacements: [
                     {
                         pattern: /\bXMLHttpRequest\b/g,
-                        replacement: 'CouchDroid.NativeXMLHttpRequest'
+                        replacement: 'PouchDroid.NativeXMLHttpRequest'
                     },
                     {
                         pattern: /\blocalStorage\b/g,
-                        replacement: 'CouchDroid.fakeLocalStorage'
+                        replacement: 'PouchDroid.fakeLocalStorage'
                     },
                     {
                         pattern: /\bopenDatabase\b/g,
-                        replacement: 'CouchDroid.SQLiteNativeDB.openNativeDatabase'
+                        replacement: 'PouchDroid.SQLiteNativeDB.openNativeDatabase'
                     }
                 ]
             },

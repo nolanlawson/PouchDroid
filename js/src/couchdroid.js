@@ -1,9 +1,9 @@
-/* export CouchDroid */
-var CouchDroid;
+/* export PouchDroid */
+var PouchDroid;
 
 (function(){
     'use strict';
-    CouchDroid = {
+    PouchDroid = {
         DEBUG_MODE       : false,
         //DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper', 'SQLiteNativeDB'],
         DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper'],

@@ -7,7 +7,7 @@
     'use strict';
 
     function debug(str) {
-        CouchDroid.Util.debug('NativeXMLHttpRequest', str);
+        PouchDroid.Util.debug('NativeXMLHttpRequest', str);
     }
 
     var ids = 0;
@@ -80,7 +80,7 @@
         self.callOnReadyStateChange();
 
         // we don't need the xhr callback anymore; we can delete it
-        delete CouchDroid.NativeXMLHttpRequests[self.id];
+        delete PouchDroid.NativeXMLHttpRequests[self.id];
     };
 
     NativeXMLHttpRequest.prototype.open = function (method, url) {
@@ -145,7 +145,7 @@
             body = JSON.stringify(body);
         }
 
-        CouchDroid.NativeXMLHttpRequests[self.id] = self;
+        PouchDroid.NativeXMLHttpRequests[self.id] = self;
 
         var selfStringified = JSON.stringify(self);
 
@@ -160,6 +160,6 @@
         }
     };
 
-    CouchDroid.NativeXMLHttpRequest = NativeXMLHttpRequest;
-    CouchDroid.NativeXMLHttpRequests = {};
+    PouchDroid.NativeXMLHttpRequest = NativeXMLHttpRequest;
+    PouchDroid.NativeXMLHttpRequests = {};
 })();

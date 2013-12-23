@@ -8,7 +8,7 @@
 	<packaging>apk</packaging>
 
 	<parent>
-		<groupId>com.nolanlawson.couchdbsync</groupId>
+		<groupId>com.pouchdb.pouchdroid</groupId>
 		<artifactId>parent-example</artifactId>
 		<version>1.0.0</version>
 		<relativePath>../pom.xml</relativePath>
@@ -22,8 +22,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.nolanlawson.couchdbsync</groupId>
-			<artifactId>couchdbsyncscrollview</artifactId>
+			<groupId>com.pouchdb.pouchdroid</groupId>
+			<artifactId>pouchdroidscrollview</artifactId>
 			<version>${project.version}</version>
 			<type>apklib</type>
 		</dependency>
@@ -57,14 +57,14 @@
 	</build>
   <distributionManagement>
     <repository>
-      <id>couchdbsync-s3-releases</id>
+      <id>pouchdroid-s3-releases</id>
       <name>AWS Release Repository</name>
-      <url>s3://nolanlawson/dist/com.nolanlawson.couchdbsync/release</url>
+      <url>s3://nolanlawson/dist/com.pouchdb.pouchdroid/release</url>
     </repository>
     <snapshotRepository>
-      <id>couchdbsync-s3-snapshots</id>
+      <id>pouchdroid-s3-snapshots</id>
       <name>AWS Snapshot Repository</name>
-      <url>s3://nolanlawson/dist/com.nolanlawson.couchdbsync/snapshot</url>
+      <url>s3://nolanlawson/dist/com.pouchdb.pouchdroid/snapshot</url>
     </snapshotRepository>
   </distributionManagement>
 </project>
