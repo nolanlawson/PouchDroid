@@ -33,9 +33,9 @@ public abstract class MigrationProgressListener {
     
 
     /**
-     * Called when the migration task has finished checking for deleted documents for all tables, and has
-     * deleted them from PouchDB as appropriate.  Occurs after
-     * all <code>onProgress()</code> calls have finished.
+     * Called when the migration task has detected some number of documents for all tables that need
+     * to be deleted, and has deleted them from PouchDB as appropriate.  Occurs after
+     * all <code>onProgress()</code> calls have finished.  Called exactly once.
      * 
      * @param numDocumentsDeleted number of documents deleted in PouchDB to reflect the state of the SQLite tables
      */

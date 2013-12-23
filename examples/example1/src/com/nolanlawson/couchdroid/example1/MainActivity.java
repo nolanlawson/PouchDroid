@@ -12,6 +12,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.nolanlawson.couchdroid.CouchDroidActivity;
@@ -74,7 +75,7 @@ public class MainActivity extends CouchDroidActivity {
     
     private void doInitialMigration() {
         progress.setProgress(0);
-        text.setText(text.getText() + "\n" + Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
+        appendText("" + Html.fromHtml("Loading pok&eacute;mon data into SQLite..."));
         
         // load pokemon data in the background,
         // then launch the migration task in the foreground
@@ -240,24 +241,35 @@ public class MainActivity extends CouchDroidActivity {
                         isExpectedCount ? R.color.alert_blue : R.color.alert_red));
                 progressIndeterminate.setVisibility(View.INVISIBLE);
             }
-            text.setText(text.getText() + "\n" + textContent);
+            appendText(textContent);
         }
 
         @Override
         public void onStart() {
-            text.setText(text.getText() + "\nMigration started!");
+            appendText("Migration started!");
         }
         
         @Override
         public void onDocsDeleted(int numDocumentsDeleted) {
-            text.setText(text.getText() + "\nDeleted " + numDocumentsDeleted + " docs.");
+            appendText("Deleted " + numDocumentsDeleted + " docs.");
         }
 
         @Override
         public void onEnd() {
-            text.setText(text.getText() + "\nMigration done!");
+            appendText("Migration done!");
             
             modifyOrVerify();
         }
+    }
+    
+    private void appendText(final CharSequence format, final Object... args) {
+        text.post(new Runnable() {
+            
+            @Override
+            public void run() {
+                text.setText(new StringBuilder(text.getText()).append("\n").append(String.format(format.toString(), args)));
+                ((ScrollView)text.getParent()).fullScroll(ScrollView.FOCUS_DOWN);
+            }
+        });
     }
 }
