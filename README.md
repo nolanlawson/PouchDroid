@@ -13,7 +13,7 @@ Introduction
 
 ### What is this?
 
-PouchDroid is an Android adapter for [PouchDB][].  It offers a simple key-value store, backed by SQLite, that can automatically sync with a remote [CouchDB][] via HTTP/HTTPS.
+PouchDroid is an Android adapter for [PouchDB][] written in Java.  It offers a simple key-value store, backed by SQLite, that can automatically sync with a remote [CouchDB][] via HTTP/HTTPS.
 
 ### Why do I care?
 
@@ -67,6 +67,23 @@ pouchDB.replicateFrom("http://mysite.com:5984", true)
 
 You'll never have to touch ```SQLiteOpenHelper``` again.  And if you want to
 write a companion webapp with PouchDB, your user's data is already ready to be synced.
+
+What's supported?
+------------
+
+| - | Pouch API                  |
+|-----------|----------------------------|
+| ```[x]``` | ```create/destroy```       |
+| ```[x]``` | ```put/post/get/remove```  |
+| ```[x]``` | ```bulkDocs/allDocs```  |
+| ```[ ]``` | ```changes```  |
+| ```[x]``` | ```replicate```  |
+| ```[ ]``` | ```views```  |
+| ```[ ]``` | ```info```  |
+| ```[ ]``` | ```compact```  |
+| ```[ ]``` | ```revsDiff```  |
+
+
 
 More questions
 -------------
