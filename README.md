@@ -1,7 +1,7 @@
 PouchDroid
 ===========
 
-Effortlessly sync your Android user data to and from CouchDB.
+Effortlessly sync your data across multiple Android devices, using CouchDB.
 
 **Version 0.9-very-beta**
 
@@ -18,7 +18,7 @@ Syncing is hard.  You don't want to have to manage revisions, conflicts, and inc
 
 ### Why Couch/Pouch?
 
-CouchDB is awesome.  If you use its built-in user authentication, you can write Ajax apps with barely any server code at all (if any).  PouchDB is awesome too - it runs cross-browser, and it offers automagical two-way sync between the client and CouchDB.
+CouchDB is awesome.  If you use its built-in user authentication, you can write Ajax apps with barely any server code at all (if any).  PouchDB is awesome too - it runs cross-browser, and it offers automagical two-way sync between the client(s) and server.
 
 ### How does this work?
 
