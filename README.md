@@ -49,8 +49,8 @@ You create a database and add POJOs:
 
 ```java
 PouchDB<Meme> pouch = PouchDB.newPouchDB(Meme.class, pouchDroid, "memes.db");
-pouch.put(new Meme("Doge", "Much database, very JSON"));
-pouch.put(new Meme("AYB", "All your sync are belong to PouchDB"));
+pouch.post(new Meme("Doge", "Much database, very JSON"));
+pouch.post(new Meme("AYB", "All your sync are belong to PouchDB"));
 ```
 
 Then you set up continuous bidirectional sync with CouchDB:
