@@ -1,9 +1,9 @@
 PouchDroid
 ===========
 
-Effortlessly sync your data across multiple Android devices, using CouchDB.
+Effortlessly sync your data across multiple Android devices.
 
-**Version 0.9-very-beta**
+**Version 0.9.0**
 
 Introduction
 -------------
@@ -14,11 +14,57 @@ PouchDroid is an Android adapter for [PouchDB][4].  It offers a simple key-value
 
 ### Why do I care?
 
-Syncing is hard.  You don't want to have to manage revisions, conflicts, and incremental sync yourself.  CouchDB/PouchDB will handle all that junk for you, so you can devote your brain cells to other problems.
+Syncing is hard.  You don't want to have to manage revisions, conflicts, and incremental changes yourself.  CouchDB/PouchDB will handle all that junk for you, so you can devote your brain cells to other problems.
+
+Also, ORM is hard.  So instead of forcing you to write SQL or add ```@AnnoyingAnnotations```, PouchDroid lets you persist your plain old Java objects as JSON. And it uses the same API as PouchDB, which is the same API as CouchDB.  Fewer APIs == fewer brain cells wasted.
 
 ### Why Couch/Pouch?
 
 CouchDB is awesome.  If you use its built-in user authentication, you can write Ajax apps with barely any server code at all (if any).  PouchDB is awesome too - it runs cross-browser, and it offers automagical two-way sync between the client(s) and server.
+
+Examples
+----------
+
+Your activities extend ```PouchDroidActivity```:
+
+```java
+public class MyActivity extends PouchDroidActivity {
+  public void onPouchDroidReady(PouchDroid pouchDroid) {
+    // do stuff
+  }
+}
+```
+
+Your POJOs extend ```PouchDocument```:
+
+```java
+public class Meme extends PouchDocument {
+  String name;
+  String description;
+  // getters and setters (must have a bare constructor)
+}
+```
+
+You create a database and add POJOs:
+
+```java
+PouchDB<Meme> pouch = PouchDB.newPouchDB(Meme.class, pouchDroid, "memes.db");
+pouch.put(new Meme("Doge", "Much database, very JSON"));
+pouch.put(new Meme("AYB", "All your sync are belong to PouchDB"));
+```
+
+Then you set up continuous bidirectional sync with CouchDB:
+
+```java
+pouchDB.replicateTo("http://mysite.com:5984", true);
+pouchDB.replicateFrom("http://mysite.com:5984", true)
+```
+
+You'll never have to touch ```SQLiteOpenHelper``` again.  And if you want to
+write a companion webapp with PouchDB, your data is already ready to be synced.
+
+More questions
+-------------
 
 ### How does this work?
 
@@ -36,36 +82,21 @@ Also PouchDroid doesn't have any external dependencies, other than PouchDB and J
 
 ### But I already store user data in SQLite!
 
-PouchDroid includes a small utility called PouchDroidMigrationTask, which will migrate your existing SQLite tables into a reasonable key-value format.  So, if you don't want to dive head-first into Pouch, you can use it purely for one-way sync to CouchDB.
+PouchDroid includes a small utility called ```PouchDroidMigrationTask```, which can migrate your existing SQLite tables into a reasonable key-value format.  So, if you don't want to dive head-first into Pouch, you can use it purely for one-way sync to CouchDB.
 
 Limitations
 -----------
 
 1. PouchDroid needs a WebView in order to run JavaScript.  Hence, you can't use it in a background Service, and it does consume UI thread cycles.  For small databases, though, you probably won't notice.
-1. The PouchDB API is asynchronous. This means that JavaScript-style callback hell has invaded your Java cathedral.  Just avoid [the pyramid of doom][3] and you should be fine.
-1. Android 2.1 (API level 7) and up is supported.
+2. Actually, that's the only limitation.
 
-Details
+Android 2.1 (API level 7) and up is supported.
+
+Tutorials
 ----------
 
-More details in [this blog post](http://nolanlawson.com/2013/12/08/porting-pouchdb-to-android-initial-work-and-thoughts/).
+TODO
 
-<!--
-Scenarios
-----------
-
-### 1. You already have SQLite user data, and you want to sync it to CouchDB.
-
-The PouchDroidMigrationTask tool is designed specifically for this.  It will copy the existing SQLite tables and write it to a new PouchDB (overwriting if necessary).
-
-Once you have a ```PouchDB``` object, you can set up a one-way replication to CouchDB.  Of course, it will only send the diffs, and only when the service is available.  (Did I mention PouchDB is awesome?)
-
-### 2. You're writing a new app, and you want to use pure PouchDroid.
-
-It's just PouchDB!  Follow the PouchDB APIs, which have been translated as faithfully as possible into Java.
-
-PouchDroid uses Jackson for JSON serialization/deserialization, which means that, for the most part, POJOs will "just work."
--->
 License
 ----------
 
