@@ -1,7 +1,7 @@
 PouchDroid
 ===========
 
-Effortlessly sync your data across multiple Android devices.
+Effortlessly sync your data across multiple Android devices, using [PouchDB][] and [CouchDB][].
 
 **Version 0.9.0**
 
@@ -10,7 +10,7 @@ Introduction
 
 ### What is this?
 
-PouchDroid is an Android adapter for [PouchDB][4].  It offers a simple key-value store, backed by SQLite, that can automatically sync with a remote [CouchDB][5] database via HTTP/HTTPS.
+PouchDroid is an Android adapter for [PouchDB][].  It offers a simple key-value store, backed by SQLite, that can automatically sync with a remote [CouchDB][] database via HTTP/HTTPS.
 
 ### Why do I care?
 
@@ -68,7 +68,7 @@ More questions
 
 ### How does this work?
 
-Rather than rewrite PouchDB in Java, PouchDroid fires up an invisible WebView, which it basically uses as a JavaScript interpreter to run PouchDB with its WebSQL adapter.  Calls to WebSQL are rerouted to the native Android SQLite API, while calls to XMLHttpRequest are rerouted to the Apache HttpClient API.  [Jackson][6] is used for JSON serialization/deserialization.
+Rather than rewrite PouchDB in Java, PouchDroid fires up an invisible WebView, which it basically uses as a JavaScript interpreter to run PouchDB with its WebSQL adapter.  Calls to WebSQL are rerouted to the native Android SQLite API, while calls to XMLHttpRequest are rerouted to the Apache HttpClient API.  [Jackson][] is used for JSON serialization/deserialization.
 
 ### Isn't the performance terrible?
 
@@ -109,6 +109,6 @@ Nolan Lawson
 [1]: https://github.com/pgsqlite/PG-SQLitePlugin-Android-2013.09
 [2]: http://guide.couchdb.org/draft/conflicts.html
 [3]: http://tritarget.org/blog/2012/11/28/the-pyramid-of-doom-a-javascript-style-trap/]
-[4]: http://pouchdb.com/
-[5]: http://couchdb.apache.org/
-[6]: http://jackson.codehaus.org/
+[pouchdb]: http://pouchdb.com/
+[couchdb]: http://couchdb.apache.org/
+[jackson]: http://jackson.codehaus.org/
