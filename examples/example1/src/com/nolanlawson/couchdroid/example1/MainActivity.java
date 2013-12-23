@@ -18,9 +18,9 @@ import com.nolanlawson.couchdroid.CouchDroidActivity;
 import com.nolanlawson.couchdroid.CouchDroidRuntime;
 import com.nolanlawson.couchdroid.example1.pojo.PocketMonster;
 import com.nolanlawson.couchdroid.migration.CouchDroidMigrationTask;
+import com.nolanlawson.couchdroid.migration.GenericSqliteDocument;
 import com.nolanlawson.couchdroid.migration.MigrationProgressListener;
 import com.nolanlawson.couchdroid.pouch.PouchDB;
-import com.nolanlawson.couchdroid.pouch.PouchException;
 
 public class MainActivity extends CouchDroidActivity {
     
@@ -157,39 +157,55 @@ public class MainActivity extends CouchDroidActivity {
         }
     }
     
-    public void replicateToRemote() {
+    public void modifyOrVerify() {
+        
+        String sql = "select count(*) from Monsters where nationalDexNumber > 151";
+        long count = sqliteDatabase.compileStatement(sql).simpleQueryForLong();
+        
+        if (count == 0) { // already modified pokemon db, no need to replicate
+            verifyRemotePouchContents();
+        } else {
+            modifyDbAndContinue();
+        }
+    }    
+    
+    private void verifyRemotePouchContents() {
         
         new AsyncTask<Void, Void, Void>(){
 
             @Override
             protected Void doInBackground(Void... params) {
                 
-                PouchDB<PocketMonster> pouch = PouchDB.newPouchDB(PocketMonster.class, getCouchDroidRuntime(), 
+                PouchDB<GenericSqliteDocument> pouch = PouchDB.newPouchDB(GenericSqliteDocument.class, getCouchDroidRuntime(), 
                         localPouchName);
+                pouch.replicateTo(COUCHDB_URL, true);
+                
+                // verify the remote db contains only 151 pokemon, as God intended
                 try {
-                    pouch.replicateTo(COUCHDB_URL);
-                } catch (PouchException e) {
+                    Thread.sleep(90000);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
                     e.printStackTrace();
-                    // remote couch not accessible; just ignore
                 }
+                PouchDB<GenericSqliteDocument> remotePouch = PouchDB.newPouchDB(GenericSqliteDocument.class, getCouchDroidRuntime(),
+                        COUCHDB_URL);
+                List<GenericSqliteDocument> localMonsters = pouch.allDocs(true).getDocuments();
+                List<GenericSqliteDocument> monsters = remotePouch.allDocs(true).getDocuments();
+                if (monsters.size() != 151) {
+                    throw new RuntimeException("replication failed!  The remote DB contains " + monsters.size() 
+                            + " pokemon instead of 151.");
+                } else if (localMonsters.size() != 151) {
+                    throw new RuntimeException("replication failed!  The local DB contains " + localMonsters.size() 
+                            + " pokemon instead of 151.");
+                }
+                
+                
                 return null;
             }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                super.onPostExecute(result);
-                text.setText(text.getText() + "\nDatabase replicated as well!");
-                
-                String sql = "select count(*) from Monsters where nationalDexNumber > 151";
-                long count = sqliteDatabase.compileStatement(sql).simpleQueryForLong();
-                
-                if (count > 0) { //haven't deleted pokemon yet
-                    modifyDbAndContinue();
-                }
-            }
         }.execute((Void)null);
-    }    
-    
+        
+    }
+
     private void modifyDbAndContinue() {
         
         // I hate the later Pokemon
@@ -241,7 +257,7 @@ public class MainActivity extends CouchDroidActivity {
         public void onEnd() {
             text.setText(text.getText() + "\nMigration done!");
             
-            replicateToRemote();
+            modifyOrVerify();
         }
     }
 }

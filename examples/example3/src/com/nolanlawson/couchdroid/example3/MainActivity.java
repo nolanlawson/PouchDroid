@@ -133,15 +133,13 @@ public class MainActivity extends CouchDroidActivity {
         pouch2.replicateFrom(REMOTE_COUCHDB_URL, true, onReplicateFrom);
         pouch2.replicateTo(REMOTE_COUCHDB_URL, true, onReplicateTo);
         
-        final int DELAY = 10000;
+        final int DELAY = 30000;
         
         handler.postDelayed(new Runnable() {
             
             @Override
             public void run() {
                 checkPouchContents();
-                
-                handler.postDelayed(this, DELAY); // continuous
             }
         }, DELAY);
         
@@ -153,8 +151,11 @@ public class MainActivity extends CouchDroidActivity {
             
             @Override
             public void onCallback(PouchError err, AllDocsInfo<Robot> info) {
-                log.i("pouch1 contains %s docs: %s", info.getDocuments().size(), info.getDocuments());
-                
+                List<Robot> docs = info.getDocuments();
+                log.i("pouch1 contains %s docs: %s", docs.size(), docs);
+                if (docs.size() != 5) {
+                    throw new RuntimeException("replication failed for pouch1");
+                }
             }
         });
         
@@ -163,8 +164,11 @@ public class MainActivity extends CouchDroidActivity {
             
             @Override
             public void onCallback(PouchError err, AllDocsInfo<Robot> info) {
-                log.i("pouch2 contains %s docs: %s", info.getDocuments().size(), info.getDocuments());
-                
+                List<Robot> docs = info.getDocuments();
+                log.i("pouch2 contains %s docs: %s", docs.size(), docs);
+                if (docs.size() != 5) {
+                    throw new RuntimeException("replication failed for pouch2");
+                }
             }
         });
     }

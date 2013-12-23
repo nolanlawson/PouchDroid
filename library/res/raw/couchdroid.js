@@ -432,8 +432,8 @@ var CouchDroid;
         debug('onNativeCallback(' + statusCode +', ' + content +')');
 
         if (err) {
-            // TODO: do something?
-            window.console.log(JSON.stringify(err));
+            // TODO: do something better?
+            window.console.log('XHR error: ' + JSON.stringify(err));
         }
 
         self.readyState = STATES.DONE;
@@ -443,7 +443,7 @@ var CouchDroid;
         self.callOnReadyStateChange();
 
         // we don't need the xhr callback anymore; we can delete it
-        //delete CouchDroid.NativeXMLHttpRequests[self.id];
+        delete CouchDroid.NativeXMLHttpRequests[self.id];
     };
 
     NativeXMLHttpRequest.prototype.open = function (method, url) {

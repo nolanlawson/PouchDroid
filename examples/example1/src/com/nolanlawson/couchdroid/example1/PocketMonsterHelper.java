@@ -9,7 +9,6 @@ import java.util.List;
 
 import android.content.Context;
 
-import com.nolanlawson.couchdroid.example1.R;
 import com.nolanlawson.couchdroid.example1.pojo.PocketMonster;
 
 public class PocketMonsterHelper {

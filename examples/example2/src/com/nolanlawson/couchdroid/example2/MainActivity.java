@@ -134,13 +134,21 @@ public class MainActivity extends CouchDroidActivity {
         
         appendText("ran replicate, dinosaurs are now %s", dinosaurPouch.allDocs(true).getDocuments());
         
+        
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         // at this point, the dinosaurs should be in the remote CouchDB.  
         
         PouchDB<Dinosaur> remotePouch = PouchDB.newPouchDB(Dinosaur.class, getCouchDroidRuntime(), REMOTE_COUCHDB_URL);
-        
-        appendText("remote pouch contents are %s", remotePouch.allDocs(true).getDocuments());
-        
-        
+        List<Dinosaur> remoteDocs = remotePouch.allDocs(true).getDocuments();
+        appendText("remote pouch contents are %s", remoteDocs);
+        if (remoteDocs.size() != 5) {
+            throw new RuntimeException("expected the remote pouch to have 5 docs, but it had " + remoteDocs.size());
+        }
     }
     
     private void appendText(final String format, final Object... args) {

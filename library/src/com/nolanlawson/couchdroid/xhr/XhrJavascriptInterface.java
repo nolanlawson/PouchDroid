@@ -173,7 +173,7 @@ public class XhrJavascriptInterface {
                     log.d("xhrid %s read content.", xhrId);
                     return new SimpleHttpResponse(content, response.getStatusLine().getStatusCode());
                 } catch (Exception e) {
-                    log.e(e, "exception within doInBackground");
+                    log.e(e, "HTTP exception during request");
                     return null;
                 }
             }
