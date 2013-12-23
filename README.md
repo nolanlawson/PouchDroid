@@ -1,9 +1,12 @@
 PouchDroid
 ===========
 
+**Version 0.9.0**
+
+![logo][]
+
 Effortlessly sync your data across multiple Android devices, using [PouchDB][] and [CouchDB][].
 
-**Version 0.9.0**
 
 Introduction
 -------------
@@ -121,3 +124,4 @@ Nolan Lawson
 [couchdb]: http://couchdb.apache.org/
 [jackson]: http://jackson.codehaus.org/
 [couchsecurity]: http://guide.couchdb.org/draft/security.html
+[logo]: https://raw.github.com/nolanlawson/PouchDroid/master/gimp/pouchdroid_logo.png
