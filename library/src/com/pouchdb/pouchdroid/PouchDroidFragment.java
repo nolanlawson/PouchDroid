@@ -41,4 +41,9 @@ public abstract class PouchDroidFragment extends Fragment {
             pouchDroid.close();
         }
     }
+    
+    
+    public PouchDroid getPouchDroid() {
+        return pouchDroid;
+    }
 }
