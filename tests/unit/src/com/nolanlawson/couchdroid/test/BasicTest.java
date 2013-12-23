@@ -137,6 +137,7 @@ public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
             
             pouch1.replicateTo(pouch2.getName(), false);
             pouch1.replicateFrom(pouch2.getName(), false);
+            Thread.sleep(20000);
             
             assertEquals(3, pouch1.allDocs().getDocuments().size());
             assertEquals(pouch1.allDocs().getDocuments(), pouch2.allDocs().getDocuments());
