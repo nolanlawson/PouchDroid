@@ -34,6 +34,7 @@ Your Activity extends ```PouchDroidActivity```:
 
 ```java
 public class MyActivity extends PouchDroidActivity {
+  /* ... */
   public void onPouchDroidReady(PouchDroid pouchDroid) {
     // do stuff
   }
