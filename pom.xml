@@ -12,7 +12,7 @@
 	<groupId>com.pouchdb.pouchdroid</groupId>
 	<artifactId>parent</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.0</version>
+	<version>0.1.0</version>
 
 	<name>SuperSaiyanScrollView (Parent)</name>
 	<description>Android library for easily creating a sectioned ListView with fast-scrolling and overlays.</description>
