@@ -7,16 +7,15 @@ PouchDroid
 
 Effortlessly sync your data across multiple Android devices, using [PouchDB][] and [CouchDB][].
 
-#### Table of Contents
-
-* [Introduction](#introduction)
-* [Examples](#examples)
-* [What's supported?](#whats-supported)
-* [More questions](#more-questions)
-* [Limitations](#limitations)
-* [Tutorials](#tutorials)
-* [License](#license)
-* [Author](#author)
+|Table of Contents|
+|-----------------|
+| [Introduction](#introduction) |
+| [Basic Usage](#basic-usage) |
+| [Q&amp;A](#qa) |
+| [What's supported?](#whats-supported) |
+| [Tutorials](#tutorials) |
+| [License](#license) |
+| [Author](#author) |
 
 Introduction
 -------------
@@ -37,7 +36,7 @@ CouchDB is awesome.  If you use its [built-in user authentication][couchsecurity
 
 PouchDB is awesome too.  It runs cross-browser, and it offers automagical two-way sync between the client and server.
 
-Examples
+Basic Usage
 ----------
 
 Your Activity extends ```PouchDroidActivity```:
@@ -79,24 +78,7 @@ pouchDB.replicateFrom("http://user:password@mysite.com:5984", true)
 You'll never have to touch ```SQLiteOpenHelper``` again.  And if your user
 opens the app on another device, their data is already waiting for them.
 
-What's supported?
-------------
-
-| - | Pouch API                  |
-|-----------|----------------------------|
-| ```[x]``` | ```create/destroy```       |
-| ```[x]``` | ```put/post/get/remove```  |
-| ```[x]``` | ```bulkDocs/allDocs```  |
-| ```[ ]``` | ```changes```  |
-| ```[x]``` | ```replicate```  |
-| ```[ ]``` | ```views```  |
-| ```[ ]``` | ```info```  |
-| ```[ ]``` | ```compact```  |
-| ```[ ]``` | ```revsDiff```  |
-
-
-
-More questions
+Q&amp;A
 -------------
 
 ### How does this work?
@@ -121,13 +103,27 @@ As it is, PouchDroid doesn't have any external dependencies, other than PouchDB 
 
 PouchDroid includes a small utility called ```PouchDroidMigrationTask```, which can migrate your existing SQLite tables into a pretty reasonable key-value format.  So, if you don't want to dive head-first into Pouch, you can use it purely for one-way sync to CouchDB.
 
-Limitations
------------
+### What are the limitations?
 
 1. PouchDroid needs a WebView in order to run JavaScript.  Hence, you can't use it in a background Service, and it does consume UI cycles.  For small databases, though, you probably won't notice.
 2. Actually, that's the only limitation.
 
 Android 2.1 (API level 7) and up is supported.
+
+What's supported?
+------------
+
+| - | Pouch API                  |
+|-----------|----------------------------|
+| ```[x]``` | ```create/destroy```       |
+| ```[x]``` | ```put/post/get/remove```  |
+| ```[x]``` | ```bulkDocs/allDocs```  |
+| ```[ ]``` | ```changes```  |
+| ```[x]``` | ```replicate```  |
+| ```[ ]``` | ```views```  |
+| ```[ ]``` | ```info```  |
+| ```[ ]``` | ```compact```  |
+| ```[ ]``` | ```revsDiff```  |
 
 Tutorials
 ----------
