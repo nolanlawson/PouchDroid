@@ -62,12 +62,12 @@ pouch.post(new Meme("AYB", "All your sync are belong to PouchDB"));
 Then you set up continuous bidirectional sync with CouchDB:
 
 ```java
-pouchDB.replicateTo("http://mysite.com:5984", true);
-pouchDB.replicateFrom("http://mysite.com:5984", true)
+pouchDB.replicateTo("http://user:password@mysite.com:5984", true);
+pouchDB.replicateFrom("http://user:password@mysite.com:5984", true)
 ```
 
-You'll never have to touch ```SQLiteOpenHelper``` again.  And if you want to
-write a companion webapp with PouchDB, your user's data is already ready to be synced.
+You'll never have to touch ```SQLiteOpenHelper``` again.  And if your user
+opens the app on another device, their data is already waiting for them.
 
 What's supported?
 ------------
