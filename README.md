@@ -128,7 +128,7 @@ What's supported?
 Tutorials
 ----------
 
-TODO
+* [Getting started with PouchDroid](//github.com/nolanlawson/PouchDroid/wiki/Getting-Started)
 
 License
 ----------
