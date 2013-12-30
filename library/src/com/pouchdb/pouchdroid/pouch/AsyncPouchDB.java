@@ -14,6 +14,7 @@ import com.pouchdb.pouchdroid.PouchDroid;
 import com.pouchdb.pouchdroid.pouch.callback.AllDocsCallback;
 import com.pouchdb.pouchdroid.pouch.callback.BulkCallback;
 import com.pouchdb.pouchdroid.pouch.callback.Callback;
+import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
 import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
 import com.pouchdb.pouchdroid.pouch.callback.ReplicateCallback;
 import com.pouchdb.pouchdroid.pouch.callback.StandardCallback;
@@ -36,6 +37,12 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
 
     private Class<T> documentClass;
     
+    /*
+     *******************************************
+     * Constructors
+     *******************************************
+     */
+    
     /* package */ AsyncPouchDB(Class<T> documentClass, PouchDroid pouchDroid, String name, boolean autoCompaction) {
         this.id = POUCH_IDS.incrementAndGet();
         this.documentClass = documentClass;
@@ -52,6 +59,12 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
                 .append(");"));
     }
     
+    /*
+     *******************************************
+     * Public methods
+     *******************************************
+     */
+    
     /**
      * Returns the name of the database that was provided in the constructor call.
      * @return
@@ -67,7 +80,13 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
     public boolean isDestroyed() {
         return destroyed;
     }
-
+    
+    /*
+     *******************************************
+     * Public overrides
+     *******************************************
+     */
+    
     @Override
     public void destroy(Map<String, Object> options, StandardCallback callback) {
         
@@ -362,6 +381,16 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
     public void replicateFrom(String remoteDB) {
         replicateFrom(remoteDB, null);
     }
+    
+    public void info(DatabaseInfoCallback callback) {
+        loadAction("info", null, callback);
+    }
+    
+    /*
+     *******************************************
+     * Private methods
+     *******************************************
+     */
 
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
         loadAction(action, null, options, callback, null);

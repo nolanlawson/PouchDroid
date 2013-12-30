@@ -10,10 +10,12 @@ import android.os.Looper;
 import com.pouchdb.pouchdroid.PouchDroid;
 import com.pouchdb.pouchdroid.pouch.callback.AllDocsCallback;
 import com.pouchdb.pouchdroid.pouch.callback.BulkCallback;
+import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
 import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
 import com.pouchdb.pouchdroid.pouch.callback.ReplicateCallback;
 import com.pouchdb.pouchdroid.pouch.callback.StandardCallback;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
+import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
 import com.pouchdb.pouchdroid.util.Maps;
@@ -22,6 +24,12 @@ public class PouchDB<T extends PouchDocumentInterface> {
 
     private AsyncPouchDB<T> delegate;
 
+    /*
+     *******************************************
+     * Constructors
+     *******************************************
+     */    
+    
     /* package */ PouchDB(Class<T> documentClass, PouchDroid pouchDroid, String name,
             boolean autoCompaction) {
         delegate = new AsyncPouchDB<T>(documentClass, pouchDroid, name, autoCompaction);
@@ -121,6 +129,12 @@ public class PouchDB<T extends PouchDocumentInterface> {
         return new AsyncPouchDB<T>(documentClass, pouchDroid, name, autoCompaction);
     }
     
+    /*
+     *******************************************
+     * Public methods
+     *******************************************
+     */
+    
     /**
      * @see AsyncPouchDB#getName()
      */
@@ -134,7 +148,20 @@ public class PouchDB<T extends PouchDocumentInterface> {
     public boolean isDestroyed() {
         return delegate.isDestroyed();
     }
-
+    
+    /**
+     * Returns the underlying AsyncPouchDB, in case you want to do some asynchronous calls as well.
+     * @return
+     */
+    public AsyncPouchDB<T> getAsyncPouchDB() {
+        return delegate;
+    }
+    
+    /*
+     *******************************************
+     * Public overrides (implicit or otherwise)
+     *******************************************
+     */
     /**
      * @see AsyncPouchDB#destroy(options, callback)
      */
@@ -376,13 +403,25 @@ public class PouchDB<T extends PouchDocumentInterface> {
         replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
     }
     
-    /**
-     * Returns the underlying AsyncPouchDB, in case you want to do some asynchronous calls as well.
-     * @return
-     */
-    public AsyncPouchDB<T> getAsyncPouchDB() {
-        return delegate;
+    public DatabaseInfo info() {
+        final BlockingQueue<PouchResponse<DatabaseInfo>> lock = createLock();
+
+        delegate.info(new DatabaseInfoCallback() {
+
+            @Override
+            public void onCallback(PouchError err, DatabaseInfo info) {
+
+                lock.offer(new PouchResponse<DatabaseInfo>(err, info));
+            }
+        });
+        return waitAndReturn(lock);        
     }
+    
+    /*
+     *******************************************
+     * Private methods
+     *******************************************
+     */
     
     private StandardCallback createStandardCallback(final BlockingQueue<PouchResponse<PouchInfo>> lock) {
         return new StandardCallback() {

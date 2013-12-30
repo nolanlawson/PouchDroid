@@ -170,7 +170,8 @@ public class PouchDroid {
         @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            if (Build.VERSION.SDK_INT < 11) { //  I believe they started logging the "Web Console" in 11
+            if (Build.VERSION.SDK_INT < 11 || Build.VERSION.SDK_INT >= 19) {
+                //  I believe they started logging the "Web Console" in 11, then stopped in kitkat
                 Log.i("Web Console", message);
             }
         }

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.pouchdb.pouchdroid.pouch.callback.AllDocsCallback;
 import com.pouchdb.pouchdroid.pouch.callback.BulkCallback;
+import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
 import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
 import com.pouchdb.pouchdroid.pouch.callback.ReplicateCallback;
 import com.pouchdb.pouchdroid.pouch.callback.StandardCallback;
@@ -751,4 +752,53 @@ public abstract class AbstractPouchDB<T extends PouchDocumentInterface> {
      * @param complete
      */    
     public abstract void replicateFrom(String remoteDB, Map<String, Object> options, ReplicateCallback complete);
+    
+    /**
+     * 
+     * <h2>Get database information<a id="database_information"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Get information about a database.
+     * </p>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">info</span><span class="p">)</span> <span class="p">{</span> <span class="p">})</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h4>Example Response:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s2">&quot;db_name&quot;</span><span class="o">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+     *   <span class="s2">&quot;doc_count&quot;</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
+     *   <span class="s2">&quot;update_seq&quot;</span><span class="o">:</span> <span class="mi">5</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * @see <a href='http://pouchdb.com/api.html#database_information'>
+     *      http://pouchdb.com/api.html#database_information </a>
+     * @param callback
+     */
+    public abstract void info(DatabaseInfoCallback callback);
 }

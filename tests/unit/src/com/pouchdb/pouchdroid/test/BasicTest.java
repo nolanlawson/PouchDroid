@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import junit.framework.Assert;
+
 import android.annotation.SuppressLint;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
@@ -21,12 +22,12 @@ import com.pouchdb.pouchdroid.pouch.model.ReplicateInfo;
 import com.pouchdb.pouchdroid.test.data.GameBoy;
 import com.pouchdb.pouchdroid.test.data.Person;
 
-@SuppressLint("NewApi")
-public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
+public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity> {
     
     private String dbName;
     private PouchDB<Person> pouchDB;
     
+    @SuppressLint("NewApi")
     public BasicTest() {
         super(MainActivity.class);
     }
@@ -36,8 +37,9 @@ public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
         super.setUp();
         while (getActivity() == null || !getActivity().isPouchDroidReady()) {
             Thread.sleep(100);
-            Log.i("Tests", "Waiting for couch droid pouchDroid to not be null");
+            Log.i("Tests", "Waiting for pouchDroid to not be null");
         }
+        Log.i("Tests", "pouchdroid is not null");
         dbName = "unit-test-" + Integer.toHexString(new Random().nextInt());
         pouchDB = PouchDB.newPouchDB(Person.class, 
                 getActivity().getPouchDroid(), dbName);
@@ -49,7 +51,9 @@ public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
     protected void tearDown() throws Exception {
         super.tearDown();
         if (pouchDB != null) {
+            Log.i("Tests", "Destroying pouchDroid");
             pouchDB.destroy();
+            Log.i("Tests", "Destroyed pouchDroid");
         }
     }
     
@@ -143,8 +147,7 @@ public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
             pouch2.post(new Person("Butters", 867354, 3, Arrays.asList(new GameBoy("Chaos", "GBA")), true));
             
             // use async so we can tell when it's done
-            AsyncPouchDB<Person> asyncPouch1 = PouchDB.newAsyncPouchDB(Person.class, getActivity().getPouchDroid(), 
-                    pouch1Name);
+            AsyncPouchDB<Person> asyncPouch1 = pouch1.getAsyncPouchDB();
             
             final ArrayBlockingQueue<Boolean> lock = new ArrayBlockingQueue<Boolean>(1);
             
