@@ -64,16 +64,60 @@ You create a database and add POJOs:
 
 ```java
 PouchDB<Meme> pouch = PouchDB.newPouchDB(Meme.class, pouchDroid, "memes.db");
-pouch.post(new Meme("Doge", "Much database, very JSON"));
-pouch.post(new Meme("AYB", "All your sync are belong to PouchDB"));
+pouch.post(new Meme("Doge", "Much database, very JSON. Wow."));
+pouch.post(new Meme("AYB", "All your sync are belong to PouchDB."));
 ```
 
 Then you set up continuous bidirectional sync with CouchDB:
 
 ```java
-pouchDB.replicateTo("http://user:password@mysite.com:5984", true);
-pouchDB.replicateFrom("http://user:password@mysite.com:5984", true)
+pouchDB.replicateTo("http://user:password@mysite.com:5984/mydb", true);
+pouchDB.replicateFrom("http://user:password@mysite.com:5984/mydb", true)
 ```
+
+You check the remote CouchDB:
+
+```
+curl 'http://user:password@mysite.com:5984/_all_docs?include_docs=true' | python -mjson.tool
+```
+
+And it returns:
+```json
+{
+    "offset": 0, 
+    "rows": [
+        {
+            "doc": {
+                "_id": "e01532d5cb2765bc0b80dcbe687474c9", 
+                "_rev": "2-b1344c55cdf88a537c6698f7f81745a1", 
+                "description": "Much database, very JSON. Wow.", 
+                "name": "Doge"
+            }, 
+            "id": "e01532d5cb2765bc0b80dcbe687474c9", 
+            "key": "e01532d5cb2765bc0b80dcbe687474c9", 
+            "value": {
+                "rev": "2-b1344c55cdf88a537c6698f7f81745a1"
+            }
+        }, 
+        {
+            "doc": {
+                "_id": "e01532d5cb2765bc0b80dcbe68747ede", 
+                "_rev": "2-f6d6f0e06d6912c6bd40329c0bcf604f", 
+                "description": "All your sync are belong to PouchDB.", 
+                "name": "AYB"
+            }, 
+            "id": "e01532d5cb2765bc0b80dcbe68747ede", 
+            "key": "e01532d5cb2765bc0b80dcbe68747ede", 
+            "value": {
+                "rev": "2-f6d6f0e06d6912c6bd40329c0bcf604f"
+            }
+        }
+    ], 
+    "total_rows": 2
+}
+```
+
+
 
 You'll never have to touch ```SQLiteOpenHelper``` again.  And if your user
 opens the app on another device, their data is already waiting for them.
