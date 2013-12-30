@@ -3,6 +3,7 @@ package com.pouchdb.pouchdroid.test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import junit.framework.Assert;
 import android.annotation.SuppressLint;
@@ -10,9 +11,13 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
 import com.pouchdb.pouchdroid.appforunittests.MainActivity;
+import com.pouchdb.pouchdroid.pouch.AsyncPouchDB;
 import com.pouchdb.pouchdroid.pouch.PouchDB;
 import com.pouchdb.pouchdroid.pouch.PouchException;
+import com.pouchdb.pouchdroid.pouch.callback.ReplicateCallback;
+import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
+import com.pouchdb.pouchdroid.pouch.model.ReplicateInfo;
 import com.pouchdb.pouchdroid.test.data.GameBoy;
 import com.pouchdb.pouchdroid.test.data.Person;
 
@@ -124,20 +129,42 @@ public class BasicTest extends ActivityInstrumentationTestCase2<MainActivity>{
         PouchDB<Person> pouch2 = null;
         
         try {
+            String pouch1Name = "pouch1_" + new Random().nextInt();
+            String pouch2Name = "pouch2_" + new Random().nextInt();
+            
             pouch1 = PouchDB.newPouchDB(Person.class, 
-                    getActivity().getPouchDroid(), "pouch1_" + new Random().nextInt());
+                    getActivity().getPouchDroid(), pouch1Name);
             pouch2 = PouchDB.newPouchDB(Person.class, 
-                    getActivity().getPouchDroid(), "pouch2_" + new Random().nextInt());
+                    getActivity().getPouchDroid(), pouch2Name);
             
             pouch1.post(new Person("Stan", 18324, 1, Arrays.asList(new GameBoy("foo", "Nintendo DS")), false));
             pouch1.post(new Person("Wendy", 2318324, 0, Collections.<GameBoy>emptyList(), true));
             
             pouch2.post(new Person("Butters", 867354, 3, Arrays.asList(new GameBoy("Chaos", "GBA")), true));
             
+            // use async so we can tell when it's done
+            AsyncPouchDB<Person> asyncPouch1 = PouchDB.newAsyncPouchDB(Person.class, getActivity().getPouchDroid(), 
+                    pouch1Name);
             
-            pouch1.replicateTo(pouch2.getName(), false);
-            pouch1.replicateFrom(pouch2.getName(), false);
-            Thread.sleep(20000);
+            final ArrayBlockingQueue<Boolean> lock = new ArrayBlockingQueue<Boolean>(1);
+            
+            asyncPouch1.replicateTo(pouch2.getName(), false, new ReplicateCallback() {
+                
+                @Override
+                public void onCallback(PouchError err, ReplicateInfo info) {
+                    lock.offer(Boolean.TRUE);
+                }
+            });
+            lock.take();
+            
+            asyncPouch1.replicateFrom(pouch2.getName(), false, new ReplicateCallback() {
+                
+                @Override
+                public void onCallback(PouchError err, ReplicateInfo info) {
+                    lock.offer(Boolean.TRUE);
+                }
+            });
+            lock.take();
             
             assertEquals(3, pouch1.allDocs().getDocuments().size());
             assertEquals(pouch1.allDocs().getDocuments(), pouch2.allDocs().getDocuments());
