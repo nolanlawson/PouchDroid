@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.ConsoleMessage;
@@ -29,7 +28,7 @@ public class PouchDroid {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
-    private static final boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = false;
     private static final boolean USE_WEINRE = DEBUG_MODE;
     private static final boolean USE_MINIFIED_POUCH = !USE_WEINRE;
     private static final boolean USE_MINIFIED_COUCHDROID = !USE_WEINRE;
@@ -173,26 +172,16 @@ public class PouchDroid {
     
     private class MyWebChromeClient extends WebChromeClient {
         
-        @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            if (Build.VERSION.SDK_INT < 11) {
-                //  I believe they started logging the "Web Console" in 11, then stopped in kitkat
-                Log.i("Web Console", message);
-            }
+            log.d("Web Console: %s", message);
         }
 
-        @Override
         @SuppressLint("NewApi")
         public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-            if (Build.VERSION.SDK_INT >= 19) {
-                Log.i("Web Console", consoleMessage.message());
-                return true;
-            }
+            log.d("Web Console: %s", consoleMessage.message());
             return false;
         }
-        
-        
     }
     
     /* 

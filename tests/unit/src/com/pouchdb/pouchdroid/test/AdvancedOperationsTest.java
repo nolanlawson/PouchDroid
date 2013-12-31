@@ -73,6 +73,7 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
             }
         }, null, Maps.quickMap("include_docs", true));
         
+        Log.i("Tests", response.toString());
         assertEquals(2, response.getDocuments().size());
     }
 }
