@@ -403,6 +403,10 @@ public class PouchDB<T extends PouchDocumentInterface> {
         replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
     }
     
+    /**
+     * 
+     * @see AsyncPouchDB#info(DatabaseInfoCallback)
+     */
     public DatabaseInfo info() {
         final BlockingQueue<PouchResponse<DatabaseInfo>> lock = createLock();
 
@@ -415,6 +419,37 @@ public class PouchDB<T extends PouchDocumentInterface> {
             }
         });
         return waitAndReturn(lock);        
+    }
+    
+    /**
+     * @see AsyncPouchDB#query(MapFunction, ReduceFunction, Map, AllDocsCallback)
+     */
+    public AllDocsInfo<T> query(MapFunction<T> mapFunction, ReduceFunction reduceFunction, 
+            Map<String, Object> options) {
+        final BlockingQueue<PouchResponse<AllDocsInfo<T>>> lock = createLock();
+
+        delegate.query(mapFunction, reduceFunction, options, new AllDocsCallback<T>() {
+
+            @Override
+            public void onCallback(PouchError err, AllDocsInfo<T> info) {
+
+                lock.offer(new PouchResponse<AllDocsInfo<T>>(err, info));
+            }
+        });
+        return waitAndReturn(lock);                
+    }
+    /**
+     * @see AsyncPouchDB#query(MapFunction, ReduceFunction, Map, AllDocsCallback)
+     */
+    public AllDocsInfo<T> query(MapFunction<T> mapFunction, ReduceFunction reduceFunction) {
+        return query(mapFunction, reduceFunction, null);
+    }
+    
+    /**
+     * @see AsyncPouchDB#query(MapFunction, ReduceFunction, Map, AllDocsCallback)
+     */
+    public AllDocsInfo<T> query(MapFunction<T> mapFunction) {
+        return query(mapFunction, null, null);
     }
     
     /*

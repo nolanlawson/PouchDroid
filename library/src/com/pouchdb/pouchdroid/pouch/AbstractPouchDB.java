@@ -801,4 +801,82 @@ public abstract class AbstractPouchDB<T extends PouchDocumentInterface> {
      * @param callback
      */
     public abstract void info(DatabaseInfoCallback callback);
+    
+    /**
+     * <h2>Query the database<a id="query_database"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">query</span><span class="p">(</span><span class="nx">fun</span><span class="p">,</span> <span class="p">[</span><span class="nx">options</span><span class="p">],</span> <span class="p">[</span><span class="nx">callback</span><span class="p">])</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Retrieve a view, this allows you to perform more complex queries on
+     * PouchDB, the <a
+     * href="http://docs.couchdb.org/en/latest/ddocs.html#view-functions"
+     * >CouchDB documentation for map reduce</a> applies to PouchDB.
+     * </p>
+     * 
+     * <ul>
+     * <li><code>fun</code>: Name of a view function or function</li>
+     * <li><code>options.reduce</code>: Reduce function</li>
+     * </ul>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="kd">function</span> <span class="nx">map</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
+     *   <span class="k">if</span><span class="p">(</span><span class="nx">doc</span><span class="p">.</span><span class="nx">title</span><span class="p">)</span> <span class="p">{</span>
+     *     <span class="nx">emit</span><span class="p">(</span><span class="nx">doc</span><span class="p">.</span><span class="nx">title</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+     *   <span class="p">}</span>
+     * <span class="p">}</span>
+     * 
+     * <span class="nx">db</span><span class="p">.</span><span class="nx">query</span><span class="p">({</span><span class="nx">map</span><span class="o">:</span> <span class="nx">map</span><span class="p">},</span> <span class="p">{</span><span class="nx">reduce</span><span class="o">:</span> <span class="kc">false</span><span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">response</span><span class="p">)</span> <span class="p">{</span> <span class="p">});</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h4>Example Response:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s2">&quot;rows&quot;</span><span class="o">:</span> <span class="p">[{</span>
+     *     <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;0B3358C1-BA4B-4186-8795-9024203EB7DD&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;Cony Island Baby&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="kc">null</span>
+     *   <span class="p">},</span> <span class="p">{</span>
+     *     <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;otherdoc&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;Legendary Hearts&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="kc">null</span>
+     *   <span class="p">},</span> <span class="p">{</span>
+     *     <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;828124B9-3973-4AF3-9DFD-A94CE4544005&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;Lisa Says&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="kc">null</span>
+     *   <span class="p">},</span> <span class="p">{</span>
+     *     <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;mydoc&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;Rock and Roll Heart&quot;</span><span class="p">,</span>
+     *     <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="kc">null</span>
+     *   <span class="p">}]</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * @see <a href=
+     *      'http://pouchdb.com/api.html#query_database'>http://pouchdb.com/api.html#query_database</a
+     *      >
+     */
+    public abstract void query(MapFunction<T> mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
+            AllDocsCallback<T> callback);
+    
 }

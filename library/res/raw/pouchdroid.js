@@ -58,7 +58,8 @@ var PouchDroid;
         //DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper', 'SQLiteNativeDB'],
         DEBUG_CLASSES : ['NativeXMLHttpRequest', 'PouchDBHelper'],
         fakeLocalStorage : {}, // for pouchdb
-        pouchDBs: {} // Java user created pouch dbs
+        pouchDBs: {}, // Java user created pouch dbs
+        emitFunctions : {} // emit functions for map reduce
     };
 })();
 ;/**

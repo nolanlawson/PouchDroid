@@ -1,11 +1,11 @@
 package com.pouchdb.pouchdroid.pouch;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
 
 import android.app.Activity;
 import android.text.TextUtils;
@@ -386,6 +386,54 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         loadAction("info", null, callback);
     }
     
+    public void query(MapFunction<T> mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
+            AllDocsCallback<T> callback) {
+        
+        MapReduceFunction<T> mrFunction = new MapReduceFunction<T>(documentClass, mapFunction, reduceFunction);
+        List<CharSequence> mapReduceArgs = createMapReduceCallbackArgs(mrFunction);
+        CharSequence mapStr = mapReduceArgs.get(0);
+        CharSequence reduceStr = mapReduceArgs.get(1);
+        CharSequence callbackAsString = createFunctionForCallback(callback);
+        
+        if (options == null) {
+            options = new LinkedHashMap<String, Object>();
+        }
+        options.put("reduce", reduceStr);
+        
+        
+        // API is a little complex, so we need to build the js in a special way
+        StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].query(")
+                .append(mapStr)
+                .append(",")
+                .append(JsonUtil.simpleMap(options))
+                .append(",")
+                .append(callbackAsString)
+                .append(");");
+        
+        pouchDroid.loadJavascript(js);
+    }
+    
+    /**
+     * @see AsyncPouchDB#query(MapFunction, reduceFunction, options, callback)
+     */
+    public void query(MapFunction<T> mapFunction) {
+        query(mapFunction, null, null, null);
+    }
+    
+    /**
+     * @see AsyncPouchDB#query(MapFunction, reduceFunction, options, callback)
+     */
+    public void query(MapFunction<T> mapFunction, ReduceFunction reduceFunction) {
+        query(mapFunction, reduceFunction, null, null);
+    }
+    
+    /**
+     * @see AsyncPouchDB#query(MapFunction, reduceFunction, options, callback)
+     */
+    public void query(MapFunction<T> mapFunction, ReduceFunction reduceFunction, AllDocsCallback<T> callback) {
+        query(mapFunction, reduceFunction, null, callback);
+    }    
+    
     /*
      *******************************************
      * Private methods
@@ -452,7 +500,7 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         }
 
         // begin cone of death
-        int callbackId = PouchJavascriptInterface.INSTANCE.addCallback(new Callback<Object>() {
+        int callbackId = pouchDroid.getPouchJavascriptInterface().addCallback(new Callback<Object>() {
 
             @Override
             public void onCallback(final PouchError err, final Object info) {
@@ -488,5 +536,27 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
 
         return new StringBuilder("function(err, info){PouchJavascriptInterface.callback(").append(callbackId).append(
                 ", err ? JSON.stringify(err) : null, info ? JSON.stringify(info) : null);}");
+    }
+    
+    private List<CharSequence> createMapReduceCallbackArgs(MapReduceFunction<T> mrFunction) {
+        
+        int mrId = pouchDroid.getPouchJavascriptInterface().addMapReduceFunction(mrFunction);
+        
+        // result should look like this:
+        // db.query({map: map}, {reduce: false}, function(err, response) { });
+        CharSequence map = new StringBuilder()
+            .append("{map : function(doc){if (!window.PouchDroid.emitFunctions[")
+            .append(mrId)
+            .append("]) {window.PouchDroid.emitFunctions[")
+            .append(mrId)
+            .append("] = emit;};")
+            .append("PouchJavascriptInterface.mapCallback(")
+            .append(mrId)
+            .append(",JSON.stringify(doc));")
+            .append("}}");
+        
+        CharSequence reduce =  mrFunction.getReduce() == null ? "false" : ("\"" + mrFunction.getReduce().getName() + "\"");
+        
+        return Arrays.asList(map, reduce);
     }
 }

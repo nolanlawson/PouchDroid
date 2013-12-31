@@ -7,17 +7,20 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
 import com.pouchdb.pouchdroid.appforunittests.MainActivity;
+import com.pouchdb.pouchdroid.pouch.MapFunction;
 import com.pouchdb.pouchdroid.pouch.PouchDB;
+import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.test.data.Person;
+import com.pouchdb.pouchdroid.util.Maps;
 
-public class MetaOperationsTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<MainActivity> {
     
     private String dbName;
     private PouchDB<Person> pouchDB;
     
     @SuppressLint("NewApi")
-    public MetaOperationsTest() {
+    public AdvancedOperationsTest() {
         super(MainActivity.class);
     }
     
@@ -43,15 +46,33 @@ public class MetaOperationsTest extends ActivityInstrumentationTestCase2<MainAct
             Log.i("Tests", "Destroyed pouchDroid");
         }
     }
+    
+    
     public void testDatabaseInfo() {
         
-        pouchDB.post(new Person("Mr. Hankey", 0, 0, null, false));
-        pouchDB.post(new Person("Butters", 0, 0, null, false));
+        pouchDB.post(new Person("Mr. Hankey", 342143, 5, null, false));
+        pouchDB.post(new Person("Butters", 3412, 3, null, false));
+        pouchDB.post(new Person("Randy Marsh", 43234, 0, null, true));
         
         DatabaseInfo info = pouchDB.info();
         assertEquals("_pouch_" + pouchDB.getName(), info.getDbName());
-        assertEquals(2, info.getDocCount());
-        assertEquals(2, info.getUpdateSeq());
+        assertEquals(3, info.getDocCount());
+        assertEquals(3, info.getUpdateSeq());
     }
     
+    public void testMap() {
+        
+        AllDocsInfo<Person> response = pouchDB.query(new MapFunction<Person>() {
+            
+            @Override
+            public void map(Person doc) {
+                
+                if (doc.getNumberOfPetsOwned() < 4) {
+                    emit(doc, null);
+                }
+            }
+        }, null, Maps.quickMap("include_docs", true));
+        
+        assertEquals(2, response.getDocuments().size());
+    }
 }

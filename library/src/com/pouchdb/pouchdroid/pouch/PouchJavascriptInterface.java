@@ -11,21 +11,53 @@ import android.text.TextUtils;
 import android.util.SparseArray;
 import android.webkit.JavascriptInterface;
 
+import com.pouchdb.pouchdroid.PouchDroid;
+import com.pouchdb.pouchdroid.pouch.MapFunction.EmitListener;
 import com.pouchdb.pouchdroid.pouch.callback.Callback;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.util.UtilLogger;
 
 public class PouchJavascriptInterface {
 
-    public static final PouchJavascriptInterface INSTANCE = new PouchJavascriptInterface();
-
     private static UtilLogger log = new UtilLogger(PouchJavascriptInterface.class);
 
+    private PouchDroid pouchDroid;
+    private AtomicInteger mrIds = new AtomicInteger(0);
     private AtomicInteger callbackIds = new AtomicInteger(0);
     private SparseArray<Callback<?>> callbacks = new SparseArray<Callback<?>>();
+    private SparseArray<MapReduceFunction<?>> mapReduceCallbacks = new SparseArray<MapReduceFunction<?>>();
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    private PouchJavascriptInterface() {
+    public PouchJavascriptInterface(PouchDroid pouchDroid) {
+        this.pouchDroid = pouchDroid;
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @JavascriptInterface
+    public void mapCallback(final int mapReduceCallbackId, String docObjJson) {
+        MapReduceFunction mrFunction = mapReduceCallbacks.get(mapReduceCallbackId);
+        PouchDocumentInterface doc = PouchDocumentMapper.fromJson(docObjJson, mrFunction.getDocumentClass());
+        mrFunction.getMap().map(doc, new EmitListener() {
+
+            @Override
+            public void onEmit(Object key, Object value) {
+                StringBuilder js;
+                try {
+                    js = new StringBuilder()
+                        .append("window.PouchDroid.emitFunctions[")
+                        .append(mapReduceCallbackId)
+                        .append("].apply(null, [JSON.parse(")
+                        .append(objectMapper.writeValueAsString(key))
+                        .append("),JSON.parse(")
+                        .append(objectMapper.writeValueAsString(value))
+                        .append(")]);");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e); // shouldn't happen
+                }
+                pouchDroid.loadJavascript(js);
+            }
+        });
     }
 
     @JavascriptInterface
@@ -93,5 +125,11 @@ public class PouchJavascriptInterface {
         int callbackId = callbackIds.incrementAndGet();
         callbacks.put(callbackId, callback);
         return callbackId;
+    }
+    
+    public int addMapReduceFunction(MapReduceFunction<?> mrFunction) {
+        int mrId = mrIds.incrementAndGet();
+        mapReduceCallbacks.put(mrId, mrFunction);
+        return mrId;
     }
 }

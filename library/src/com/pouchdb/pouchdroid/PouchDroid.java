@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -28,15 +29,18 @@ public class PouchDroid {
 
     private static final int JSINTERFACE_VERIFIER_CALLER_INTERVAL = 1000; // ms
     
-    private static final boolean USE_WEINRE = false;
-    private static final boolean USE_MINIFIED_POUCH = true;
-    private static final boolean USE_MINIFIED_COUCHDROID = true;
+    private static final boolean DEBUG_MODE = true;
+    private static final boolean USE_WEINRE = DEBUG_MODE;
+    private static final boolean USE_MINIFIED_POUCH = !USE_WEINRE;
+    private static final boolean USE_MINIFIED_COUCHDROID = !USE_WEINRE;
     private static final String WEINRE_URL = "http://192.168.0.3:8080";
     
     private Activity activity;
     private WebView webView;
     private JSInterfaceVerifierCaller jsInterfaceVerifierCaller;
     private OnReadyListener onReadyListener;
+
+    private PouchJavascriptInterface pouchJavascriptInterface;
     
     /**
      * Start a new PouchDroid in the given activity.  The standard idiom is:
@@ -68,6 +72,7 @@ public class PouchDroid {
     public PouchDroid(Activity activity, OnReadyListener onReadyListener) {
         this.activity = activity;
         this.onReadyListener = onReadyListener;
+        this.pouchJavascriptInterface = new PouchJavascriptInterface(this);
         
         initWebView();
         
@@ -140,7 +145,7 @@ public class PouchDroid {
         // TODO: combine all these javascript interfaces together, cordova-style
         webView.addJavascriptInterface(new SQLiteJavascriptInterface(this), "SQLiteJavascriptInterface");
         webView.addJavascriptInterface(new XhrJavascriptInterface(this), "XhrJavascriptInterface");
-        webView.addJavascriptInterface(PouchJavascriptInterface.INSTANCE, "PouchJavascriptInterface");
+        webView.addJavascriptInterface(pouchJavascriptInterface, "PouchJavascriptInterface");
         webView.addJavascriptInterface(new JSInterfaceVerifier(), "JSInterfaceVerifier");
         
         final String html = new StringBuilder("<html><head></head><body>")
@@ -165,16 +170,29 @@ public class PouchDroid {
         activity = null; // release context resources (TODO: is this necessary?)
     }
     
+    
     private class MyWebChromeClient extends WebChromeClient {
         
         @Override
         @Deprecated
         public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-            if (Build.VERSION.SDK_INT < 11 || Build.VERSION.SDK_INT >= 19) {
+            if (Build.VERSION.SDK_INT < 11) {
                 //  I believe they started logging the "Web Console" in 11, then stopped in kitkat
                 Log.i("Web Console", message);
             }
         }
+
+        @Override
+        @SuppressLint("NewApi")
+        public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+            if (Build.VERSION.SDK_INT >= 19) {
+                Log.i("Web Console", consoleMessage.message());
+                return true;
+            }
+            return false;
+        }
+        
+        
     }
     
     /* 
@@ -246,5 +264,9 @@ public class PouchDroid {
     
     public static interface OnReadyListener {
         public void onReady(PouchDroid pouchDroid);
+    }
+
+    public PouchJavascriptInterface getPouchJavascriptInterface() {
+        return pouchJavascriptInterface;
     }
 }
