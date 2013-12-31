@@ -18,6 +18,7 @@ import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
+import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
 import com.pouchdb.pouchdroid.util.Maps;
 
 public class PouchDB<T extends PouchDocumentInterface> {
@@ -422,13 +423,13 @@ public class PouchDB<T extends PouchDocumentInterface> {
     }
     
     /**
-     * @see AsyncPouchDB#query(MapFunction, ReduceFunction, Map, AllDocsCallback)
+     * @see AsyncPouchDB#query(javascriptMapFunction, ReduceFunction, Map, AllDocsCallback)
      */
-    public AllDocsInfo<T> query(MapFunction<T> mapFunction, ReduceFunction reduceFunction, 
+    public AllDocsInfo<T> query(CharSequence javascriptMapFunction, ReduceFunction reduceFunction, 
             Map<String, Object> options) {
         final BlockingQueue<PouchResponse<AllDocsInfo<T>>> lock = createLock();
 
-        delegate.query(mapFunction, reduceFunction, options, new AllDocsCallback<T>() {
+        delegate.query(javascriptMapFunction, reduceFunction, options, new AllDocsCallback<T>() {
 
             @Override
             public void onCallback(PouchError err, AllDocsInfo<T> info) {
@@ -439,17 +440,17 @@ public class PouchDB<T extends PouchDocumentInterface> {
         return waitAndReturn(lock);                
     }
     /**
-     * @see AsyncPouchDB#query(MapFunction, ReduceFunction, Map, AllDocsCallback)
+     * @see AsyncPouchDB#query(javascriptMapFunction, ReduceFunction, Map, AllDocsCallback)
      */
-    public AllDocsInfo<T> query(MapFunction<T> mapFunction, ReduceFunction reduceFunction) {
-        return query(mapFunction, reduceFunction, null);
+    public AllDocsInfo<T> query(CharSequence javascriptMapFunction, ReduceFunction reduceFunction) {
+        return query(javascriptMapFunction, reduceFunction, null);
     }
     
     /**
-     * @see AsyncPouchDB#query(MapFunction, ReduceFunction, Map, AllDocsCallback)
+     * @see AsyncPouchDB#query(javascriptMapFunction, ReduceFunction, Map, AllDocsCallback)
      */
-    public AllDocsInfo<T> query(MapFunction<T> mapFunction) {
-        return query(mapFunction, null, null);
+    public AllDocsInfo<T> query(CharSequence javascriptMapFunction) {
+        return query(javascriptMapFunction, null, null);
     }
     
     /*

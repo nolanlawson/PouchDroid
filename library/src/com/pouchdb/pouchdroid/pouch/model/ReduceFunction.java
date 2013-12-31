@@ -1,4 +1,4 @@
-package com.pouchdb.pouchdroid.pouch;
+package com.pouchdb.pouchdroid.pouch.model;
 
 public enum ReduceFunction {
     

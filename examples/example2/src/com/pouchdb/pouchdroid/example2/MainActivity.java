@@ -10,10 +10,12 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.widget.TextView;
 
-import com.pouchdb.pouchdroid.PouchDroidActivity;
 import com.pouchdb.pouchdroid.PouchDroid;
+import com.pouchdb.pouchdroid.PouchDroidActivity;
 import com.pouchdb.pouchdroid.pouch.PouchDB;
 import com.pouchdb.pouchdroid.pouch.PouchException;
+import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
+import com.pouchdb.pouchdroid.util.Maps;
 
 public class MainActivity extends PouchDroidActivity {
 
@@ -134,6 +136,9 @@ public class MainActivity extends PouchDroidActivity {
         
         appendText("ran replicate, dinosaurs are now %s", dinosaurPouch.allDocs(true).getDocuments());
         
+        AllDocsInfo<Dinosaur> queryResponse = dinosaurPouch.query("function(doc){emit(doc.name, null);}", null, 
+                Maps.quickMap("include_docs", true));
+        appendText("query response is %s", queryResponse);
         
         try {
             Thread.sleep(20000);

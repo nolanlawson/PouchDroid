@@ -1,15 +1,18 @@
 package com.pouchdb.pouchdroid.test;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import android.annotation.SuppressLint;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
 import com.pouchdb.pouchdroid.appforunittests.MainActivity;
-import com.pouchdb.pouchdroid.pouch.MapFunction;
 import com.pouchdb.pouchdroid.pouch.PouchDB;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
+import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo.Row;
 import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.test.data.Person;
 import com.pouchdb.pouchdroid.util.Maps;
@@ -35,6 +38,10 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         dbName = "unit-test-" + Integer.toHexString(new Random().nextInt());
         pouchDB = PouchDB.newPouchDB(Person.class, 
                 getActivity().getPouchDroid(), dbName);
+        
+        pouchDB.post(new Person("Mr. Hankey", 342143, 5, null, false));
+        pouchDB.post(new Person("Butters", 3412, 3, null, false));
+        pouchDB.post(new Person("Randy Marsh", 43234, 0, null, true));
     }
 
     @Override
@@ -50,10 +57,6 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
     
     public void testDatabaseInfo() {
         
-        pouchDB.post(new Person("Mr. Hankey", 342143, 5, null, false));
-        pouchDB.post(new Person("Butters", 3412, 3, null, false));
-        pouchDB.post(new Person("Randy Marsh", 43234, 0, null, true));
-        
         DatabaseInfo info = pouchDB.info();
         assertEquals("_pouch_" + pouchDB.getName(), info.getDbName());
         assertEquals(3, info.getDocCount());
@@ -62,18 +65,25 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
     
     public void testMap() {
         
-        AllDocsInfo<Person> response = pouchDB.query(new MapFunction<Person>() {
-            
-            @Override
-            public void map(Person doc) {
-                
-                if (doc.getNumberOfPetsOwned() < 4) {
-                    emit(doc, null);
-                }
-            }
-        }, null, Maps.quickMap("include_docs", true));
+        AllDocsInfo<Person> response = pouchDB.query(
+                "function(doc){emit(doc.numberOfPetsOwned, null);}"
+        , null, Maps.quickMap("include_docs", true));
         
         Log.i("Tests", response.toString());
+        assertEquals(3, response.getDocuments().size());
+        Set<Integer> numPets = new HashSet<Integer>();
+        for (Row<Person> row : response.getRows()) {
+            numPets.add(Integer.parseInt(row.getKey()));
+        }
+        assertEquals(new HashSet<Integer>(Arrays.asList(5, 3, 0)), numPets);
+    }
+    
+    public void testFilteredMap() {
+        AllDocsInfo<Person> response = pouchDB.query(
+                "function(doc){if (doc.numberOfPetsOwned <= 3){emit(doc.numberOfPetsOwned, null);}}"
+        , null, Maps.quickMap("include_docs", true));
+        assertEquals(2, response.getRows().size());
         assertEquals(2, response.getDocuments().size());
+        assertEquals(2, response.getTotalRows());
     }
 }
