@@ -542,14 +542,24 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         
         int mrId = pouchDroid.getPouchJavascriptInterface().addMapReduceFunction(mrFunction);
         
-        // result should look like this:
-        // db.query({map: map}, {reduce: false}, function(err, response) { });
+        // Create a map reduce function to run in Javascript.
+        // Since this is eval'ed by PouchDB, we can actually do some tricks to ensure that PouchDB waits
+        // until all the Java code has executed.
+        // Namely, we can manipulate the num_started and checkComplete functions (line ~100 in pouchdb.mapreduce)
+        
         CharSequence map = new StringBuilder()
-            .append("{map : function(doc){if (!window.PouchDroid.emitFunctions[")
+            .append("{map : function(doc){")
+            
+            // save the emit function for later, if not already saved
+            .append("if (!window.PouchDroid.emitFunctions[")
             .append(mrId)
             .append("]) {window.PouchDroid.emitFunctions[")
             .append(mrId)
-            .append("] = emit;};")
+            .append("] = function(key, value){num_started--;emit.apply(null, [key, value]);if(num_started === results.length){checkComplete();}};}")
+            
+            // manipulate the num_started counter to always be 1 ahead, hence it never catches up
+            // until our own emit function gets to it
+            .append("num_started++;")
             .append("PouchJavascriptInterface.mapCallback(")
             .append(mrId)
             .append(",JSON.stringify(doc));")
