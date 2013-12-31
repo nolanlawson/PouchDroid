@@ -388,29 +388,7 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
     
     public void query(MapFunction<T> mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
             AllDocsCallback<T> callback) {
-        
-        MapReduceFunction<T> mrFunction = new MapReduceFunction<T>(documentClass, mapFunction, reduceFunction);
-        List<CharSequence> mapReduceArgs = createMapReduceCallbackArgs(mrFunction);
-        CharSequence mapStr = mapReduceArgs.get(0);
-        CharSequence reduceStr = mapReduceArgs.get(1);
-        CharSequence callbackAsString = createFunctionForCallback(callback);
-        
-        if (options == null) {
-            options = new LinkedHashMap<String, Object>();
-        }
-        options.put("reduce", reduceStr);
-        
-        
-        // API is a little complex, so we need to build the js in a special way
-        StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].query(")
-                .append(mapStr)
-                .append(",")
-                .append(JsonUtil.simpleMap(options))
-                .append(",")
-                .append(callbackAsString)
-                .append(");");
-        
-        pouchDroid.loadJavascript(js);
+        query(mapFunction, reduceFunction, options, callback, true);
     }
     
     /**
@@ -439,6 +417,43 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
      * Private methods
      *******************************************
      */
+    
+    private void query(final MapFunction<T> mapFunction, final ReduceFunction reduceFunction, 
+            final Map<String, Object> options, 
+            final AllDocsCallback<T> callback, boolean first) {
+        
+        AllDocsCallback<T> superCallback = new AllDocsCallback<T>() {
+
+            @Override
+            public void onCallback(PouchError err, AllDocsInfo<T> info) {
+                query(mapFunction, reduceFunction, )
+                callback.onCallback(err, info);
+            }
+        };
+        
+        MapReduceFunction<T> mrFunction = new MapReduceFunction<T>(documentClass, mapFunction, reduceFunction);
+        List<CharSequence> mapReduceArgs = createMapReduceCallbackArgs(mrFunction);
+        CharSequence mapStr = mapReduceArgs.get(0);
+        CharSequence reduceStr = mapReduceArgs.get(1);
+        CharSequence callbackAsString = createFunctionForCallback(callback);
+        
+        if (options == null) {
+            options = new LinkedHashMap<String, Object>();
+        }
+        options.put("reduce", reduceStr);
+        
+        
+        // API is a little complex, so we need to build the js in a special way
+        StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].query(")
+                .append(mapStr)
+                .append(",")
+                .append(JsonUtil.simpleMap(options))
+                .append(",")
+                .append(callbackAsString)
+                .append(");");
+        
+        pouchDroid.loadJavascript(js);
+    }
 
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
         loadAction(action, null, options, callback, null);
@@ -542,11 +557,6 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         
         int mrId = pouchDroid.getPouchJavascriptInterface().addMapReduceFunction(mrFunction);
         
-        // Create a map reduce function to run in Javascript.
-        // Since this is eval'ed by PouchDB, we can actually do some tricks to ensure that PouchDB waits
-        // until all the Java code has executed.
-        // Namely, we can manipulate the num_started and checkComplete functions (line ~100 in pouchdb.mapreduce)
-        
         CharSequence map = new StringBuilder()
             .append("{map : function(doc){")
             
@@ -555,11 +565,13 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
             .append(mrId)
             .append("]) {window.PouchDroid.emitFunctions[")
             .append(mrId)
-            .append("] = function(key, value){num_started--;emit.apply(null, [key, value]);if(num_started === results.length){checkComplete();}};}")
+            .append("] = {emit : function(key, value){window.PouchDroid.emitFunctions[")
+            .append(mrId)
+            .append("].push([key, value, doc]);")
+            .append("emit(key, value);}, results : []};}")
             
             // manipulate the num_started counter to always be 1 ahead, hence it never catches up
             // until our own emit function gets to it
-            .append("num_started++;")
             .append("PouchJavascriptInterface.mapCallback(")
             .append(mrId)
             .append(",JSON.stringify(doc));")
