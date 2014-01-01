@@ -4,162 +4,162 @@
  */
 
 (function () {
-    'use strict';
+  'use strict';
 
-    function debug(str) {
-        PouchDroid.Util.debug('NativeXMLHttpRequest', str);
+  function debug(str) {
+    PouchDroid.Util.debug('NativeXMLHttpRequest', str);
+  }
+
+  var ids = 0;
+
+  var STATES = {
+    UNSENT: 0,
+    OPENED: 1,
+    HEADERS_RECEIVED: 2,
+    LOADING: 3,
+    DONE: 4
+  };
+
+  function NativeXMLHttpRequest() {
+    var self = this;
+
+    self.id = ids++;
+    self.withCredentials = false;
+    self.responseType = null;
+    self.onreadystatechange = null;
+    self.readyState = STATES.UNSENT;
+    self.status = 0;
+    self.timeout = 0;
+    self.response = null; // used if binary;
+    self.responseText = null; // used if non-binary;
+    self.requestHeaders = {};
+    self.upload = {};
+  }
+
+  NativeXMLHttpRequest.prototype.onNativeProgress = function (isUpload) {
+    // TODO: actually implement the progress event spec: http://www.w3.org/TR/progress-events/
+    // TODO: actually call this method!  For now this method is never called
+    var self = this;
+
+    if (isUpload) {
+      if (self.onprogress && typeof self.onprogress === 'function') {
+        self.onprogress.call(null);
+      }
+    } else { // download
+      if (self.upload.onprogress && typeof self.upload.onprogress === 'function') {
+        self.upload.onprogress.call(null);
+      }
+    }
+  };
+
+  NativeXMLHttpRequest.prototype.callOnReadyStateChange = function () {
+    var self = this;
+
+    debug('calling onreadystatechange...');
+    try {
+      self.onreadystatechange();
+    } catch (err2) {
+      window.console.log('onreadystatechange threw error: ' + JSON.stringify(err2));
+    }
+    debug('called onreadystatechange.');
+  };
+
+  NativeXMLHttpRequest.prototype.onNativeCallback = function (err, statusCode, content) {
+    var self = this;
+    debug('onNativeCallback(' + statusCode + ', ' + content + ')');
+
+    if (err) {
+      // TODO: do something better?
+      window.console.log('XHR error: ' + JSON.stringify(err));
     }
 
-    var ids = 0;
+    self.readyState = STATES.DONE;
+    self.status = statusCode;
+    self.responseText = content;
 
-    var STATES = {
-        UNSENT: 0,
-        OPENED: 1,
-        HEADERS_RECEIVED: 2,
-        LOADING: 3,
-        DONE: 4
-    };
+    self.callOnReadyStateChange();
 
-    function NativeXMLHttpRequest() {
-        var self = this;
+    // we don't need the xhr callback anymore; we can delete it
+    delete PouchDroid.NativeXMLHttpRequests[self.id];
+  };
 
-        self.id = ids++;
-        self.withCredentials = false;
-        self.responseType = null;
-        self.onreadystatechange = null;
-        self.readyState = STATES.UNSENT;
-        self.status = 0;
-        self.timeout = 0;
-        self.response = null; // used if binary;
-        self.responseText = null; // used if non-binary;
-        self.requestHeaders = {};
-        self.upload = {};
+  NativeXMLHttpRequest.prototype.open = function (method, url) {
+    var self = this;
+
+    debug('open()');
+
+    self.state = STATES.OPENED;
+    self.method = method;
+    self.url = url;
+  };
+
+  NativeXMLHttpRequest.prototype.abort = function () {
+    var self = this;
+
+    debug('abort()');
+
+    // notify Java
+    var selfStringified = JSON.stringify(self);
+    try {
+      XhrJavascriptInterface.abort(selfStringified);
+    } catch (error) {
+      window.console.log('failed to call XhrJavascriptInterface.abort() with selfStringified ' + selfStringified);
     }
 
-    NativeXMLHttpRequest.prototype.onNativeProgress = function(isUpload) {
-        // TODO: actually implement the progress event spec: http://www.w3.org/TR/progress-events/
-        // TODO: actually call this method!  For now this method is never called
-        var self = this;
+  };
 
-        if (isUpload) {
-            if (self.onprogress && typeof self.onprogress === 'function') {
-                self.onprogress.call(null);
-            }
-        } else { // download
-            if (self.upload.onprogress && typeof self.upload.onprogress === 'function') {
-                self.upload.onprogress.call(null);
-            }
-        }
-    };
+  NativeXMLHttpRequest.prototype.setRequestHeader = function (key, value) {
+    var self = this;
 
-    NativeXMLHttpRequest.prototype.callOnReadyStateChange = function() {
-        var self = this;
+    debug('setRequestHeader()');
 
-        debug('calling onreadystatechange...');
-        try {
-            self.onreadystatechange();
-        } catch (err2) {
-            window.console.log('onreadystatechange threw error: ' + JSON.stringify(err2));
-        }
-        debug('called onreadystatechange.');
-    };
+    self.requestHeaders[key] = value;
+  };
 
-    NativeXMLHttpRequest.prototype.onNativeCallback = function (err, statusCode, content) {
-        var self = this;
-        debug('onNativeCallback(' + statusCode +', ' + content +')');
+  NativeXMLHttpRequest.prototype.getRequestHeader = function (key) {
+    var self = this;
 
-        if (err) {
-            // TODO: do something better?
-            window.console.log('XHR error: ' + JSON.stringify(err));
-        }
+    debug('getRequestHeader()');
 
-        self.readyState = STATES.DONE;
-        self.status = statusCode;
-        self.responseText = content;
+    return self.requestHeaders[key];
+  };
 
-        self.callOnReadyStateChange();
+  NativeXMLHttpRequest.prototype.send = function (body) {
+    var self = this;
 
-        // we don't need the xhr callback anymore; we can delete it
-        delete PouchDroid.NativeXMLHttpRequests[self.id];
-    };
+    body = body || '';
 
-    NativeXMLHttpRequest.prototype.open = function (method, url) {
-        var self = this;
+    if (typeof body !== 'string') {
+      // TODO
+      /*
+       * according to the xhr spec, this could be:
+       *   void send();
+       void send(ArrayBuffer data);
+       void send(ArrayBufferView data);
+       void send(Blob data);
+       void send(Document data);
+       void send(DOMString? data);
+       void send(FormData data);
+       */
+      window.console.log('body isn\'t a string!  we don\'t know what to do!: ' + JSON.stringify(body));
+      body = JSON.stringify(body);
+    }
 
-        debug('open()');
+    PouchDroid.NativeXMLHttpRequests[self.id] = self;
 
-        self.state = STATES.OPENED;
-        self.method = method;
-        self.url = url;
-    };
+    var selfStringified = JSON.stringify(self);
 
-    NativeXMLHttpRequest.prototype.abort = function () {
-        var self = this;
+    debug('send(' + selfStringified + ',' + body + ')');
 
-        debug('abort()');
+    self.state = STATES.LOADING;
+    try {
+      XhrJavascriptInterface.send(selfStringified, body);
+    } catch (error) {
+      window.console.log('failed to call XhrJavascriptInterface with selfStringified' +
+        selfStringified + ' and body ' + body);
+    }
+  };
 
-        // notify Java
-        var selfStringified = JSON.stringify(self);
-        try {
-            XhrJavascriptInterface.abort(selfStringified);
-        } catch (error) {
-            window.console.log('failed to call XhrJavascriptInterface.abort() with selfStringified ' + selfStringified);
-        }
-
-    };
-
-    NativeXMLHttpRequest.prototype.setRequestHeader = function (key, value) {
-        var self = this;
-
-        debug('setRequestHeader()');
-
-        self.requestHeaders[key] = value;
-    };
-
-    NativeXMLHttpRequest.prototype.getRequestHeader = function (key) {
-        var self = this;
-
-        debug('getRequestHeader()');
-
-        return self.requestHeaders[key];
-    };
-
-    NativeXMLHttpRequest.prototype.send = function (body) {
-        var self = this;
-
-        body = body || '';
-
-        if (typeof body !== 'string') {
-            // TODO
-            /*
-             * according to the xhr spec, this could be:
-             *   void send();
-                 void send(ArrayBuffer data);
-                 void send(ArrayBufferView data);
-                 void send(Blob data);
-                 void send(Document data);
-                 void send(DOMString? data);
-                 void send(FormData data);
-             */
-            window.console.log('body isn\'t a string!  we don\'t know what to do!: ' + JSON.stringify(body));
-            body = JSON.stringify(body);
-        }
-
-        PouchDroid.NativeXMLHttpRequests[self.id] = self;
-
-        var selfStringified = JSON.stringify(self);
-
-        debug('send(' + selfStringified + ',' + body + ')');
-
-        self.state = STATES.LOADING;
-        try {
-            XhrJavascriptInterface.send(selfStringified, body);
-        } catch (error) {
-            window.console.log('failed to call XhrJavascriptInterface with selfStringified' +
-                selfStringified + ' and body ' + body);
-        }
-    };
-
-    PouchDroid.NativeXMLHttpRequest = NativeXMLHttpRequest;
-    PouchDroid.NativeXMLHttpRequests = {};
+  PouchDroid.NativeXMLHttpRequest = NativeXMLHttpRequest;
+  PouchDroid.NativeXMLHttpRequests = {};
 })();
