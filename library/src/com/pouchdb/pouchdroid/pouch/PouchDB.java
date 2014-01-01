@@ -440,6 +440,14 @@ public class PouchDB<T extends PouchDocumentInterface> {
         });
         return waitAndReturn(lock);                
     }
+    
+    /**
+     * @see AsyncPouchDB#query(mapFunction, ReduceFunction, Map, AllDocsCallback)
+     */
+    public AllDocsInfo<T> query(MapFunction mapFunction, Map<String, Object> options) {
+        return query(mapFunction, null, options);
+    }
+    
     /**
      * @see AsyncPouchDB#query(mapFunction, ReduceFunction, Map, AllDocsCallback)
      */

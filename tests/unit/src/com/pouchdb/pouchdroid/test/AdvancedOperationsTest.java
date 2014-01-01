@@ -100,6 +100,19 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertEquals(2, response.getTotalRows());
     }
     
+    public void testBasicQuery() {
+        MapFunction map = MapFunction.simpleFieldLookup("numberOfPetsOwned");
+        assertEquals(1, pouchDB.query(map, PouchOptions.key(5)).getDocuments().size());
+        assertEquals(1, pouchDB.query(map, PouchOptions.key(3)).getDocuments().size());
+        assertEquals(1, pouchDB.query(map, PouchOptions.key(0)).getDocuments().size());
+        assertEquals(0, pouchDB.query(map, PouchOptions.key(52)).getDocuments().size());
+    }
+    
     public void testComplexQuery() {
+        MapFunction map = MapFunction.simpleFieldLookup("numberOfPetsOwned", "belieber");
+        assertEquals(1, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(0, true))).getDocuments().size());
+        assertEquals(1, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(3, false))).getDocuments().size());
+        assertEquals(1, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(5, false))).getDocuments().size());
+        assertEquals(0, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(52, true))).getDocuments().size());
     }
 }

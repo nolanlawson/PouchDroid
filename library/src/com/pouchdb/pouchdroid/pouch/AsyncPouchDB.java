@@ -397,7 +397,14 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         
         pouchDroid.loadJavascript(js);
     }
-
+    
+    /**
+     * @see AsyncPouchDB#query(mapFunction, reduceFunction, options, callback)
+     */
+    public void query(MapFunction mapFunction, Map<String, Object> options, AllDocsCallback<T> callback) {
+        query(mapFunction, null, options, callback);
+    }
+    
     /**
      * @see AsyncPouchDB#query(mapFunction, reduceFunction, options, callback)
      */

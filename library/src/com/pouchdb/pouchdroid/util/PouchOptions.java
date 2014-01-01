@@ -1,5 +1,7 @@
 package com.pouchdb.pouchdroid.util;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ public class PouchOptions {
     public static final String START_KEY = "startkey";
     public static final String END_KEY = "endkey";
     public static final String DESCENDING = "descending";
+    public static final String KEY = "key";
     public static final String KEYS = "keys";
     public static final String ATTACHMENTS = "attachments";
     public static final String CONFLICTS = "conflicts";
@@ -48,5 +51,17 @@ public class PouchOptions {
     
     public static Map<String, Object> continuous() {
         return from(CONTINUOUS, true);
+    }
+    
+    public static Map<String, Object> keys(Object... keys) {
+        return keys(Arrays.asList(keys));
+    }
+    
+    public static Map<String, Object> keys(Collection<?> keys) {
+        return from(KEYS, keys);
+    }
+    
+    public static Map<String, Object> key(Object key) {
+        return from(KEY, key);
     }
 }
