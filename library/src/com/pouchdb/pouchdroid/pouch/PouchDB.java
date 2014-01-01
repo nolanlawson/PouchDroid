@@ -20,7 +20,7 @@ import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
 import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
-import com.pouchdb.pouchdroid.util.Maps;
+import com.pouchdb.pouchdroid.util.PouchOptions;
 
 public class PouchDB<T extends PouchDocumentInterface> {
 
@@ -304,14 +304,14 @@ public class PouchDB<T extends PouchDocumentInterface> {
      * @see AsyncPouchDB#allDocs(includeDocs, options)
      */
     public AllDocsInfo<T> allDocs(boolean includeDocs) throws PouchException {
-        return allDocs(Maps.quickMap("include_docs", includeDocs));
+        return allDocs(PouchOptions.from(PouchOptions.INCLUDE_DOCS, includeDocs));
     }
     
     /**
      * @see AsyncPouchDB#allDocs(includeDocs, options)
      */
     public AllDocsInfo<T> allDocs(boolean includeDocs, List<String> keys) throws PouchException {
-        return allDocs(Maps.quickMap("include_docs", includeDocs, "keys", keys));
+        return allDocs(PouchOptions.from(PouchOptions.INCLUDE_DOCS, includeDocs, "keys", keys));
     }
     
     /**
@@ -356,7 +356,7 @@ public class PouchDB<T extends PouchDocumentInterface> {
      * @see AsyncPouchDB#replicateTo(remoteDB, options, complete)
      */    
     public void replicateTo(String remoteDB, boolean continuous) throws PouchException {
-        replicateTo(remoteDB, Maps.quickMap("continuous", continuous));
+        replicateTo(remoteDB, PouchOptions.from(PouchOptions.CONTINUOUS, continuous));
     }
 
     /**
@@ -402,7 +402,7 @@ public class PouchDB<T extends PouchDocumentInterface> {
      * @see AsyncPouchDB#replicateFrom(remoteDB, options, complete)
      */
     public void replicateFrom(String remoteDB, boolean continuous) throws PouchException {
-        replicateFrom(remoteDB, Maps.quickMap("continuous", continuous));
+        replicateFrom(remoteDB, PouchOptions.from(PouchOptions.CONTINUOUS, continuous));
     }
     
     /**

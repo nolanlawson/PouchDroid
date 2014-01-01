@@ -22,7 +22,7 @@ import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
 import com.pouchdb.pouchdroid.util.JsonUtil;
-import com.pouchdb.pouchdroid.util.Maps;
+import com.pouchdb.pouchdroid.util.PouchOptions;
 import com.pouchdb.pouchdroid.util.UtilLogger;
 
 public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouchDB<T> {
@@ -296,7 +296,7 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         // included as a convenience method, because I'm sure otherwise people
         // will forge to set include_docs=true
         Map<String, Object> options = otherOptions != null ? otherOptions : new LinkedHashMap<String, Object>();
-        options.put("include_docs", includeDocs);
+        options.put(PouchOptions.INCLUDE_DOCS, includeDocs);
         allDocs(options, callback);
     }
 
@@ -316,14 +316,14 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
      * @see AsyncPouchDB#replicateTo(remoteDB, options, complete)
      */
     public void replicateTo(String remoteDB, boolean continuous, ReplicateCallback complete) {
-        replicateTo(remoteDB, Maps.quickMap("continuous", continuous), complete);
+        replicateTo(remoteDB, PouchOptions.from(PouchOptions.CONTINUOUS, continuous), complete);
     }
     
     /**
      * @see AsyncPouchDB#replicateTo(remoteDB, options, complete)
      */
     public void replicateTo(String remoteDB, boolean continuous) {
-        replicateTo(remoteDB, Maps.quickMap("continuous", continuous), null);
+        replicateTo(remoteDB, PouchOptions.from(PouchOptions.CONTINUOUS, continuous), null);
     }
     
     /**
@@ -348,14 +348,14 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
      * @see AsyncPouchDB#replicateFrom(remoteDB, options, complete)
      */
     public void replicateFrom(String remoteDB, boolean continuous, ReplicateCallback complete) {
-        replicateFrom(remoteDB, Maps.quickMap("continuous", continuous), complete);
+        replicateFrom(remoteDB, PouchOptions.from(PouchOptions.CONTINUOUS, continuous), complete);
     }
     
     /**
      * @see AsyncPouchDB#replicateFrom(remoteDB, options, complete)
      */
     public void replicateFrom(String remoteDB, boolean continuous) {
-        replicateFrom(remoteDB, Maps.quickMap("continuous", continuous), null);
+        replicateFrom(remoteDB, PouchOptions.from(PouchOptions.CONTINUOUS, continuous), null);
     }
 
     /**

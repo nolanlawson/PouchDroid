@@ -17,7 +17,7 @@ import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo.Row;
 import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.test.data.Person;
-import com.pouchdb.pouchdroid.util.Maps;
+import com.pouchdb.pouchdroid.util.PouchOptions;
 
 public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<MainActivity> {
     
@@ -76,7 +76,7 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         
         for (MapFunction map : mapFunctions) {
         
-            AllDocsInfo<Person> response = pouchDB.query(map, null, Maps.quickMap("include_docs", true));
+            AllDocsInfo<Person> response = pouchDB.query(map, null, PouchOptions.includeDocs());
             
             Log.i("Tests", response.toString());
             assertEquals(3, response.getDocuments().size());
@@ -94,9 +94,12 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
     public void testFilteredMap() {
         AllDocsInfo<Person> response = pouchDB.query(MapFunction.fromJavascript(
                 "function(doc){if (doc.numberOfPetsOwned <= 3){emit(doc.numberOfPetsOwned, null);}}"), 
-                null, Maps.quickMap("include_docs", true));
+                null, PouchOptions.includeDocs());
         assertEquals(2, response.getRows().size());
         assertEquals(2, response.getDocuments().size());
         assertEquals(2, response.getTotalRows());
+    }
+    
+    public void testComplexQuery() {
     }
 }
