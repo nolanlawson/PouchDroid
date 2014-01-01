@@ -75,7 +75,7 @@ public class AllDocsInfo<T extends PouchDocumentInterface> {
     public static class Row<T extends PouchDocumentInterface> {
         private T doc;
         private String id;
-        private String key;
+        private Object key;
         private String error;
         private RowValue value;
         
@@ -97,10 +97,10 @@ public class AllDocsInfo<T extends PouchDocumentInterface> {
         public void setId(String id) {
             this.id = id;
         }
-        public String getKey() {
+        public Object getKey() {
             return key;
         }
-        public void setKey(String key) {
+        public void setKey(Object key) {
             this.key = key;
         }
         public RowValue getValue() {

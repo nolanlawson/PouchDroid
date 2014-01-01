@@ -2,6 +2,7 @@ package com.pouchdb.pouchdroid.test;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -14,6 +15,7 @@ import com.pouchdb.pouchdroid.pouch.PouchDB;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo.Row;
 import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
+import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.test.data.Person;
 import com.pouchdb.pouchdroid.util.Maps;
 
@@ -65,23 +67,34 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
     
     public void testMap() {
         
-        AllDocsInfo<Person> response = pouchDB.query(
-                "function(doc){emit(doc.numberOfPetsOwned, null);}"
-        , null, Maps.quickMap("include_docs", true));
+        // all these map functions should return 3 documents
+        MapFunction[] mapFunctions = new MapFunction[]{
+                MapFunction.fromJavascript("function(doc){emit(doc.numberOfPetsOwned, null);}"),
+                MapFunction.simpleFieldLookup("numberOfPetsOwned"),
+                MapFunction.simpleFieldLookup("numberOfPetsOwned", "belieber")
+                };
         
-        Log.i("Tests", response.toString());
-        assertEquals(3, response.getDocuments().size());
-        Set<Integer> numPets = new HashSet<Integer>();
-        for (Row<Person> row : response.getRows()) {
-            numPets.add(Integer.parseInt(row.getKey()));
+        for (MapFunction map : mapFunctions) {
+        
+            AllDocsInfo<Person> response = pouchDB.query(map, null, Maps.quickMap("include_docs", true));
+            
+            Log.i("Tests", response.toString());
+            assertEquals(3, response.getDocuments().size());
+            Set<Integer> numPets = new HashSet<Integer>();
+            for (Row<Person> row : response.getRows()) {
+                int pets = (row.getKey() instanceof Integer) 
+                        ? (Integer)row.getKey() 
+                        : (Integer)(((List<?>)row.getKey()).get(0));
+                numPets.add(pets);
+            }
+            assertEquals(new HashSet<Integer>(Arrays.asList(5, 3, 0)), numPets);
         }
-        assertEquals(new HashSet<Integer>(Arrays.asList(5, 3, 0)), numPets);
     }
     
     public void testFilteredMap() {
-        AllDocsInfo<Person> response = pouchDB.query(
-                "function(doc){if (doc.numberOfPetsOwned <= 3){emit(doc.numberOfPetsOwned, null);}}"
-        , null, Maps.quickMap("include_docs", true));
+        AllDocsInfo<Person> response = pouchDB.query(MapFunction.fromJavascript(
+                "function(doc){if (doc.numberOfPetsOwned <= 3){emit(doc.numberOfPetsOwned, null);}}"), 
+                null, Maps.quickMap("include_docs", true));
         assertEquals(2, response.getRows().size());
         assertEquals(2, response.getDocuments().size());
         assertEquals(2, response.getTotalRows());

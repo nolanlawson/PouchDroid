@@ -9,6 +9,7 @@ import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
 import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
 import com.pouchdb.pouchdroid.pouch.callback.ReplicateCallback;
 import com.pouchdb.pouchdroid.pouch.callback.StandardCallback;
+import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
 
 
@@ -877,7 +878,7 @@ public abstract class AbstractPouchDB<T extends PouchDocumentInterface> {
      *      'http://pouchdb.com/api.html#query_database'>http://pouchdb.com/api.html#query_database</a
      *      >
      */
-    public abstract void query(CharSequence javascriptMapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
+    public abstract void query(MapFunction mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
             AllDocsCallback<T> callback);
     
 }

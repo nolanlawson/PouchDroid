@@ -18,6 +18,7 @@ import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
 import com.pouchdb.pouchdroid.pouch.callback.ReplicateCallback;
 import com.pouchdb.pouchdroid.pouch.callback.StandardCallback;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
+import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
 import com.pouchdb.pouchdroid.util.JsonUtil;
@@ -375,7 +376,7 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         loadAction("info", null, callback);
     }
     
-    public void query(CharSequence javascriptMapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
+    public void query(MapFunction mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
             AllDocsCallback<T> callback) {
         
         CharSequence callbackAsString = createFunctionForCallback(wrapAllDocsCallback(callback));
@@ -383,11 +384,11 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         if (options == null) {
             options = new LinkedHashMap<String, Object>();
         }
-        options.put("reduce", (reduceFunction == null ? false : reduceFunction.getName()));
+        options.put("reduce", (reduceFunction == null ? false : reduceFunction.toJavascript()));
         
         // API is a little complex, so we need to build the js in a special way
         StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].query({map:")
-                .append(javascriptMapFunction)
+                .append(mapFunction.toJavascript())
                 .append("},")
                 .append(JsonUtil.simpleMap(options))
                 .append(",")
@@ -398,24 +399,24 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
     }
 
     /**
-     * @see AsyncPouchDB#query(javascriptMapFunction, reduceFunction, options, callback)
+     * @see AsyncPouchDB#query(mapFunction, reduceFunction, options, callback)
      */
-    public void query(CharSequence javascriptMapFunction) {
-        query(javascriptMapFunction, null, null, null);
+    public void query(MapFunction mapFunction) {
+        query(mapFunction, null, null, null);
     }
     
     /**
-     * @see AsyncPouchDB#query(javascriptMapFunction, reduceFunction, options, callback)
+     * @see AsyncPouchDB#query(mapFunction, reduceFunction, options, callback)
      */
-    public void query(CharSequence javascriptMapFunction, ReduceFunction reduceFunction) {
-        query(javascriptMapFunction, reduceFunction, null, null);
+    public void query(MapFunction mapFunction, ReduceFunction reduceFunction) {
+        query(mapFunction, reduceFunction, null, null);
     }
     
     /**
-     * @see AsyncPouchDB#query(javascriptMapFunction, reduceFunction, options, callback)
+     * @see AsyncPouchDB#query(mapFunction, reduceFunction, options, callback)
      */
-    public void query(CharSequence javascriptMapFunction, ReduceFunction reduceFunction, AllDocsCallback<T> callback) {
-        query(javascriptMapFunction, reduceFunction, null, callback);
+    public void query(MapFunction mapFunction, ReduceFunction reduceFunction, AllDocsCallback<T> callback) {
+        query(mapFunction, reduceFunction, null, callback);
     }    
     
     /*

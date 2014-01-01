@@ -15,6 +15,7 @@ import com.pouchdb.pouchdroid.PouchDroidActivity;
 import com.pouchdb.pouchdroid.pouch.PouchDB;
 import com.pouchdb.pouchdroid.pouch.PouchException;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
+import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.util.Maps;
 
 public class MainActivity extends PouchDroidActivity {
@@ -136,7 +137,7 @@ public class MainActivity extends PouchDroidActivity {
         
         appendText("ran replicate, dinosaurs are now %s", dinosaurPouch.allDocs(true).getDocuments());
         
-        AllDocsInfo<Dinosaur> queryResponse = dinosaurPouch.query("function(doc){emit(doc.name, null);}", null, 
+        AllDocsInfo<Dinosaur> queryResponse = dinosaurPouch.query(MapFunction.simpleFieldLookup("name"), null, 
                 Maps.quickMap("include_docs", true));
         appendText("query response is %s", queryResponse);
         
