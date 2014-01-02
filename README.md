@@ -169,6 +169,12 @@ What's supported?
 | ```[ ]``` | ```compact```  |
 | ```[ ]``` | ```revsDiff```  |
 
+Next steps:
+
+* Full Pouch API support
+* Passes Pouch unit test suite
+* PhoneGap plugin
+
 Tutorials
 ----------
 
