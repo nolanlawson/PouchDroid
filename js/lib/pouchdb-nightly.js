@@ -2673,6 +2673,18 @@ function quote(str) {
   return "'" + str + "'";
 }
 
+function openDB() {
+  if (typeof window !== 'undefined') {
+    if (window.navigator && window.navigator.sqlitePlugin && window.navigator.sqlitePlugin.openDatabase) {
+      return navigator.sqlitePlugin.openDatabase.apply(navigator.sqlitePlugin, arguments);
+    } else if (window.sqlitePlugin && window.sqlitePlugin.openDatabase) {
+      return window.sqlitePlugin.openDatabase.apply(window.sqlitePlugin, arguments);
+    } else {
+      return window.openDatabase.apply(window, arguments);
+    }
+  }
+}
+
 var POUCH_VERSION = 1;
 var POUCH_SIZE = 5 * 1024 * 1024;
 
@@ -2706,7 +2718,7 @@ function webSqlPouch(opts, callback) {
   var instanceId = null;
   var name = opts.name;
 
-  var db = openDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
+  var db = openDB(name, POUCH_VERSION, name, POUCH_SIZE);
   if (!db) {
     return utils.call(callback, errors.UNKNOWN_ERROR);
   }
@@ -3220,9 +3232,9 @@ function webSqlPouch(opts, callback) {
 
   api._changes = function idb_changes(opts) {
 
-    
+
     //console.log(name + ': Start Changes Feed: continuous=' + opts.continuous);
-    
+
 
     if (opts.continuous) {
       var id = name + ':' + utils.uuid();
@@ -3342,11 +3354,20 @@ function webSqlPouch(opts, callback) {
 }
 
 webSqlPouch.valid = function () {
-  return typeof window !== 'undefined' && !!window.openDatabase;
+  if (typeof window !== 'undefined') {
+    if (window.navigator && window.navigator.sqlitePlugin && window.navigator.sqlitePlugin.openDatabase) {
+      return true;
+    } else if (window.sqlitePlugin && window.sqlitePlugin.openDatabase) {
+      return true;
+    } else if (window.openDatabase) {
+      return true;
+    }
+  }
+  return false;
 };
 
 webSqlPouch.destroy = function (name, opts, callback) {
-  var db = openDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
+  var db = openDB(name, POUCH_VERSION, name, POUCH_SIZE);
   db.transaction(function (tx) {
     tx.executeSql('DROP TABLE IF EXISTS ' + DOC_STORE, []);
     tx.executeSql('DROP TABLE IF EXISTS ' + BY_SEQ_STORE, []);
@@ -3443,10 +3464,13 @@ function PouchDB(name, opts, callback) {
 
 module.exports = PouchDB;
 },{"./adapter":1}],6:[function(require,module,exports){
+var process=require("__browserify_process");"use strict";
+
 var request = require('request');
 var extend = require('./extend.js');
 var createBlob = require('./blob.js');
 var errors = require('./errors');
+
 function ajax(options, callback) {
 
   if (typeof options === "function") {
@@ -3455,11 +3479,12 @@ function ajax(options, callback) {
   }
 
   function call(fun) {
+    /* jshint validthis: true */
     var args = Array.prototype.slice.call(arguments, 1);
     if (typeof fun === typeof Function) {
       fun.apply(this, args);
     }
-  };
+  }
 
   var defaultOptions = {
     method : "GET",
@@ -3471,11 +3496,10 @@ function ajax(options, callback) {
 
   options = extend(true, defaultOptions, options);
 
-
   function onSuccess(obj, resp, cb) {
     if (!options.binary && !options.json && options.processData &&
-        typeof obj !== 'string') {
-        obj = JSON.stringify(obj);
+      typeof obj !== 'string') {
+      obj = JSON.stringify(obj);
     } else if (!options.binary && options.json && typeof obj === 'string') {
       try {
         obj = JSON.parse(obj);
@@ -3486,11 +3510,11 @@ function ajax(options, callback) {
       }
     }
     if (Array.isArray(obj)) {
-      obj = obj.map(function(v) {
+      obj = obj.map(function (v) {
         var obj;
         if (v.ok) {
           return v;
-        } else if (v.error&&v.error==='conflict') {
+        } else if (v.error && v.error === 'conflict') {
           obj = errors.REV_CONFLICT;
           obj.id = v.id;
           return obj;
@@ -3502,28 +3526,28 @@ function ajax(options, callback) {
       });
     }
     call(cb, null, obj, resp);
-  };
+  }
 
-  function onError(err, cb){
+  function onError(err, cb) {
     var errParsed, errObj, errType, key;
     try {
       errParsed = JSON.parse(err.responseText);
       //would prefer not to have a try/catch clause
-      for(key in errors){
-        if(errors[key].name === errParsed.error){
+      for (key in errors) {
+        if (errors[key].name === errParsed.error) {
           errType = errors[key];
           break;
         }
       }
       errType = errType || errors.UNKNOWN_ERROR;
       errObj = errors.error(errType, errParsed.reason);
-    } catch(e) {
-      errObj = errors.UNKNOWN_ERROR;
+    } catch (e) {
+      errObj = errors.error(errors.UNKNOWN_ERROR);
     }
     call(cb, errObj);
-  };
+  }
 
-  if (typeof window !== 'undefined' && window.XMLHttpRequest) {
+  if (process.browser && typeof XMLHttpRequest !== 'undefined') {
     var timer, timedout = false;
     var xhr = new XMLHttpRequest();
 
@@ -3543,16 +3567,15 @@ function ajax(options, callback) {
       xhr.responseType = 'arraybuffer';
     }
 
-    function createCookie(name,value,days) {
+    var createCookie = function (name, value, days) {
+      var expires = "";
       if (days) {
         var date = new Date();
-        date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
-      } else {
-        var expires = "";
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toGMTString();
       }
-      document.cookie = name+"="+value+expires+"; path=/";
-    }
+      document.cookie = name + "=" + value + expires + "; path=/";
+    };
 
     for (var key in options.headers) {
       if (key === 'Cookie') {
@@ -3567,8 +3590,8 @@ function ajax(options, callback) {
       options.body = null;
     }
 
-    function abortReq() {
-      timedout=true;
+    var abortReq = function () {
+      timedout = true;
       xhr.abort();
       call(onError, xhr, callback);
     };
@@ -3589,19 +3612,19 @@ function ajax(options, callback) {
         }
         call(onSuccess, data, xhr, callback);
       } else {
-         call(onError, xhr, callback);
+        call(onError, xhr, callback);
       }
     };
 
     if (options.timeout > 0) {
       timer = setTimeout(abortReq, options.timeout);
-      xhr.upload.onprogress = xhr.onprogress = function() {
-      	clearTimeout(timer);
-      	timer = setTimeout(abortReq, options.timeout);
+      xhr.upload.onprogress = xhr.onprogress = function () {
+        clearTimeout(timer);
+        timer = setTimeout(abortReq, options.timeout);
       };
     }
     xhr.send(options.body);
-    return {abort:abortReq};
+    return {abort: abortReq};
 
   } else {
 
@@ -3651,7 +3674,7 @@ function ajax(options, callback) {
           error = errors.MISSING_DOC;
         } else if (data.reason === 'no_db_file') {
           error = errors.error(errors.DB_MISSING, data.reason);
-        } else if (data.error === 'conflict'){
+        } else if (data.error === 'conflict') {
           error = errors.REV_CONFLICT;
         } else {
           error = errors.error(errors.UNKNOWN_ERROR, data.reason, data.error);
@@ -3661,11 +3684,13 @@ function ajax(options, callback) {
       }
     });
   }
-};
+}
 
 module.exports = ajax;
 
-},{"./blob.js":7,"./errors":8,"./extend.js":9,"request":18}],7:[function(require,module,exports){
+},{"./blob.js":7,"./errors":8,"./extend.js":9,"__browserify_process":19,"request":18}],7:[function(require,module,exports){
+"use strict";
+
 //Abstracts constructing a Blob object, so it also works in older
 //browsers that don't support the native Blob constructor. (i.e.
 //old QtWebKit versions, at least).
@@ -3676,7 +3701,7 @@ function createBlob(parts, properties) {
     return new Blob(parts, properties);
   } catch (e) {
     if (e.name !== "TypeError") {
-      throw(e);
+      throw e;
     }
     var BlobBuilder = window.BlobBuilder || window.MSBlobBuilder || window.MozBlobBuilder || window.WebKitBlobBuilder;
     var builder = new BlobBuilder();
@@ -3685,8 +3710,7 @@ function createBlob(parts, properties) {
     }
     return builder.getBlob(properties.type);
   }
-};
-
+}
 
 module.exports = createBlob;
 
@@ -3804,6 +3828,8 @@ exports.error = function (error, reason, name) {
   return new CustomPouchError(reason);
 };
 },{}],9:[function(require,module,exports){
+"use strict";
+
 // Extends method
 // (taken from http://code.jquery.com/jquery-1.9.0.js)
 // Populate the class2type map
@@ -3812,38 +3838,38 @@ var class2type = {};
 var types = ["Boolean", "Number", "String", "Function", "Array", "Date", "RegExp", "Object", "Error"];
 for (var i = 0; i < types.length; i++) {
   var typename = types[i];
-  class2type[ "[object " + typename + "]" ] = typename.toLowerCase();
+  class2type["[object " + typename + "]"] = typename.toLowerCase();
 }
 
 var core_toString = class2type.toString;
 var core_hasOwn = class2type.hasOwnProperty;
 
- function type(obj) {
+function type(obj) {
   if (obj === null) {
-    return String( obj );
+    return String(obj);
   }
   return typeof obj === "object" || typeof obj === "function" ?
     class2type[core_toString.call(obj)] || "object" :
     typeof obj;
-};
+}
 
 function isWindow(obj) {
   return obj !== null && obj === obj.window;
 }
 
-function isPlainObject( obj ) {
+function isPlainObject(obj) {
   // Must be an Object.
   // Because of IE, we also have to check the presence of the constructor property.
   // Make sure that DOM nodes and window objects don't pass through, as well
-  if ( !obj || type(obj) !== "object" || obj.nodeType || isWindow( obj ) ) {
+  if (!obj || type(obj) !== "object" || obj.nodeType || isWindow(obj)) {
     return false;
   }
 
   try {
     // Not own constructor property must be Object
-    if ( obj.constructor &&
+    if (obj.constructor &&
       !core_hasOwn.call(obj, "constructor") &&
-      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
+      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
       return false;
     }
   } catch ( e ) {
@@ -3853,17 +3879,16 @@ function isPlainObject( obj ) {
 
   // Own properties are enumerated firstly, so to speed up,
   // if last one is own, then all properties are own.
-
   var key;
-  for ( key in obj ) {}
+  for (key in obj) {}
 
-  return key === undefined || core_hasOwn.call( obj, key );
-};
+  return key === undefined || core_hasOwn.call(obj, key);
+}
 
 
 function isFunction(obj) {
   return type(obj) === "function";
-};
+}
 
 var isArray = Array.isArray || function (obj) {
   return type(obj) === "array";
@@ -3877,7 +3902,7 @@ function extend() {
     deep = false;
 
   // Handle a deep copy situation
-  if ( typeof target === "boolean" ) {
+  if (typeof target === "boolean") {
     deep = target;
     target = arguments[1] || {};
     // skip the boolean and the target
@@ -3885,32 +3910,33 @@ function extend() {
   }
 
   // Handle case when target is a string or something (possible in deep copy)
-  if ( typeof target !== "object" && !isFunction (target) ) {
+  if (typeof target !== "object" && !isFunction(target)) {
     target = {};
   }
 
   // extend jQuery itself if only one argument is passed
-  if ( length === i ) {
+  if (length === i) {
+    /* jshint validthis: true */
     target = this;
     --i;
   }
 
-  for ( ; i < length; i++ ) {
+  for (; i < length; i++) {
     // Only deal with non-null/undefined values
-    if ((options = arguments[ i ]) != null) {
+    if ((options = arguments[i]) != null) {
       // Extend the base object
-      for ( name in options ) {
-        src = target[ name ];
-        copy = options[ name ];
+      for (name in options) {
+        src = target[name];
+        copy = options[name];
 
         // Prevent never-ending loop
-        if ( target === copy ) {
+        if (target === copy) {
           continue;
         }
 
         // Recurse if we're merging plain objects or arrays
-        if ( deep && copy && ( isPlainObject(copy) || (copyIsArray = isArray(copy)) ) ) {
-          if ( copyIsArray ) {
+        if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
+          if (copyIsArray) {
             copyIsArray = false;
             clone = src && isArray(src) ? src : [];
 
@@ -3919,12 +3945,12 @@ function extend() {
           }
 
           // Never move original objects, clone them
-          target[ name ] = extend( deep, clone, copy );
+          target[name] = extend(deep, clone, copy);
 
         // Don't bring in undefined values
-        } else if ( copy !== undefined ) {
-          if (!(isArray(options) && isFunction (copy))) {
-            target[ name ] = copy;
+        } else if (copy !== undefined) {
+          if (!(isArray(options) && isFunction(copy))) {
+            target[name] = copy;
           }
         }
       }
@@ -3933,14 +3959,16 @@ function extend() {
 
   // Return the modified object
   return target;
-};
+}
 
 
 module.exports = extend;
 
 
 },{}],10:[function(require,module,exports){
-var process=require("__browserify_process");/**
+var process=require("__browserify_process");"use strict";
+
+/**
 *
 *  MD5 (Message-Digest Algorithm)
 *
@@ -3953,21 +3981,21 @@ var process=require("__browserify_process");/**
 **/
 var crypto = require('crypto');
 
-exports.MD5 = function(string) {
+exports.MD5 = function (string) {
   if (!process.browser) {
     return crypto.createHash('md5').update(string).digest('hex');
   }
-  function RotateLeft(lValue, iShiftBits) {
-    return (lValue<<iShiftBits) | (lValue>>>(32-iShiftBits));
+  function rotateLeft(lValue, iShiftBits) {
+    return (lValue<<iShiftBits) | (lValue>>>(32 - iShiftBits));
   }
 
-  function AddUnsigned(lX,lY) {
-    var lX4,lY4,lX8,lY8,lResult;
+  function addUnsigned(lX, lY) {
+    var lX4, lY4, lX8, lY8, lResult;
     lX8 = (lX & 0x80000000);
     lY8 = (lY & 0x80000000);
     lX4 = (lX & 0x40000000);
     lY4 = (lY & 0x40000000);
-    lResult = (lX & 0x3FFFFFFF)+(lY & 0x3FFFFFFF);
+    lResult = (lX & 0x3FFFFFFF) + (lY & 0x3FFFFFFF);
     if (lX4 & lY4) {
       return (lResult ^ 0x80000000 ^ lX8 ^ lY8);
     }
@@ -3982,154 +4010,162 @@ exports.MD5 = function(string) {
     }
   }
 
-  function F(x,y,z) { return (x & y) | ((~x) & z); }
-  function G(x,y,z) { return (x & z) | (y & (~z)); }
-  function H(x,y,z) { return (x ^ y ^ z); }
-  function I(x,y,z) { return (y ^ (x | (~z))); }
+  function f(x, y, z) { return (x & y) | ((~x) & z); }
+  function g(x, y, z) { return (x & z) | (y & (~z)); }
+  function h(x, y, z) { return (x ^ y ^ z); }
+  function i(x, y, z) { return (y ^ (x | (~z))); }
 
-  function FF(a,b,c,d,x,s,ac) {
-    a = AddUnsigned(a, AddUnsigned(AddUnsigned(F(b, c, d), x), ac));
-    return AddUnsigned(RotateLeft(a, s), b);
-  };
+  function ff(a, b, c, d, x, s, ac) {
+    a = addUnsigned(a, addUnsigned(addUnsigned(f(b, c, d), x), ac));
+    return addUnsigned(rotateLeft(a, s), b);
+  }
 
-  function GG(a,b,c,d,x,s,ac) {
-    a = AddUnsigned(a, AddUnsigned(AddUnsigned(G(b, c, d), x), ac));
-    return AddUnsigned(RotateLeft(a, s), b);
-  };
+  function gg(a, b, c, d, x, s, ac) {
+    a = addUnsigned(a, addUnsigned(addUnsigned(g(b, c, d), x), ac));
+    return addUnsigned(rotateLeft(a, s), b);
+  }
 
-  function HH(a,b,c,d,x,s,ac) {
-    a = AddUnsigned(a, AddUnsigned(AddUnsigned(H(b, c, d), x), ac));
-    return AddUnsigned(RotateLeft(a, s), b);
-  };
+  function hh(a, b, c, d, x, s, ac) {
+    a = addUnsigned(a, addUnsigned(addUnsigned(h(b, c, d), x), ac));
+    return addUnsigned(rotateLeft(a, s), b);
+  }
 
-  function II(a,b,c,d,x,s,ac) {
-    a = AddUnsigned(a, AddUnsigned(AddUnsigned(I(b, c, d), x), ac));
-    return AddUnsigned(RotateLeft(a, s), b);
-  };
+  function ii(a, b, c, d, x, s, ac) {
+    a = addUnsigned(a, addUnsigned(addUnsigned(i(b, c, d), x), ac));
+    return addUnsigned(rotateLeft(a, s), b);
+  }
 
-  function ConvertToWordArray(string) {
+  function convertToWordArray(string) {
     var lWordCount;
     var lMessageLength = string.length;
-    var lNumberOfWords_temp1=lMessageLength + 8;
-    var lNumberOfWords_temp2=(lNumberOfWords_temp1-(lNumberOfWords_temp1 % 64))/64;
-    var lNumberOfWords = (lNumberOfWords_temp2+1)*16;
-    var lWordArray=Array(lNumberOfWords-1);
+    var lNumberOfWords_temp1 = lMessageLength + 8;
+    var lNumberOfWords_temp2 = (lNumberOfWords_temp1 - (lNumberOfWords_temp1 % 64)) / 64;
+    var lNumberOfWords = (lNumberOfWords_temp2 + 1) * 16;
+    var lWordArray = new Array(lNumberOfWords - 1);
     var lBytePosition = 0;
     var lByteCount = 0;
-    while ( lByteCount < lMessageLength ) {
-      lWordCount = (lByteCount-(lByteCount % 4))/4;
-      lBytePosition = (lByteCount % 4)*8;
+    while (lByteCount < lMessageLength) {
+      lWordCount = (lByteCount - (lByteCount % 4)) / 4;
+      lBytePosition = (lByteCount % 4) * 8;
       lWordArray[lWordCount] = (lWordArray[lWordCount] | (string.charCodeAt(lByteCount)<<lBytePosition));
       lByteCount++;
     }
-    lWordCount = (lByteCount-(lByteCount % 4))/4;
-    lBytePosition = (lByteCount % 4)*8;
+    lWordCount = (lByteCount - (lByteCount % 4)) / 4;
+    lBytePosition = (lByteCount % 4) * 8;
     lWordArray[lWordCount] = lWordArray[lWordCount] | (0x80<<lBytePosition);
-    lWordArray[lNumberOfWords-2] = lMessageLength<<3;
-    lWordArray[lNumberOfWords-1] = lMessageLength>>>29;
+    lWordArray[lNumberOfWords - 2] = lMessageLength<<3;
+    lWordArray[lNumberOfWords - 1] = lMessageLength>>>29;
     return lWordArray;
-  };
+  }
 
-  function WordToHex(lValue) {
-    var WordToHexValue="",WordToHexValue_temp="",lByte,lCount;
-    for (lCount = 0;lCount<=3;lCount++) {
-      lByte = (lValue>>>(lCount*8)) & 255;
-      WordToHexValue_temp = "0" + lByte.toString(16);
-      WordToHexValue = WordToHexValue + WordToHexValue_temp.substr(WordToHexValue_temp.length-2,2);
+  function wordToHex(lValue) {
+    var   wordToHexValue = "",   wordToHexValue_temp = "", lByte, lCount;
+    for (lCount = 0;lCount <= 3;lCount++) {
+      lByte = (lValue>>>(lCount * 8)) & 255;
+      wordToHexValue_temp = "0" + lByte.toString(16);
+      wordToHexValue = wordToHexValue + wordToHexValue_temp.substr(wordToHexValue_temp.length - 2, 2);
     }
-    return WordToHexValue;
-  };
+    return   wordToHexValue;
+  }
 
   //**	function Utf8Encode(string) removed. Aready defined in pidcrypt_utils.js
 
-  var x=Array();
-  var k,AA,BB,CC,DD,a,b,c,d;
-  var S11=7, S12=12, S13=17, S14=22;
-  var S21=5, S22=9 , S23=14, S24=20;
-  var S31=4, S32=11, S33=16, S34=23;
-  var S41=6, S42=10, S43=15, S44=21;
+  var x = [];
+  var k, AA, BB, CC, DD, a, b, c, d;
+  var S11 = 7, S12 = 12, S13 = 17, S14 = 22;
+  var S21 = 5, S22 = 9,  S23 = 14, S24 = 20;
+  var S31 = 4, S32 = 11, S33 = 16, S34 = 23;
+  var S41 = 6, S42 = 10, S43 = 15, S44 = 21;
 
   //	string = Utf8Encode(string); #function call removed
 
-  x = ConvertToWordArray(string);
+  x = convertToWordArray(string);
 
-  a = 0x67452301; b = 0xEFCDAB89; c = 0x98BADCFE; d = 0x10325476;
+  a = 0x67452301;
+  b = 0xEFCDAB89;
+  c = 0x98BADCFE;
+  d = 0x10325476;
 
-  for (k=0;k<x.length;k+=16) {
-    AA=a; BB=b; CC=c; DD=d;
-    a=FF(a,b,c,d,x[k+0], S11,0xD76AA478);
-    d=FF(d,a,b,c,x[k+1], S12,0xE8C7B756);
-    c=FF(c,d,a,b,x[k+2], S13,0x242070DB);
-    b=FF(b,c,d,a,x[k+3], S14,0xC1BDCEEE);
-    a=FF(a,b,c,d,x[k+4], S11,0xF57C0FAF);
-    d=FF(d,a,b,c,x[k+5], S12,0x4787C62A);
-    c=FF(c,d,a,b,x[k+6], S13,0xA8304613);
-    b=FF(b,c,d,a,x[k+7], S14,0xFD469501);
-    a=FF(a,b,c,d,x[k+8], S11,0x698098D8);
-    d=FF(d,a,b,c,x[k+9], S12,0x8B44F7AF);
-    c=FF(c,d,a,b,x[k+10],S13,0xFFFF5BB1);
-    b=FF(b,c,d,a,x[k+11],S14,0x895CD7BE);
-    a=FF(a,b,c,d,x[k+12],S11,0x6B901122);
-    d=FF(d,a,b,c,x[k+13],S12,0xFD987193);
-    c=FF(c,d,a,b,x[k+14],S13,0xA679438E);
-    b=FF(b,c,d,a,x[k+15],S14,0x49B40821);
-    a=GG(a,b,c,d,x[k+1], S21,0xF61E2562);
-    d=GG(d,a,b,c,x[k+6], S22,0xC040B340);
-    c=GG(c,d,a,b,x[k+11],S23,0x265E5A51);
-    b=GG(b,c,d,a,x[k+0], S24,0xE9B6C7AA);
-    a=GG(a,b,c,d,x[k+5], S21,0xD62F105D);
-    d=GG(d,a,b,c,x[k+10],S22,0x2441453);
-    c=GG(c,d,a,b,x[k+15],S23,0xD8A1E681);
-    b=GG(b,c,d,a,x[k+4], S24,0xE7D3FBC8);
-    a=GG(a,b,c,d,x[k+9], S21,0x21E1CDE6);
-    d=GG(d,a,b,c,x[k+14],S22,0xC33707D6);
-    c=GG(c,d,a,b,x[k+3], S23,0xF4D50D87);
-    b=GG(b,c,d,a,x[k+8], S24,0x455A14ED);
-    a=GG(a,b,c,d,x[k+13],S21,0xA9E3E905);
-    d=GG(d,a,b,c,x[k+2], S22,0xFCEFA3F8);
-    c=GG(c,d,a,b,x[k+7], S23,0x676F02D9);
-    b=GG(b,c,d,a,x[k+12],S24,0x8D2A4C8A);
-    a=HH(a,b,c,d,x[k+5], S31,0xFFFA3942);
-    d=HH(d,a,b,c,x[k+8], S32,0x8771F681);
-    c=HH(c,d,a,b,x[k+11],S33,0x6D9D6122);
-    b=HH(b,c,d,a,x[k+14],S34,0xFDE5380C);
-    a=HH(a,b,c,d,x[k+1], S31,0xA4BEEA44);
-    d=HH(d,a,b,c,x[k+4], S32,0x4BDECFA9);
-    c=HH(c,d,a,b,x[k+7], S33,0xF6BB4B60);
-    b=HH(b,c,d,a,x[k+10],S34,0xBEBFBC70);
-    a=HH(a,b,c,d,x[k+13],S31,0x289B7EC6);
-    d=HH(d,a,b,c,x[k+0], S32,0xEAA127FA);
-    c=HH(c,d,a,b,x[k+3], S33,0xD4EF3085);
-    b=HH(b,c,d,a,x[k+6], S34,0x4881D05);
-    a=HH(a,b,c,d,x[k+9], S31,0xD9D4D039);
-    d=HH(d,a,b,c,x[k+12],S32,0xE6DB99E5);
-    c=HH(c,d,a,b,x[k+15],S33,0x1FA27CF8);
-    b=HH(b,c,d,a,x[k+2], S34,0xC4AC5665);
-    a=II(a,b,c,d,x[k+0], S41,0xF4292244);
-    d=II(d,a,b,c,x[k+7], S42,0x432AFF97);
-    c=II(c,d,a,b,x[k+14],S43,0xAB9423A7);
-    b=II(b,c,d,a,x[k+5], S44,0xFC93A039);
-    a=II(a,b,c,d,x[k+12],S41,0x655B59C3);
-    d=II(d,a,b,c,x[k+3], S42,0x8F0CCC92);
-    c=II(c,d,a,b,x[k+10],S43,0xFFEFF47D);
-    b=II(b,c,d,a,x[k+1], S44,0x85845DD1);
-    a=II(a,b,c,d,x[k+8], S41,0x6FA87E4F);
-    d=II(d,a,b,c,x[k+15],S42,0xFE2CE6E0);
-    c=II(c,d,a,b,x[k+6], S43,0xA3014314);
-    b=II(b,c,d,a,x[k+13],S44,0x4E0811A1);
-    a=II(a,b,c,d,x[k+4], S41,0xF7537E82);
-    d=II(d,a,b,c,x[k+11],S42,0xBD3AF235);
-    c=II(c,d,a,b,x[k+2], S43,0x2AD7D2BB);
-    b=II(b,c,d,a,x[k+9], S44,0xEB86D391);
-    a=AddUnsigned(a,AA);
-    b=AddUnsigned(b,BB);
-    c=AddUnsigned(c,CC);
-    d=AddUnsigned(d,DD);
+  for (k = 0;k < x.length;k += 16) {
+    AA = a;
+    BB = b;
+    CC = c;
+    DD = d;
+    a = ff(a, b, c, d, x[k + 0],  S11, 0xD76AA478);
+    d = ff(d, a, b, c, x[k + 1],  S12, 0xE8C7B756);
+    c = ff(c, d, a, b, x[k + 2],  S13, 0x242070DB);
+    b = ff(b, c, d, a, x[k + 3],  S14, 0xC1BDCEEE);
+    a = ff(a, b, c, d, x[k + 4],  S11, 0xF57C0FAF);
+    d = ff(d, a, b, c, x[k + 5],  S12, 0x4787C62A);
+    c = ff(c, d, a, b, x[k + 6],  S13, 0xA8304613);
+    b = ff(b, c, d, a, x[k + 7],  S14, 0xFD469501);
+    a = ff(a, b, c, d, x[k + 8],  S11, 0x698098D8);
+    d = ff(d, a, b, c, x[k + 9],  S12, 0x8B44F7AF);
+    c = ff(c, d, a, b, x[k + 10], S13, 0xFFFF5BB1);
+    b = ff(b, c, d, a, x[k + 11], S14, 0x895CD7BE);
+    a = ff(a, b, c, d, x[k + 12], S11, 0x6B901122);
+    d = ff(d, a, b, c, x[k + 13], S12, 0xFD987193);
+    c = ff(c, d, a, b, x[k + 14], S13, 0xA679438E);
+    b = ff(b, c, d, a, x[k + 15], S14, 0x49B40821);
+    a = gg(a, b, c, d, x[k + 1],  S21, 0xF61E2562);
+    d = gg(d, a, b, c, x[k + 6],  S22, 0xC040B340);
+    c = gg(c, d, a, b, x[k + 11], S23, 0x265E5A51);
+    b = gg(b, c, d, a, x[k + 0],  S24, 0xE9B6C7AA);
+    a = gg(a, b, c, d, x[k + 5],  S21, 0xD62F105D);
+    d = gg(d, a, b, c, x[k + 10], S22, 0x2441453);
+    c = gg(c, d, a, b, x[k + 15], S23, 0xD8A1E681);
+    b = gg(b, c, d, a, x[k + 4],  S24, 0xE7D3FBC8);
+    a = gg(a, b, c, d, x[k + 9],  S21, 0x21E1CDE6);
+    d = gg(d, a, b, c, x[k + 14], S22, 0xC33707D6);
+    c = gg(c, d, a, b, x[k + 3],  S23, 0xF4D50D87);
+    b = gg(b, c, d, a, x[k + 8],  S24, 0x455A14ED);
+    a = gg(a, b, c, d, x[k + 13], S21, 0xA9E3E905);
+    d = gg(d, a, b, c, x[k + 2],  S22, 0xFCEFA3F8);
+    c = gg(c, d, a, b, x[k + 7],  S23, 0x676F02D9);
+    b = gg(b, c, d, a, x[k + 12], S24, 0x8D2A4C8A);
+    a = hh(a, b, c, d, x[k + 5],  S31, 0xFFFA3942);
+    d = hh(d, a, b, c, x[k + 8],  S32, 0x8771F681);
+    c = hh(c, d, a, b, x[k + 11], S33, 0x6D9D6122);
+    b = hh(b, c, d, a, x[k + 14], S34, 0xFDE5380C);
+    a = hh(a, b, c, d, x[k + 1],  S31, 0xA4BEEA44);
+    d = hh(d, a, b, c, x[k + 4],  S32, 0x4BDECFA9);
+    c = hh(c, d, a, b, x[k + 7],  S33, 0xF6BB4B60);
+    b = hh(b, c, d, a, x[k + 10], S34, 0xBEBFBC70);
+    a = hh(a, b, c, d, x[k + 13], S31, 0x289B7EC6);
+    d = hh(d, a, b, c, x[k + 0],  S32, 0xEAA127FA);
+    c = hh(c, d, a, b, x[k + 3],  S33, 0xD4EF3085);
+    b = hh(b, c, d, a, x[k + 6],  S34, 0x4881D05);
+    a = hh(a, b, c, d, x[k + 9],  S31, 0xD9D4D039);
+    d = hh(d, a, b, c, x[k + 12], S32, 0xE6DB99E5);
+    c = hh(c, d, a, b, x[k + 15], S33, 0x1FA27CF8);
+    b = hh(b, c, d, a, x[k + 2],  S34, 0xC4AC5665);
+    a = ii(a, b, c, d, x[k + 0],  S41, 0xF4292244);
+    d = ii(d, a, b, c, x[k + 7],  S42, 0x432AFF97);
+    c = ii(c, d, a, b, x[k + 14], S43, 0xAB9423A7);
+    b = ii(b, c, d, a, x[k + 5],  S44, 0xFC93A039);
+    a = ii(a, b, c, d, x[k + 12], S41, 0x655B59C3);
+    d = ii(d, a, b, c, x[k + 3],  S42, 0x8F0CCC92);
+    c = ii(c, d, a, b, x[k + 10], S43, 0xFFEFF47D);
+    b = ii(b, c, d, a, x[k + 1],  S44, 0x85845DD1);
+    a = ii(a, b, c, d, x[k + 8],  S41, 0x6FA87E4F);
+    d = ii(d, a, b, c, x[k + 15], S42, 0xFE2CE6E0);
+    c = ii(c, d, a, b, x[k + 6],  S43, 0xA3014314);
+    b = ii(b, c, d, a, x[k + 13], S44, 0x4E0811A1);
+    a = ii(a, b, c, d, x[k + 4],  S41, 0xF7537E82);
+    d = ii(d, a, b, c, x[k + 11], S42, 0xBD3AF235);
+    c = ii(c, d, a, b, x[k + 2],  S43, 0x2AD7D2BB);
+    b = ii(b, c, d, a, x[k + 9],  S44, 0xEB86D391);
+    a = addUnsigned(a, AA);
+    b = addUnsigned(b, BB);
+    c = addUnsigned(c, CC);
+    d = addUnsigned(d, DD);
   }
-  var temp = WordToHex(a)+WordToHex(b)+WordToHex(c)+WordToHex(d);
+  var temp = wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d);
   return temp.toLowerCase();
 };
 },{"__browserify_process":19,"crypto":18}],11:[function(require,module,exports){
+"use strict";
+
 // BEGIN Math.uuid.js
 
 /*!
@@ -4168,7 +4204,7 @@ Dual licensed under the MIT and GPL licenses.
 
 
 function uuid(len, radix) {
-  var chars = uuid.CHARS 
+  var chars = uuid.CHARS;
   var uuidInner = [];
   var i;
 
@@ -4176,7 +4212,9 @@ function uuid(len, radix) {
 
   if (len) {
     // Compact form
-    for (i = 0; i < len; i++) uuidInner[i] = chars[0 | Math.random()*radix];
+    for (i = 0; i < len; i++) {
+      uuidInner[i] = chars[0 | Math.random() * radix];
+    }
   } else {
     // rfc4122, version 4 form
     var r;
@@ -4189,14 +4227,15 @@ function uuid(len, radix) {
     // per rfc4122, sec. 4.1.5
     for (i = 0; i < 36; i++) {
       if (!uuidInner[i]) {
-        r = 0 | Math.random()*16;
-        uuidInner[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+        r = 0 | Math.random() * 16;
+        uuidInner[i] = chars[(i === 19) ? (r & 0x3) | 0x8 : r];
       }
     }
   }
 
   return uuidInner.join('');
-};
+}
+
 uuid.CHARS = (
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
   'abcdefghijklmnopqrstuvwxyz'
@@ -4510,7 +4549,7 @@ PouchMerge.rootToLeaf = function (tree) {
 module.exports = PouchMerge;
 
 },{"./deps/extend":9}],14:[function(require,module,exports){
-'use strict';
+var process=require("__browserify_process");'use strict';
 
 var PouchUtils = require('./utils');
 var Pouch = require('./index');
@@ -4550,7 +4589,9 @@ function RequestManager(promise) {
     }
     processing = true;
     var task = queue.shift();
-    task.fun.apply(null, task.args);
+    process.nextTick(function () {
+      task.fun.apply(null, task.args);
+    });
   };
 
   // We need to be notified whenever a request is complete to process
@@ -4577,10 +4618,14 @@ function fetchCheckpoint(src, target, id, callback) {
   target.get(id, function (err, targetDoc) {
     if (err && err.status === 404) {
       callback(null, 0);
+    } else if (err) {
+      callback(err);
     } else {
       src.get(id, function (err, sourceDoc) {
-        if (err && err.status === 404 || targetDoc.last_seq !== sourceDoc.last_seq) {
+        if (err && err.status === 404 || (!err && (targetDoc.last_seq !== sourceDoc.last_seq))) {
           callback(null, 0);
+        } else if (err) {
+          callback(err);
         } else {
           callback(null, sourceDoc.last_seq);
         }
@@ -4806,7 +4851,7 @@ exports.replicate = function (src, target, opts, callback) {
   return replicateRet;
 };
 
-},{"./index":12,"./utils":16}],15:[function(require,module,exports){
+},{"./index":12,"./utils":16,"__browserify_process":19}],15:[function(require,module,exports){
 "use strict";
 
 var PouchDB = require("./constructor");
@@ -5466,24 +5511,110 @@ var pouchCollate = require('pouchdb-collate');
 // and storing the result of the map function (possibly using the upcoming
 // extracted adapter functions)
 
-
-
-// This is the first implementation of a basic plugin, we register the
-// plugin object with pouch and it is mixin'd to each database created
-// (regardless of adapter), adapters can override plugins by providing
-// their own implementation. functions on the plugin object that start
-// with _ are reserved function that are called by pouchdb for special
-// notifications.
-
-// If we wanted to store incremental views we can do it here by listening
-// to the changes feed (keeping track of our last update_seq between page loads)
-// and storing the result of the map function (possibly using the upcoming
-// extracted adapter functions)
-
 function MapReduce(db) {
   if(!(this instanceof MapReduce)){
     return new MapReduce(db);
   }
+
+  function createKeysLookup(keys) {
+    // creates a lookup map for the given keys, so that doing
+    // query() with keys doesn't become an O(n * m) operation
+    // lookup values are typically integer indexes, but may
+    // map to a list of integers, since keys can be duplicated
+    var lookup = {};
+
+    for (var i = 0, len = keys.length; i < len; i++) {
+      var key = keys[i];
+      if (typeof key === 'undefined') {
+        key = null; // edge case where couch considers undefined to be the same as null
+      }
+      var val = lookup[key];
+      if (typeof val === 'undefined') {
+        lookup[key] = i;
+      } else if (typeof val === 'number') {
+        lookup[key] = [val, i];
+      } else { // array
+        val.push(i);
+      }
+    }
+
+    return lookup;
+  }
+
+  function mapUsingKeys(inputResults, keys, keysLookup) {
+    // create a new array from the given results, if there are more keys
+    // than results, since duplicates and nulls in the keys need to be
+    // taken into account.  return the (possibly new) array
+    if (inputResults.length === keys.length) {
+      // we can use a simple sort, keys and results are one-to-one,
+      // lookup vals are always integers
+      inputResults.sort(function(a, b) {
+        var aIndex = keysLookup[a.key];
+        var bIndex = keysLookup[b.key];
+        return aIndex === bIndex ? 0 : aIndex < bIndex ? -1 : 1;
+      });
+      return inputResults;
+    }
+    // else have to respect dups/nulls in keys
+    var outputResults = new Array(keys.length);
+
+    inputResults.forEach(function(result) {
+      var idx = keysLookup[result.key];
+      if (typeof idx === 'number') {
+        outputResults[idx] = result;
+      } else { // array of indices
+        idx.forEach(function(subIdx) {
+          outputResults[subIdx] = result;
+        });
+      }
+    });
+
+    // work backwards, removing nulls
+    for (var i = outputResults.length - 1; i >= 0; i--) {
+      if (!outputResults[i]) {
+        outputResults.splice(i, 1);
+      }
+    }
+
+    return outputResults;
+  }
+
+  function sum(values) {
+    return values.reduce(function (a, b) { return a + b; }, 0);
+  }
+
+  var builtInReduce = {
+    "_sum": function (keys, values){
+      return sum(values);
+    },
+
+    "_count": function (keys, values, rereduce){
+      if (rereduce){
+        return sum(values);
+      } else {
+        return values.length;
+      }
+    },
+
+    "_stats": function (keys, values, rereduce) {
+      return {
+        'sum': sum(values),
+        'min': Math.min.apply(null, values),
+        'max': Math.max.apply(null, values),
+        'count': values.length,
+        'sumsqr': (function () {
+          var _sumsqr = 0;
+          for(var idx in values) {
+            if (typeof values[idx] === 'number') {
+              _sumsqr += values[idx] * values[idx];
+            }
+          }
+          return _sumsqr;
+        })()
+      };
+    }
+  };
+
   function viewQuery(fun, options) {
     if (!options.complete) {
       return;
@@ -5497,46 +5628,11 @@ function MapReduce(db) {
       options.reduce = false;
     }
 
-    function sum(values) {
-      return values.reduce(function (a, b) { return a + b; }, 0);
-    }
-
-    var builtInReduce = {
-      "_sum": function (keys, values){
-        return sum(values);
-      },
-
-      "_count": function (keys, values, rereduce){
-        if (rereduce){
-          return sum(values);
-        } else {
-          return values.length;
-        }
-      },
-
-      "_stats": function (keys, values, rereduce) {
-        return {
-          'sum': sum(values),
-          'min': Math.min.apply(null, values),
-          'max': Math.max.apply(null, values),
-          'count': values.length,
-          'sumsqr': (function () {
-            var _sumsqr = 0;
-            for(var idx in values) {
-              if (typeof values[idx] === 'number') {
-              _sumsqr += values[idx] * values[idx];
-              }
-            }
-            return _sumsqr;
-          })()
-        };
-      }
-    };
-
     var results = [];
     var current = null;
     var num_started= 0;
     var completed= false;
+    var keysLookup = null;
 
     function emit(key, val) {
       var viewRow = {
@@ -5545,9 +5641,15 @@ function MapReduce(db) {
         value: val
       };
 
-      if (options.startkey && pouchCollate(key, options.startkey) < 0) return;
-      if (options.endkey && pouchCollate(key, options.endkey) > 0) return;
-      if (options.key && pouchCollate(key, options.key) !== 0) return;
+      if (typeof options.startkey !== 'undefined' && pouchCollate(key, options.startkey) < 0) return;
+      if (typeof options.endkey !== 'undefined' && pouchCollate(key, options.endkey) > 0) return;
+      if (typeof options.key !== 'undefined' && pouchCollate(key, options.key) !== 0) return;
+      if (typeof options.keys !== 'undefined') {
+        keysLookup = keysLookup || createKeysLookup(options.keys);
+        if (typeof keysLookup[key] === 'undefined') {
+          return;
+        }
+      }
 
       num_started++;
       if (options.include_docs) {
@@ -5583,9 +5685,15 @@ function MapReduce(db) {
     //only proceed once all documents are mapped and joined
     function checkComplete() {
       if (completed && results.length == num_started){
-        results.sort(function (a, b) {
-          return pouchCollate(a.key, b.key);
-        });
+
+        if (typeof options.keys !== 'undefined') { // user supplied a keys param, sort by keys
+          keysLookup = keysLookup || createKeysLookup(options.keys);
+          results = mapUsingKeys(results, options.keys, keysLookup);
+        } else { // normal sorting
+          results.sort(function (a, b) {
+            return pouchCollate(a.key, b.key);
+          });
+        }
         if (options.descending) {
           results.reverse();
         }
@@ -5639,6 +5747,17 @@ function MapReduce(db) {
     });
   }
 
+  function addHttpParam(paramName, opts, params, asJson) {
+    // add an http param from opts to params, optionally json-encoded
+    var val = opts[paramName];
+    if (typeof val !== 'undefined') {
+      if (asJson) {
+        val = encodeURIComponent(JSON.stringify(val));
+      }
+      params.push(paramName + '=' + val);
+    }
+  }
+
   function httpQuery(fun, opts, callback) {
 
     // List of parameters to add to the PUT request
@@ -5650,42 +5769,26 @@ function MapReduce(db) {
     // of parameters.
     // If reduce=false then the results are that of only the map function
     // not the final result of map and reduce.
-    if (typeof opts.reduce !== 'undefined') {
-      params.push('reduce=' + opts.reduce);
-    }
-    if (typeof opts.include_docs !== 'undefined') {
-      params.push('include_docs=' + opts.include_docs);
-    }
-    if (typeof opts.limit !== 'undefined') {
-      params.push('limit=' + opts.limit);
-    }
-    if (typeof opts.descending !== 'undefined') {
-      params.push('descending=' + opts.descending);
-    }
-    if (typeof opts.startkey !== 'undefined') {
-      params.push('startkey=' + encodeURIComponent(JSON.stringify(opts.startkey)));
-    }
-    if (typeof opts.endkey !== 'undefined') {
-      params.push('endkey=' + encodeURIComponent(JSON.stringify(opts.endkey)));
-    }
-    if (typeof opts.key !== 'undefined') {
-      params.push('key=' + encodeURIComponent(JSON.stringify(opts.key)));
-    }
-    if (typeof opts.group !== 'undefined') {
-      params.push('group=' + opts.group);
-    }
-    if (typeof opts.group_level !== 'undefined') {
-      params.push('group_level=' + opts.group_level);
-    }
-    if (typeof opts.skip !== 'undefined') {
-      params.push('skip=' + opts.skip);
-    }
+    addHttpParam('reduce', opts, params);
+    addHttpParam('include_docs', opts, params);
+    addHttpParam('limit', opts, params);
+    addHttpParam('descending', opts, params);
+    addHttpParam('group', opts, params);
+    addHttpParam('group_level', opts, params);
+    addHttpParam('skip', opts, params);
+    addHttpParam('startkey', opts, params, true);
+    addHttpParam('endkey', opts, params, true);
+    addHttpParam('key', opts, params, true);
 
     // If keys are supplied, issue a POST request to circumvent GET query string limits
     // see http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options
     if (typeof opts.keys !== 'undefined') {
       method = 'POST';
-      body = JSON.stringify({keys:opts.keys});
+      if (typeof fun === 'string') {
+        body = JSON.stringify({keys:opts.keys});
+      } else { // fun is {map : mapfun}, so append to this
+        fun.keys = opts.keys;
+      }
     }
 
     // Format the list of parameters into a valid URI query string
@@ -5821,6 +5924,10 @@ function collationIndex(x) {
   if (Array.isArray(x)) {
     return 4.5;
   }
+  if (typeof x === 'undefined') {
+    // CouchDB indexes both null/undefined as null
+    return 1;
+  }
 }
 module.exports = pouchCollate;
 function pouchCollate(a, b) {
@@ -5829,14 +5936,14 @@ function pouchCollate(a, b) {
   if ((ai - bi) !== 0) {
     return ai - bi;
   }
-  if (a === null) {
+  if (a === null || typeof a === 'undefined') {
     return 0;
   }
   if (typeof a === 'number') {
     return a - b;
   }
   if (typeof a === 'boolean') {
-    return a < b ? -1 : 1;
+    return a === b ? 0 : (a < b ? -1 : 1);
   }
   if (typeof a === 'string') {
     return stringCollate(a, b);
@@ -5851,4 +5958,3 @@ function pouchCollate(a, b) {
 },{}]},{},[12])
 (12)
 });
-;
