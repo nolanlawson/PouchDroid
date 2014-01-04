@@ -9,6 +9,7 @@ import android.os.Looper;
 
 import com.pouchdb.pouchdroid.PouchDroid;
 import com.pouchdb.pouchdroid.pouch.callback.AllDocsCallback;
+import com.pouchdb.pouchdroid.pouch.callback.AttachmentCallback;
 import com.pouchdb.pouchdroid.pouch.callback.BulkCallback;
 import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
 import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
@@ -460,6 +461,48 @@ public class PouchDB<T extends PouchDocumentInterface> {
      */
     public AllDocsInfo<T> query(MapFunction mapFunction) {
         return query(mapFunction, null, null);
+    }
+    
+    /**
+     * @see AsyncPouchDB#putAttachment(String, String, String, byte[], String, StandardCallback)
+     */    
+    public PouchInfo putAttachment(String docId, String attachmentId, String rev, byte[] data, String contentType) {
+        final BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.putAttachment(docId, attachmentId, rev, data, contentType, createStandardCallback(lock));
+        return waitAndReturn(lock);
+    }
+    
+    /**
+     * @see AsyncPouchDB#getAttachment(String, String, Map, AttachmentCallback)
+     */    
+    public PouchAttachment getAttachment(String docId, String attachmentId, Map<String, Object> options) {
+        final BlockingQueue<PouchResponse<PouchAttachment>> lock = createLock();
+
+        delegate.getAttachment(docId, attachmentId, options, new AttachmentCallback() {
+            
+            @Override
+            public void onCallback(PouchError err, PouchAttachment info) {
+                lock.offer(new PouchResponse<PouchAttachment>(err, info));
+            }
+        });
+        
+        return waitAndReturn(lock); 
+    }
+    
+    /**
+     * @see AsyncPouchDB#getAttachment(String, String, Map, AttachmentCallback)
+     */    
+    public PouchAttachment getAttachment(String docId, String attachmentId) {
+        return getAttachment(docId, attachmentId, null);
+    }
+    
+    /**
+     * @see AsyncPouchDB#removeAttachment(String, String, String, StandardCallback)
+     */
+    public PouchInfo removeAttachment(String docId, String attachmentId, String rev, StandardCallback callback) {
+        final BlockingQueue<PouchResponse<PouchInfo>> lock = createLock();
+        delegate.removeAttachment(docId, attachmentId, rev, createStandardCallback(lock));
+        return waitAndReturn(lock);
     }
     
     /*

@@ -1,5 +1,6 @@
 package com.pouchdb.pouchdroid.pouch;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +12,7 @@ import android.text.TextUtils;
 
 import com.pouchdb.pouchdroid.PouchDroid;
 import com.pouchdb.pouchdroid.pouch.callback.AllDocsCallback;
+import com.pouchdb.pouchdroid.pouch.callback.AttachmentCallback;
 import com.pouchdb.pouchdroid.pouch.callback.BulkCallback;
 import com.pouchdb.pouchdroid.pouch.callback.Callback;
 import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
@@ -21,6 +23,7 @@ import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
+import com.pouchdb.pouchdroid.util.Base64Compat;
 import com.pouchdb.pouchdroid.util.JsonUtil;
 import com.pouchdb.pouchdroid.util.PouchOptions;
 import com.pouchdb.pouchdroid.util.UtilLogger;
@@ -379,6 +382,10 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
     public void query(MapFunction mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
             AllDocsCallback<T> callback) {
         
+        if (destroyed) {
+            throw new RuntimeException("PouchDB destroyed!  Can't do any further actions.");
+        }
+        
         CharSequence callbackAsString = createFunctionForCallback(wrapAllDocsCallback(callback));
         
         if (options == null) {
@@ -426,11 +433,71 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         query(mapFunction, reduceFunction, null, callback);
     }    
     
+    /**
+     * @see AsyncPouchDB#putAttachment(String, String, String, byte[], String, StandardCallback)
+     */
+    public void putAttachment(String docId, String attachmentId, String rev, byte[] data, String contentType,
+            StandardCallback callback) {
+        loadAttachmentAction("putAttachment", docId, attachmentId, rev, null, data, contentType, callback);
+    }
+
+    /**
+     * @see AsyncPouchDB#getAttachment(String, String, Map, AttachmentCallback)
+     */
+    public void getAttachment(String docId, String attachmentId, Map<String, Object> options,
+            AttachmentCallback callback) {
+        loadAttachmentAction("getAttachment", docId, attachmentId, null, options, null, null, callback);
+    }
+    
+    /**
+     * @see AsyncPouchDB#removeAttachment(String, String, String, StandardCallback)
+     */
+    public void removeAttachment(String docId, String attachmentId, String rev, StandardCallback callback) {
+        loadAttachmentAction("removeAttachment", docId, attachmentId, rev, null, null, null, callback);
+    }
+    
     /*
      *******************************************
      * Private methods
      *******************************************
      */
+    
+    private void loadAttachmentAction(String action, String docId, String attachmentId, String rev, 
+            Map<String, Object> options, byte[] data, String contentType, Callback<?> callback) {
+        if (destroyed) {
+            throw new RuntimeException("PouchDB destroyed!  Can't do any further actions.");
+        }
+
+        List<CharSequence> arguments = new LinkedList<CharSequence>(Arrays.asList(
+                JsonUtil.simpleString(docId), 
+                JsonUtil.simpleString(attachmentId)));
+        
+        if (rev != null) {
+            arguments.add(JsonUtil.simpleString(rev));
+        }
+        if (options != null) {
+            arguments.add(JsonUtil.simpleMap(options));
+        }
+        
+        if (data != null) {
+            arguments.add(new StringBuilder("PouchDroid.Util.base64DecToArr(\"")
+            .append(Base64Compat.encodeToString(data, Base64Compat.DEFAULT))
+            .append("\").buffer"));
+        }
+        
+        if (contentType != null) {
+            arguments.add(JsonUtil.simpleString(contentType));
+        }
+        
+        if (callback != null) {
+            arguments.add(createFunctionForCallback(callback));
+        }
+        
+        StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].").append(action).append("(")
+                .append(TextUtils.join(",", arguments)).append(");");
+
+        pouchDroid.loadJavascript(js);
+    }
 
     private void loadAction(String action, Map<String, Object> options, Callback<?> callback) {
         loadAction(action, null, options, callback, null);

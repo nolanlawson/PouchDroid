@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.pouchdb.pouchdroid.pouch.callback.AllDocsCallback;
+import com.pouchdb.pouchdroid.pouch.callback.AttachmentCallback;
 import com.pouchdb.pouchdroid.pouch.callback.BulkCallback;
 import com.pouchdb.pouchdroid.pouch.callback.DatabaseInfoCallback;
 import com.pouchdb.pouchdroid.pouch.callback.GetCallback;
@@ -880,5 +881,199 @@ public abstract class AbstractPouchDB<T extends PouchDocumentInterface> {
      */
     public abstract void query(MapFunction mapFunction, ReduceFunction reduceFunction, Map<String, Object> options, 
             AllDocsCallback<T> callback);
+    
+    /**
+     * 
+     * 
+     <h2>Save an attachment<a id="save_attachment"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">putAttachment</span><span class="p">(</span><span class="nx">docId</span><span class="p">,</span> <span class="nx">attachmentId</span><span class="p">,</span> <span class="nx">rev</span><span class="p">,</span> <span class="nx">doc</span><span class="p">,</span> <span class="nx">type</span><span class="p">,</span> <span class="p">[</span><span class="nx">callback</span><span class="p">]);</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Attaches a binary object to a document, most of PouchDB&#39;s API deals
+     * with JSON however we often need to store binary data, these are called
+     * <code>attachments</code> and you can attach any binary data to a
+     * document.
+     * </p>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="kd">var</span> <span class="nx">doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Blob</span><span class="p">([</span><span class="s2">&quot;It&#39;s a God awful small affair&quot;</span><span class="p">]);</span>
+     * <span class="nx">db</span><span class="p">.</span><span class="nx">putAttachment</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="nx">rev</span><span class="p">,</span> <span class="nx">doc</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{})</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h4>Example Response:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+     *   <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;otherdoc&quot;</span><span class="p">,</span>
+     *   <span class="s2">&quot;rev&quot;</span><span class="o">:</span> <span class="s2">&quot;2-068E73F5B44FEC987B51354DFC772891&quot;</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Within node you must use a Buffer:
+     * </p>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="kd">var</span> <span class="nx">doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Buffer</span><span class="p">(</span><span class="s2">&quot;It&#39;s a God awful small affair&quot;</span><span class="p">);</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h3>Save an inline attachment</h3>
+     * 
+     * <p>
+     * You can inline attachments inside the document. In this case the
+     * attachment data must be supplied as a base64 encoded string:
+     * </p>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s1">&#39;_id&#39;</span><span class="o">:</span> <span class="s1">&#39;otherdoc&#39;</span><span class="p">,</span>
+     *   <span class="s1">&#39;title&#39;</span><span class="o">:</span> <span class="s1">&#39;Legendary Hearts&#39;</span><span class="p">,</span>
+     *   <span class="s1">&#39;_attachments&#39;</span><span class="o">:</span> <span class="p">{</span>
+     *     <span class="s2">&quot;text&quot;</span><span class="o">:</span> <span class="p">{</span>
+     *       <span class="s2">&quot;content_type&quot;</span><span class="o">:</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+     *        <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="s2">&quot;TGVnZW5kYXJ5IGhlYXJ0cywgdGVhciB1cyBhbGwgYXBhcnQKT&quot;</span> <span class="o">+</span>
+     *          <span class="s2">&quot;WFrZSBvdXIgZW1vdGlvbnMgYmxlZWQsIGNyeWluZyBvdXQgaW4gbmVlZA==&quot;</span>
+     *     <span class="p">}</span>
+     *   <span class="p">}</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * See <a href=
+     * "http://wiki.apache.org/couchdb/HTTP_Document_API#Inline_Attachments"
+     * >Inline Attachments</a> on the CouchDB Wiki.
+     * </p>
+     * 
+     * @see <a href=
+     *      'http://pouchdb.com/api.html#save_attachment'>http://pouchdb.com/api.html#save_attachment</
+     *      a >
+     */
+    public abstract void putAttachment(String docId, String attachmentId, String rev, byte[] data, String contentType, StandardCallback callback);
+    
+    /**
+     * <h2>Get an attachment<a id="get_attachment"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">getAttachment</span><span class="p">(</span><span class="nx">docId</span><span class="p">,</span> <span class="nx">attachmentId</span><span class="p">,</span> <span class="p">[</span><span class="nx">opts</span><span class="p">],</span> <span class="p">[</span><span class="nx">callback</span><span class="p">])</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Get attachment data.
+     * </p>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">getAttachment</span><span class="p">(</span><span class="s1">&#39;otherdoc&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> <span class="p">});</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * In node you get Buffers and Blobs in the browser.
+     * </p>
+     * 
+     * <h3>Inline attachments</h3>
+     * 
+     * <p>
+     * You can specify <code>attachments: true</code> to most read operations,
+     * the attachment data will then be included in the result.
+     * </p>
+     * 
+     * @see <a href=
+     *      'http://pouchdb.com/api.html#get_attachment'>http://pouchdb.com/api.html#get_attachment<
+     *      / a >
+     */
+    public abstract void getAttachment(String docId, String attachmentId, Map<String, Object> options, AttachmentCallback callback);
+    
+    /**
+     * 
+     * <h2>Delete an attachment<a id="delete_attachment"></a></h2>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">removeAttachment</span><span class="p">(</span><span class="nx">docId</span><span class="p">,</span> <span class="nx">attachmentId</span><span class="p">,</span> <span class="nx">rev</span><span class="p">,</span> <span class="p">[</span><span class="nx">callback</span><span class="p">])</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <p>
+     * Delete an attachment from a doc.
+     * </p>
+     * 
+     * <h4>Example Usage:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="nx">db</span><span class="p">.</span><span class="nx">removeAttachment</span><span class="p">(</span><span class="s1">&#39;otherdoc&#39;</span><span class="p">,</span>
+     *                     <span class="s1">&#39;text&#39;</span><span class="p">,</span>
+     *                     <span class="s1">&#39;2-068E73F5B44FEC987B51354DFC772891&#39;</span><span class="p">,</span>
+     *                     <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> <span class="p">});</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * <h4>Example Response:</h4>
+     * 
+     * <div class="highlight">
+     * 
+     * <pre>
+     * <code class="js"><span class="p">{</span>
+     *   <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+     *   <span class="s2">&quot;rev&quot;</span><span class="o">:</span> <span class="s2">&quot;3-1F983211AB87EFCCC980974DFC27382F&quot;</span>
+     * <span class="p">}</span>
+     * </code>
+     * </pre>
+     * 
+     * </div>
+     * 
+     * @see <a href=
+     *      'http://pouchdb.com/api.html#delete_attachment'>http://pouchdb.com/api.html#delete_attachment
+     *      < / a >
+     */
+    public abstract void removeAttachment(String docId, String attachmentId, String rev, StandardCallback callback);
     
 }

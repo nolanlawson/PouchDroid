@@ -122,9 +122,34 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertEquals(0, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(52, true))).getDocuments().size());
     }
     
-    public void testGetAttachments() {
+    public void testGetInlineAttachments() {
         Person randy  = pouchDB.get("randy", PouchOptions.attachments());
-        assertEquals(randy.getPouchAttachments().keySet(), new HashSet<String>(Arrays.asList("foobar.txt", "foobaz.txt")));
-        //assertEquals(randy.getPouchAttachments().get("))
+        assertEquals(new HashSet<String>(Arrays.asList("foobar.txt", "foobaz.txt")), randy.getPouchAttachments().keySet());
+        
+        PouchAttachment foobar = randy.getPouchAttachments().get("foobar.txt");
+        assertEquals("foobar", new String(foobar.getData()));
+        assertEquals("text/plain", foobar.getContentType());
+        assertEquals(0, foobar.getRevpos());
+        assertEquals("md5-3858f62230ac3c915f300c664312c63f", foobar.getDigest());
+        
+        PouchAttachment foobaz = randy.getPouchAttachments().get("foobaz.txt");
+        assertEquals("foobaz", new String(foobaz.getData()));
+        assertEquals("text/plain", foobaz.getContentType());
+        assertEquals(0, foobaz.getRevpos());
+        assertEquals("md5-80338e79d2ca9b9c090ebaaa2ef293c7", foobaz.getDigest());
+    }
+    
+    public void testGetAttachments() {
+        PouchAttachment foobar = pouchDB.getAttachment("randy", "foobar.txt", PouchOptions.attachments());
+        assertEquals("foobar", new String(foobar.getData()));
+        assertEquals("text/plain", foobar.getContentType());
+        assertEquals(0, foobar.getRevpos());
+        assertEquals("md5-3858f62230ac3c915f300c664312c63f", foobar.getDigest());
+        
+        PouchAttachment foobaz = pouchDB.getAttachment("randy", "foobaz.txt", PouchOptions.attachments());
+        assertEquals("foobaz", new String(foobaz.getData()));
+        assertEquals("text/plain", foobaz.getContentType());
+        assertEquals(0, foobaz.getRevpos());
+        assertEquals("md5-80338e79d2ca9b9c090ebaaa2ef293c7", foobaz.getDigest());        
     }
 }
