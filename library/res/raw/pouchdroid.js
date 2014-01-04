@@ -499,7 +499,7 @@ var PouchDroid;
     },
 
     base64ToArrayBuffer : function(str) {
-      return base64.base64DecToArr(str);
+      return base64.base64DecToArr(str).buffer;
     },
 
     arrayBufferToBase64: function (buffer) {
@@ -513,7 +513,7 @@ var PouchDroid;
      */
     buildBlob : function(base64Str, contentType) {
 
-      var buffer = PouchDroid.Util.base64ToArrayBuffer(base64Str).buffer;
+      var buffer = PouchDroid.Util.base64ToArrayBuffer(base64Str);
 
       var MyBlobBuilder = window.WebKitBlobBuilder || window.BlobBuilder;
       if (MyBlobBuilder) {
