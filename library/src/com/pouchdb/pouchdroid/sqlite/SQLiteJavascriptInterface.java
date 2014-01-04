@@ -34,7 +34,7 @@ import android.webkit.JavascriptInterface;
 
 import com.pouchdb.pouchdroid.PouchDroid;
 import com.pouchdb.pouchdroid.sqlite.BasicSQLiteOpenHelper.SQLiteTask;
-import com.pouchdb.pouchdroid.util.Base64Compat;
+import com.pouchdb.pouchdroid.util.JsonUtil;
 import com.pouchdb.pouchdroid.util.UtilLogger;
 
 public class SQLiteJavascriptInterface {
@@ -360,7 +360,7 @@ public class SQLiteJavascriptInterface {
                 row.put(key, cur.getString(i));
                 break;
             case Cursor.FIELD_TYPE_BLOB:
-                row.put(key, new String(Base64Compat.encode(cur.getBlob(i), Base64Compat.DEFAULT)));
+                row.put(key, JsonUtil.simpleBase64(cur.getBlob(i)));
                 break;
         }        
     }

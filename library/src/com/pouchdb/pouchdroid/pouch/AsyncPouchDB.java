@@ -481,7 +481,7 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         
         if (data != null) {
             arguments.add(new StringBuilder("new Blob([PouchDroid.Util.base64ToArrayBuffer(")
-            .append(JsonUtil.simpleString(Base64Compat.encodeToString(data, Base64Compat.DEFAULT)))
+            .append(JsonUtil.simpleBase64(data))
             .append(").buffer])"));
         }
         

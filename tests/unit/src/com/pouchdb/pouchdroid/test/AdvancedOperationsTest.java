@@ -183,9 +183,7 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertNotNull(info.getRev());
         
         PouchAttachment pngAttachment = pouchDB.getAttachment("randy", "android.png");
-        System.out.println("expected:\n" + Base64Compat.encodeToString(png, Base64Compat.DEFAULT));
-        System.out.println("actual  :\n" + pngAttachment.getData());
-        assertTrue(Arrays.equals(png, Base64Compat.decode(pngAttachment.getData(), Base64Compat.DEFAULT)));
+        assertTrue(Arrays.equals(png, pngAttachment.getData()));
         assertEquals("image/png", pngAttachment.getContentType());
     }
 }

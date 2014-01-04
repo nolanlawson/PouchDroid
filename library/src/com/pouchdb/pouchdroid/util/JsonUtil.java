@@ -56,6 +56,16 @@ public class JsonUtil {
         }
     }
     
+    public static String simpleBase64(byte[] input) {
+        try {
+            return objectMapper.writeValueAsString(input);
+        } catch (IOException e) {
+            // shouldn't happen
+            e.printStackTrace();
+            throw new RuntimeException("unexpected", e);
+        }
+    }
+    
     public static String simplePojo(Object pojo) {
         if (pojo == null) {
             return "{}";
