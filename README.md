@@ -164,7 +164,7 @@ What's supported?
 | ```[x]``` | ```bulkDocs/allDocs```  |
 | ```[ ]``` | ```changes```  |
 | ```[x]``` | ```replicate```  |
-| ```[ ]``` | ```views```  |
+| ```[x]``` | ```views```  |
 | ```[x]``` | ```info```  |
 | ```[ ]``` | ```compact```  |
 | ```[ ]``` | ```revsDiff```  |
