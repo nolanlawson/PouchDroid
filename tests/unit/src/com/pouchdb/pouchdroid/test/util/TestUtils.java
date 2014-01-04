@@ -3,6 +3,8 @@ package com.pouchdb.pouchdroid.test.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestUtils {
     public static byte[] read(InputStream input) throws IOException {
@@ -20,5 +22,15 @@ public class TestUtils {
                 output.close();
         }
         return output.toByteArray();
+    }
+    
+    public static List<String> toHexList(byte[] input) {
+        List<String> output = new ArrayList<String>(input.length);
+        
+        for (byte b : input) {
+            output.add(Integer.toHexString(b & 0xFF));
+        }
+        
+        return output;
     }
 }

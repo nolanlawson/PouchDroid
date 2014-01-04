@@ -23,7 +23,6 @@ import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.PouchError;
 import com.pouchdb.pouchdroid.pouch.model.ReduceFunction;
-import com.pouchdb.pouchdroid.util.Base64Compat;
 import com.pouchdb.pouchdroid.util.JsonUtil;
 import com.pouchdb.pouchdroid.util.PouchOptions;
 import com.pouchdb.pouchdroid.util.UtilLogger;
@@ -496,8 +495,9 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
                     .append("function(err, blob) {")
                     .append("var reader = new FileReader();")
                     .append("reader.addEventListener('loadend', function() {")
+                    .append("var data = PouchDroid.Util.arrayBufferToBase64(reader.result);")
                     .append("var convertedBlob = {content_type : blob.type, ")
-                    .append("data : PouchDroid.Util.arrayBufferToBase64(reader.result)};")
+                    .append("data : data};")
                     .append("(")
                     .append(createFunctionForCallback(callback))
                     .append(").call(null, err, convertedBlob);")

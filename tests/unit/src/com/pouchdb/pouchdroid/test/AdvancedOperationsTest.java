@@ -23,6 +23,7 @@ import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
 import com.pouchdb.pouchdroid.test.data.Person;
 import com.pouchdb.pouchdroid.test.util.TestUtils;
 import com.pouchdb.pouchdroid.util.Base64Compat;
+import com.pouchdb.pouchdroid.util.JsonUtil;
 import com.pouchdb.pouchdroid.util.PouchOptions;
 
 public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<MainActivity> {
@@ -168,7 +169,32 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertEquals("text/plain", foobuzz.getContentType());
     }
     
-    public void testLargeAttachment() throws IOException {
+    public void testPutSmallAttachment() throws IOException {
+        Person randy = pouchDB.get("randy");
+        
+        // taken from the pouchdb tests, it's a small icon
+        String pngEncoded = 
+                "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAMFBMVEX+9+j+9OD+7tL95rr93qT80YD7x2L6vkn6syz5qRT4" +
+        		"ogT4nwD4ngD4nQD4nQD4nQDT2nT/AAAAcElEQVQY002OUQLEQARDw1D14f7X3TCdbfPnhQTqI5UqvGOWIz8gAIXFH9zmC63XRyTsO" +
+        		"sCWk2A9Ga7wCXlA9m2S6G4JlVwQkpw/YmxrUgNoMoyxBwSMH/WnAzy5cnfLFu+dK2l5gMvuPGLGJd1/9AOiBQiEgkzOpgAAAABJRU" +
+        		"5ErkJggg==";
+        
+        byte[] png = Base64Compat.decode(pngEncoded, Base64Compat.DEFAULT);
+        
+        PouchInfo info = pouchDB.putAttachment("randy", "amz.png", randy.getPouchRev(), png, "image/png");
+        assertEquals(true, info.isOk());
+        assertEquals("randy", info.getId());
+        assertNotNull(info.getRev());
+        
+        PouchAttachment pngAttachment = pouchDB.getAttachment("randy", "amz.png");
+        
+        System.out.println("expected:\n" + TestUtils.toHexList(png));
+        System.out.println("actual  :\n" + TestUtils.toHexList(pngAttachment.getData()));
+        assertTrue(Arrays.equals(png, pngAttachment.getData()));
+        assertEquals("image/png", pngAttachment.getContentType());
+    }
+    
+    public void testPutLargeAttachment() throws IOException {
         
         InputStream inputStream = getActivity().getAssets().open("android.png");
         
@@ -183,6 +209,14 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertNotNull(info.getRev());
         
         PouchAttachment pngAttachment = pouchDB.getAttachment("randy", "android.png");
+        System.out.println("expected:\n" + JsonUtil.simpleBase64(png));
+        System.out.println("actual  :\n" + JsonUtil.simpleBase64(pngAttachment.getData()));
+        System.out.println("expected:\n" + TestUtils.toHexList(png));
+        System.out.println("actual  :\n" + TestUtils.toHexList(pngAttachment.getData()));
+        List<String> expectedHexList = TestUtils.toHexList(png);
+        List<String> actualHexList = TestUtils.toHexList(pngAttachment.getData());
+        System.out.println("expected (end of array):\n" + expectedHexList.subList(expectedHexList.size() - 100, expectedHexList.size()));
+        System.out.println("actual   (end of array):\n" + actualHexList.subList(actualHexList.size() - 100, actualHexList.size()));
         assertTrue(Arrays.equals(png, pngAttachment.getData()));
         assertEquals("image/png", pngAttachment.getContentType());
     }
