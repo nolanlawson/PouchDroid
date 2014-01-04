@@ -1,5 +1,7 @@
 package com.pouchdb.pouchdroid.test;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +21,8 @@ import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.pouch.model.MapFunction;
 import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
 import com.pouchdb.pouchdroid.test.data.Person;
+import com.pouchdb.pouchdroid.test.util.TestUtils;
+import com.pouchdb.pouchdroid.util.Base64Compat;
 import com.pouchdb.pouchdroid.util.PouchOptions;
 
 public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<MainActivity> {
@@ -141,11 +145,11 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
     }
     
     public void testGetAttachments() {
-        PouchAttachment foobar = pouchDB.getAttachment("randy", "foobar.txt", PouchOptions.attachments());
+        PouchAttachment foobar = pouchDB.getAttachment("randy", "foobar.txt");
         assertEquals("foobar", new String(foobar.getData()));
         assertEquals("text/plain", foobar.getContentType());
         
-        PouchAttachment foobaz = pouchDB.getAttachment("randy", "foobaz.txt", PouchOptions.attachments());
+        PouchAttachment foobaz = pouchDB.getAttachment("randy", "foobaz.txt");
         assertEquals("foobaz", new String(foobaz.getData()));
         assertEquals("text/plain", foobaz.getContentType());
     }
@@ -159,12 +163,29 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertEquals("randy", info.getId());
         assertNotNull(info.getRev());
         
-        PouchAttachment foobuzz = pouchDB.getAttachment("randy", "foobuzz.txt", PouchOptions.attachments());
+        PouchAttachment foobuzz = pouchDB.getAttachment("randy", "foobuzz.txt");
         assertEquals("foobuzz", new String(foobuzz.getData()));
         assertEquals("text/plain", foobuzz.getContentType());
     }
     
-    public void testLargeAttachment() {
+    public void testLargeAttachment() throws IOException {
         
+        InputStream inputStream = getActivity().getAssets().open("android.png");
+        
+        byte[] png = TestUtils.read(inputStream);
+        inputStream.close();
+        
+        Person randy = pouchDB.get("randy");
+        
+        PouchInfo info = pouchDB.putAttachment("randy", "android.png", randy.getPouchRev(), png, "image/png");
+        assertEquals(true, info.isOk());
+        assertEquals("randy", info.getId());
+        assertNotNull(info.getRev());
+        
+        PouchAttachment pngAttachment = pouchDB.getAttachment("randy", "android.png");
+        System.out.println("expected:\n" + Base64Compat.encodeToString(png, Base64Compat.DEFAULT));
+        System.out.println("actual  :\n" + pngAttachment.getData());
+        assertTrue(Arrays.equals(png, Base64Compat.decode(pngAttachment.getData(), Base64Compat.DEFAULT)));
+        assertEquals("image/png", pngAttachment.getContentType());
     }
 }

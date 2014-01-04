@@ -22,23 +22,29 @@
       0;
   }
 
-  PouchDroid.Util = {
-    debug: function (className, str) {
-      if (PouchDroid.DEBUG_MODE && str) {
-        var validClass = (!PouchDroid.DEBUG_CLASSES || PouchDroid.DEBUG_CLASSES.indexOf(className) !== -1);
-        if (!validClass) {
-          return;
-        }
-        window.console.log(className + ': ' + str);
-      }
-    },
+  function uint6ToB64(nUint6) {
 
+    return nUint6 < 26 ?
+      nUint6 + 65
+      : nUint6 < 52 ?
+      nUint6 + 71
+      : nUint6 < 62 ?
+      nUint6 - 4
+      : nUint6 === 62 ?
+      43
+      : nUint6 === 63 ?
+      47
+      :
+      65;
+  }
+
+  var base64 = {
     /**
      *
      * shamelessly stolen from Mozilla:
      * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Base64_encoding_and_decoding#Appendix.3A_Decode_a_Base64_string_to_Uint8Array_or_ArrayBuffer
      */
-    base64DecToArr : function(sBase64, nBlocksSize) {
+    base64DecToArr: function (sBase64, nBlocksSize) {
       /* jshint bitwise : false */
       var
         sB64Enc = sBase64.replace(/[^A-Za-z0-9\+\/]/g, ''), nInLen = sB64Enc.length,
@@ -59,18 +65,46 @@
       return taBytes;
     },
 
-    /**
-     * shamelessly stolen from StackOverflow like a total n00b:
-     * http://stackoverflow.com/a/9458996/680742
-     */
-    arrayBufferToBase64 : function(buffer) {
-      var binary = '';
-      var bytes = new Uint8Array(buffer);
-      var len = bytes.byteLength;
-      for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
+    base64EncArr: function (aBytes) {
+      /* jshint bitwise : false */
+      var nMod3, sB64Enc = '';
+
+      for (var nLen = aBytes.length, nUint24 = 0, nIdx = 0; nIdx < nLen; nIdx++) {
+        nMod3 = nIdx % 3;
+        if (nIdx > 0 && (nIdx * 4 / 3) % 76 === 0) {
+          sB64Enc += '\r\n';
+        }
+        nUint24 |= aBytes[nIdx] << (16 >>> nMod3 & 24);
+        if (nMod3 === 2 || aBytes.length - nIdx === 1) {
+          sB64Enc += String.fromCharCode(uint6ToB64(nUint24 >>> 18 & 63), uint6ToB64(nUint24 >>> 12 & 63), uint6ToB64(nUint24 >>> 6 & 63), uint6ToB64(nUint24 & 63));
+          nUint24 = 0;
+        }
       }
-      return window.btoa( binary );
+
+      return sB64Enc.replace(/A(?=A$|$)/g, '=');
+
+    }
+  };
+
+
+  PouchDroid.Util = {
+    debug: function (className, str) {
+      if (PouchDroid.DEBUG_MODE && str) {
+        var validClass = (!PouchDroid.DEBUG_CLASSES || PouchDroid.DEBUG_CLASSES.indexOf(className) !== -1);
+        if (!validClass) {
+          return;
+        }
+        window.console.log(className + ': ' + str);
+      }
+    },
+
+    base64ToArrayBuffer : function(str) {
+      return base64.base64DecToArr(str);
+    },
+
+    arrayBufferToBase64: function (buffer) {
+      var arr = new Uint8Array(buffer);
+      return base64.base64EncArr(arr);
     }
   };
 })();
