@@ -17,6 +17,7 @@ import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo.Row;
 import com.pouchdb.pouchdroid.pouch.model.DatabaseInfo;
 import com.pouchdb.pouchdroid.pouch.model.MapFunction;
+import com.pouchdb.pouchdroid.pouch.model.PouchInfo;
 import com.pouchdb.pouchdroid.test.data.Person;
 import com.pouchdb.pouchdroid.util.PouchOptions;
 
@@ -147,5 +148,23 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         PouchAttachment foobaz = pouchDB.getAttachment("randy", "foobaz.txt", PouchOptions.attachments());
         assertEquals("foobaz", new String(foobaz.getData()));
         assertEquals("text/plain", foobaz.getContentType());
+    }
+    
+    public void testPutAttachment() {
+        Person randy = pouchDB.get("randy");
+        
+        PouchInfo info = pouchDB.putAttachment("randy", "foobuzz.txt", randy.getPouchRev(), "foobuzz".getBytes(), 
+                "text/plain");
+        assertEquals(true, info.isOk());
+        assertEquals("randy", info.getId());
+        assertNotNull(info.getRev());
+        
+        PouchAttachment foobuzz = pouchDB.getAttachment("randy", "foobuzz.txt", PouchOptions.attachments());
+        assertEquals("foobuzz", new String(foobuzz.getData()));
+        assertEquals("text/plain", foobuzz.getContentType());
+    }
+    
+    public void testLargeAttachment() {
+        
     }
 }

@@ -480,9 +480,9 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         }
         
         if (data != null) {
-            arguments.add(new StringBuilder("PouchDroid.Util.base64DecToArr(\"")
-            .append(Base64Compat.encodeToString(data, Base64Compat.DEFAULT))
-            .append("\").buffer"));
+            arguments.add(new StringBuilder("new Blob([PouchDroid.Util.base64DecToArr(")
+            .append(JsonUtil.simpleString(Base64Compat.encodeToString(data, Base64Compat.DEFAULT)))
+            .append(").buffer])"));
         }
         
         if (contentType != null) {
@@ -490,20 +490,24 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         }
         
         if (callback != null) {
-            // convert the blob to a more simple attachment format
-            arguments.add(new StringBuilder()
-            .append("function(err, blob) {")
-            .append("var reader = new FileReader();")
-            .append("reader.addEventListener('loadend', function() {")
-            .append("var convertedBlob = {content_type : blob.type, ")
-            .append("data : PouchDroid.Util.arrayBufferToBase64(reader.result)};")
-            .append("(")
-            .append(createFunctionForCallback(callback))
-            .append(").call(null, err, convertedBlob);")
-            .append("});")
-            .append("reader.readAsArrayBuffer(blob);")
-            .append("}")
-            );
+            if (action.equals("getAttachment")) {
+                // convert the blob to a more simple attachment format
+                arguments.add(new StringBuilder()
+                    .append("function(err, blob) {")
+                    .append("var reader = new FileReader();")
+                    .append("reader.addEventListener('loadend', function() {")
+                    .append("var convertedBlob = {content_type : blob.type, ")
+                    .append("data : PouchDroid.Util.arrayBufferToBase64(reader.result)};")
+                    .append("(")
+                    .append(createFunctionForCallback(callback))
+                    .append(").call(null, err, convertedBlob);")
+                    .append("});")
+                    .append("reader.readAsArrayBuffer(blob);")
+                    .append("}")
+                    );
+            } else {
+                arguments.add(createFunctionForCallback(callback));
+            }
         }
         
         StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].").append(action).append("(")
