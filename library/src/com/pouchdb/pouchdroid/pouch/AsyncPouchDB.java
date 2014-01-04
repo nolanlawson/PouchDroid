@@ -479,9 +479,14 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         }
         
         if (data != null) {
-            arguments.add(new StringBuilder("new Blob([PouchDroid.Util.base64ToArrayBuffer(")
-            .append(JsonUtil.simpleBase64(data))
-            .append(").buffer])"));
+            // convert from Java byte[] to JS blob
+            arguments.add(new StringBuilder()
+                .append("PouchDroid.Util.buildBlob(")
+                .append(JsonUtil.simpleBase64(data))
+                .append(",")
+                .append(JsonUtil.simpleString(contentType))
+                .append(")")
+                );
         }
         
         if (contentType != null) {
@@ -490,18 +495,18 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         
         if (callback != null) {
             if (action.equals("getAttachment")) {
-                // convert the blob to a more simple attachment format
+                // convert the blob to a more simple attachment format, with data as a base64 string
                 arguments.add(new StringBuilder()
                     .append("function(err, blob) {")
                     .append("var reader = new FileReader();")
-                    .append("reader.addEventListener('loadend', function() {")
+                    .append("reader.onloadend = function() {")
                     .append("var data = PouchDroid.Util.arrayBufferToBase64(reader.result);")
                     .append("var convertedBlob = {content_type : blob.type, ")
                     .append("data : data};")
                     .append("(")
                     .append(createFunctionForCallback(callback))
                     .append(").call(null, err, convertedBlob);")
-                    .append("});")
+                    .append("};")
                     .append("reader.readAsArrayBuffer(blob);")
                     .append("}")
                     );

@@ -483,7 +483,6 @@ var PouchDroid;
       }
 
       return sB64Enc.replace(/A(?=A$|$)/g, '=');
-
     }
   };
 
@@ -506,6 +505,24 @@ var PouchDroid;
     arrayBufferToBase64: function (buffer) {
       var arr = new Uint8Array(buffer);
       return base64.base64EncArr(arr);
+    },
+
+    /**
+     * build a blob with the deprecated BlobBuilder if available, else the Blob constructor
+     * @param base64Str
+     */
+    buildBlob : function(base64Str, contentType) {
+
+      var buffer = PouchDroid.Util.base64ToArrayBuffer(base64Str).buffer;
+
+      var MyBlobBuilder = window.WebKitBlobBuilder || window.BlobBuilder;
+      if (MyBlobBuilder) {
+        var bb = new MyBlobBuilder();
+        bb.append(buffer);
+        return bb.getBlob(contentType);
+      }
+      // else use regular constructor
+      return new Blob([buffer], {type : contentType});
     }
   };
 })();;/**
