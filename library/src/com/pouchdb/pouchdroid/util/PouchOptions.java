@@ -45,6 +45,17 @@ public class PouchOptions {
         return map;
     }
     
+    /**
+     * Convenience method for setting include_docs and attachments to true.
+     */
+    public static Map<String, Object> includeDocsAndAttachments() {
+        return from(INCLUDE_DOCS, true, ATTACHMENTS, true);
+    }
+    
+    public static Map<String, Object> attachments() {
+        return from(ATTACHMENTS, true);
+    }
+    
     public static Map<String, Object> includeDocs() {
         return from(INCLUDE_DOCS, true);
     }

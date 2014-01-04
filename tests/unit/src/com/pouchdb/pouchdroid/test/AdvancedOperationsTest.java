@@ -11,6 +11,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
 import com.pouchdb.pouchdroid.appforunittests.MainActivity;
+import com.pouchdb.pouchdroid.pouch.PouchAttachment;
 import com.pouchdb.pouchdroid.pouch.PouchDB;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo;
 import com.pouchdb.pouchdroid.pouch.model.AllDocsInfo.Row;
@@ -43,7 +44,12 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         
         pouchDB.post(new Person("Mr. Hankey", 342143, 5, null, false));
         pouchDB.post(new Person("Butters", 3412, 3, null, false));
-        pouchDB.post(new Person("Randy Marsh", 43234, 0, null, true));
+        
+        Person randy = new Person("Randy Marsh", 43234, 0, null, true);
+        randy.addPouchAttachment("foobar.txt", new PouchAttachment("text/plain", "foobar".getBytes()));
+        randy.addPouchAttachment("foobaz.txt", new PouchAttachment("text/plain", "foobaz".getBytes()));
+        randy.setPouchId("randy");
+        pouchDB.put(randy);
     }
 
     @Override
@@ -114,5 +120,11 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         assertEquals(1, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(3, false))).getDocuments().size());
         assertEquals(1, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(5, false))).getDocuments().size());
         assertEquals(0, pouchDB.query(map, PouchOptions.key(Arrays.<Object>asList(52, true))).getDocuments().size());
+    }
+    
+    public void testGetAttachments() {
+        Person randy  = pouchDB.get("randy", PouchOptions.attachments());
+        assertEquals(randy.getPouchAttachments().keySet(), new HashSet<String>(Arrays.asList("foobar.txt", "foobaz.txt")));
+        //assertEquals(randy.getPouchAttachments().get("))
     }
 }

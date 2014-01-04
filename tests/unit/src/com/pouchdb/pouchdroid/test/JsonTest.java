@@ -45,13 +45,7 @@ public class JsonTest extends ActivityInstrumentationTestCase2<MainActivity> {
 	    String asJson = PouchDocumentMapper.toJson(person);
 	    
 	    Person fromJson = PouchDocumentMapper.fromJson(asJson, Person.class);
-	    
-	    System.out.println("asJson: " + asJson);
-	    
-	    String expectedJson = "{\"name\":\"Nolan Lawson\",\"gameBoys\":[{\"name\":\"Rudy\",\"type\":\"GameBoy Pocket\"}," +
-                "{\"name\":\"Roger\",\"type\":\"GameBoy Color\"}],\"dystopianBarcodeId\":4430823408,\"belieber\":false," +
-                "\"numberOfPetsOwned\":3,\"_id\":null,\"_rev\":null}";
-	    assertEquals(asJson, expectedJson);
+
 	    assertEquals(person, fromJson);
 	    
 	    assertNull(person.getPouchId());
@@ -63,13 +57,9 @@ public class JsonTest extends ActivityInstrumentationTestCase2<MainActivity> {
         
         person.setPouchId("myId");
         person.setPouchRev("myRev");
-        expectedJson = "{\"name\":\"Nolan Lawson\",\"gameBoys\":[{\"name\":\"Rudy\",\"type\":\"GameBoy Pocket\"}," +
-                "{\"name\":\"Roger\",\"type\":\"GameBoy Color\"}],\"dystopianBarcodeId\":4430823408,\"belieber\":false," +
-                "\"numberOfPetsOwned\":3,\"_id\":\"myId\",\"_rev\":\"myRev\"}";
         asJson = PouchDocumentMapper.toJson(person);
         fromJson = PouchDocumentMapper.fromJson(asJson, Person.class);
         
-        assertEquals(asJson, expectedJson);
         assertEquals(person, fromJson);
         assertEquals(person.getPouchId(), "myId");
         assertEquals(person.getPouchRev(), "myRev");

@@ -1,5 +1,7 @@
 package com.pouchdb.pouchdroid.pouch;
 
+import java.util.Map;
+
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
@@ -50,4 +52,19 @@ public interface PouchDocumentInterface {
      */
     @JsonProperty("_rev")
     public void setPouchRev(String pouchRev);
+    
+    /**
+     * Get a map of filenames to pouch attachments for this document.  This is null unless you set
+     * attachments=true and are actually using attachments.
+     * @return
+     */
+    @JsonProperty("_attachments")
+    public Map<String, PouchAttachment> getPouchAttachments();
+    
+    /**
+     * Set the map of filenames to pouch attachments for this document.
+     * @param pouchAttachments
+     */
+    @JsonProperty("_attachments")
+    public void setPouchAttachments(Map<String, PouchAttachment> pouchAttachments);
 }
