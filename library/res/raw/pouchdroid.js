@@ -458,6 +458,20 @@ var PouchDroid;
       }
 
       return taBytes;
+    },
+
+    /**
+     * shamelessly stolen from StackOverflow like a total n00b:
+     * http://stackoverflow.com/a/9458996/680742
+     */
+    arrayBufferToBase64 : function(buffer) {
+      var binary = '';
+      var bytes = new Uint8Array(buffer);
+      var len = bytes.byteLength;
+      for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa( binary );
     }
   };
 })();;/**

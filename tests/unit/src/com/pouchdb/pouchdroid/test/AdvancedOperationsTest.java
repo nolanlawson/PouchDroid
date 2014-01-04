@@ -143,13 +143,9 @@ public class AdvancedOperationsTest extends ActivityInstrumentationTestCase2<Mai
         PouchAttachment foobar = pouchDB.getAttachment("randy", "foobar.txt", PouchOptions.attachments());
         assertEquals("foobar", new String(foobar.getData()));
         assertEquals("text/plain", foobar.getContentType());
-        assertEquals(0, foobar.getRevpos());
-        assertEquals("md5-3858f62230ac3c915f300c664312c63f", foobar.getDigest());
         
         PouchAttachment foobaz = pouchDB.getAttachment("randy", "foobaz.txt", PouchOptions.attachments());
         assertEquals("foobaz", new String(foobaz.getData()));
         assertEquals("text/plain", foobaz.getContentType());
-        assertEquals(0, foobaz.getRevpos());
-        assertEquals("md5-80338e79d2ca9b9c090ebaaa2ef293c7", foobaz.getDigest());        
     }
 }

@@ -490,7 +490,20 @@ public class AsyncPouchDB<T extends PouchDocumentInterface> extends AbstractPouc
         }
         
         if (callback != null) {
-            arguments.add(createFunctionForCallback(callback));
+            // convert the blob to a more simple attachment format
+            arguments.add(new StringBuilder()
+            .append("function(err, blob) {")
+            .append("var reader = new FileReader();")
+            .append("reader.addEventListener('loadend', function() {")
+            .append("var convertedBlob = {content_type : blob.type, ")
+            .append("data : PouchDroid.Util.arrayBufferToBase64(reader.result)};")
+            .append("(")
+            .append(createFunctionForCallback(callback))
+            .append(").call(null, err, convertedBlob);")
+            .append("});")
+            .append("reader.readAsArrayBuffer(blob);")
+            .append("}")
+            );
         }
         
         StringBuilder js = new StringBuilder("PouchDroid.pouchDBs[").append(id).append("].").append(action).append("(")
