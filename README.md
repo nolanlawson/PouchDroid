@@ -159,13 +159,13 @@ What's supported?
 
 | - | Pouch API                  |
 |-----------|----------------------------|
-| ```[x]``` | ```create/destroy```       |
-| ```[x]``` | ```put/post/get/remove```  |
-| ```[x]``` | ```bulkDocs/allDocs```  |
+| ```[✓]``` | ```create/destroy```       |
+| ```[✓]``` | ```put/post/get/remove```  |
+| ```[✓]``` | ```bulkDocs/allDocs```  |
 | ```[ ]``` | ```changes```  |
-| ```[x]``` | ```replicate```  |
-| ```[x]``` | ```views```  |
-| ```[x]``` | ```info```  |
+| ```[✓]``` | ```replicate```  |
+| ```[✓]``` | ```views```  |
+| ```[✓]``` | ```info```  |
 | ```[ ]``` | ```compact```  |
 | ```[ ]``` | ```revsDiff```  |
 
