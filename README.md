@@ -174,6 +174,7 @@ Next steps:
 * Full Pouch API support
 * Passes Pouch unit test suite
 * PhoneGap plugin
+* Pure Java version
 
 Tutorials
 ----------
