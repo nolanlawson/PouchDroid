@@ -7,6 +7,8 @@ PouchDroid
 
 Effortlessly sync your data across multiple Android devices, using [PouchDB][] and [CouchDB][].
 
+[**Update on the status of this project.**](http://nolanlawson.com/2014/03/25/what-happened-to-pouchdroid/) (March 2014)
+
 |Table of Contents|
 |-----------------|
 | [Introduction](#introduction) |
