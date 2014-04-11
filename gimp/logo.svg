@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2" width="293.2" height="344.299">
+    <defs>
+        <marker orient="auto" overflow="visible">
+            <path d="M10 0l4-4-14 4 14 4-4-4z" fill-rule="evenodd" stroke="#000" stroke-width="NaN"/>
+        </marker>
+    </defs>
+    <g fill="#a4c639" transform="translate(-225.447 -354.031) translate(372.047 423.731)">
+        <use width="1" height="1" xlink:href="#a" stroke="#fff" stroke-width="14.4"/>
+        <use transform="scale(-1 1)" width="1" height="1" xlink:href="#b"/>
+        <g id="b" stroke="#fff" stroke-width="7.2">
+            <rect width="13" height="86" rx="6.5" x="14" y="-86" transform="rotate(29)"/>
+            <rect width="48" height="133" rx="24" x="-143" y="41" id="c"/>
+            <use x="85" y="97" width="1" height="1" xlink:href="#c"/>
+        </g>
+        <g id="a">
+            <ellipse cy="41" rx="91" ry="84"/>
+            <rect width="182" height="182" rx="22" x="-91" y="20"/>
+        </g>
+    </g>
+    <g fill="#fff" stroke="#fff" stroke-width="7.2" transform="translate(-225.447 -354.031) translate(372.047 423.731)">
+        <path d="M-95 44.5h190"/>
+        <circle cx="-42" r="4"/>
+        <circle cx="42" r="4"/>
+    </g>
+    <g fill-opacity=".996">
+        <path d="M91.25 120.845l1.98 33.205 23.188 12.504-6.282 24.659 36.014 36.527 26.77-7.173 13.03-49.668-17.874-18.187 13.202-22.255-14.32-29.899-16.189 40.269-25.202 6.753z" fill="#6ccb94"/>
+        <path d="M147.989 181.07l2.781-40.243-25.202 6.753z" fill="#6ecc95"/>
+    </g>
+    <path d="M93.029 191.439v44.633l50.714 20.714c1.964.281 3.929.389 5.893 0l50.536-21.428v-44.098z" fill="#a4c639" stroke="#fff" stroke-width="7.2"/>
+</svg>
