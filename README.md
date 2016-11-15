@@ -1,3 +1,6 @@
+⚠ DEPRECATED! DO NOT USE! ⚠ I wrote this project as a proof-of-concept and have zero intention to continue supporting it. It barely works. Original documentation follows.
+=======
+
 PouchDroid
 ===========
 
